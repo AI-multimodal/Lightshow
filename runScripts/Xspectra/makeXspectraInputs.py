@@ -235,37 +235,3 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                   with open(xanesfolder / "weight.txt", "w") as f:
                       f.write( str(weight) + "\n" )
 
-"""              
-          for dir in (1, 2, 3):
-              dir1, dir2 = directions - set((dir, ))
-              dirs = (dir, dir1, dir2)
-
-              for mode in ("dipole", "quadrupole"):
-
-                  xanesfolder = subfolder / ("%s%d" % (mode, dir))
-
-                  if any([np.all(XY == rot) for rot in symm['rotations']]) and dir == 2:
-                      xanesfolder.symlink_to(("%s1"%mode))
-                      continue
-
-                  if any([np.all(XZ == rot) for rot in symm['rotations']]) and dir == 3:
-                      xanesfolder.symlink_to(("%s1"%mode))
-                      continue
-
-                  if any([np.all(YZ == rot) for rot in symm['rotations']]) and dir == 3:
-                      xanesfolder.symlink_to(("%s2"%mode))
-                      continue
-
-                  xanesfolder.mkdir(parents=True, exist_ok=True)
-
-                  with open(xanesfolder / "xanes.in", "w") as f:
-                      f.write(xinput(mode, iabs[i], dirs,
-                                     ortho(atoms.cell, dir - 1, 
-                                           (dir2 if dir==2 else dir1)-1), xsJSON['XS']))
-
-                  with open(xanesfolder / "xanes_.in", "w") as f:
-                      f.write(xinput(mode, iabs[i], dirs,
-                                     ortho(atoms.cell, dir - 1,
-                                           (dir2 if dir==2 else dir1)-1), xsJSON['XS'],
-                                     plot=True))
-"""
