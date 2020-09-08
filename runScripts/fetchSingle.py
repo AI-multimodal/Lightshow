@@ -181,7 +181,7 @@ ocean_input['toldfe'] = conv_thr
 
 us = {}
 ph = ()
-photonSymm( unitC, us, ph)
+#photonSymm( unitC, us, ph)
 
 params = dict(defaultConvPerAtom=1E-10, photonOrder=6)
 

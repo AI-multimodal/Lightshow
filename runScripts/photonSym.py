@@ -62,8 +62,8 @@ def BuildOh( n, oh, norm ):
 def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
     # for now mode is assumed to be quad
 
-    uniqueSites = {}
-    photons = []
+#    uniqueSites = {}
+#    photons = []
 
     symm= spglib.get_symmetry((atoms.get_cell(),
                            atoms.get_scaled_positions(),
@@ -171,3 +171,4 @@ def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
         photons.append( { "dipole": dip, "quad": tempQuadList, "norm": norm } )
 
         print( { "dipole": dip, "quad": tempQuadList } )
+#    print( photons )
