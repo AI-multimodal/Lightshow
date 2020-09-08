@@ -102,9 +102,10 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     atoms = smaller( unitCell )
 
     us = {}
-    ph = ()
+    ph = []
     photonSymm( atoms, us, ph, params['photonOrder'])
 
+    print( ph )
 
     symm= spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
@@ -133,7 +134,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 #    input = xsJSON['QE']
-    folder = pathlib.Path(env['PWD']) / mpid 
+    folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     try:
         write(str(folder / "qe.in"), atoms, format='espresso-in',
@@ -177,6 +178,64 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           write(str(subfolder / "input.txt"), atoms, format='espresso-in',
               input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
 
+          # OCEAN photon labeling is continuous, so we will do that here too
+          #  not sure that we will actually want dipole-only spectra(?)
+          totalweight = 0
+          for photon in ph:
+              totalweight += photon["dipole"][3]
+#          totalweight *= Somethingforthesymmetry
+          
+          photonCount = 0
+          for photon in ph:
+#              print( dipole )
+              photonCount += 1
+              dir1 = photon["dipole"][0:3]
+              dir2 = dir1
+              weight = photon["dipole"][3] * us[i] / totalweight
+              mode = "dipole"
+              xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+              xanesfolder.mkdir(parents=True, exist_ok=True)
+              # fo
+              with open(xanesfolder / "xanes.in", "w") as f:
+                      f.write(xinput(mode, iabs[i], dir1,
+                                           dir2, xsJSON['XS']))
+
+              with open(xanesfolder / "xanes_.in", "w") as f:
+                  f.write(xinput(mode, iabs[i], dir1,
+                                 dir2,  xsJSON['XS'], plot=True)) 
+
+              with open(xanesfolder / "weight.txt", "w") as f:
+                  f.write( str(weight) + "\n" )
+
+
+          # New total weight for the quadrupole terms
+          totalweight = 0
+          for photon in ph:
+              for quad in photon["quad"]:
+                  totalweight += quad[3]
+
+          for photon in ph:
+              for quad in photon["quad"]:
+                  photonCount += 1
+                  dir1 = photon["dipole"][0:3]
+                  dir2 = quad[0:3]
+                  weight = quad[3] * us[i] / totalweight
+                  mode = "quadrupole"
+                  xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                  xanesfolder.mkdir(parents=True, exist_ok=True)
+                  # fo
+                  with open(xanesfolder / "xanes.in", "w") as f:
+                          f.write(xinput(mode, iabs[i], dir1,
+                                               dir2, xsJSON['XS']))
+
+                  with open(xanesfolder / "xanes_.in", "w") as f:
+                      f.write(xinput(mode, iabs[i], dir1,
+                                     dir2,  xsJSON['XS'], plot=True))
+
+                  with open(xanesfolder / "weight.txt", "w") as f:
+                      f.write( str(weight) + "\n" )
+
+"""              
           for dir in (1, 2, 3):
               dir1, dir2 = directions - set((dir, ))
               dirs = (dir, dir1, dir2)
@@ -209,3 +268,4 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                                      ortho(atoms.cell, dir - 1,
                                            (dir2 if dir==2 else dir1)-1), xsJSON['XS'],
                                      plot=True))
+"""
