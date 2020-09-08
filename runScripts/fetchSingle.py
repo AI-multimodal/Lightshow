@@ -35,123 +35,14 @@ with open('mp.key', 'r' ) as f:
 #print( str(mpkey) )
 mp = MPRester( str(mpkey) )
 
-### Sym ops for xspectra
-XY = np.array(([0, 1, 0], [1, 0, 0], [0, 0, 1]))
-XZ = np.array(([0, 0, 1], [0, 1, 0], [1, 0, 0]))
-YZ = np.array(([1, 0, 0], [0, 0, 1], [0, 1, 0]))
-
-directions = {1, 2, 3}
-
-def smaller(atoms):
-#    # starting from the primitive cell, give a supercell
-#    # that has at least 9 Å in each direction; either using
-#    # primitive or conventinal cell as building blocks;
-#    # returns which ever is smaller
-    prim =  atoms * ((9 / np.linalg.norm(atoms.cell, axis=1)).astype(int) + 1)
-    lat, pos, Z = spglib.standardize_cell((atoms.get_cell(),
-                                           atoms.get_scaled_positions(),
-                                           atoms.get_atomic_numbers()))
-    conv = Atoms(Z, cell=lat, positions=pos@lat, pbc=True)
-    conv = conv * ((9 / np.linalg.norm(conv.cell, axis=1)).astype(int) + 1)
-    return conv if len(conv) <= len(prim) else prim
-
-# For both OCEAN and QE/xspectra we want to have a uniform level of convergence (per atom?)
-defaultConvPerAtom = 1E-10
-
-##### These dictionaries are for building QE/xspectra inputs
-# input file description
-#psp = dict(Ti='Ti.upf',
-#           Ti1='Ti.fch.upf',
-#           O='O.upf')
 psp = dict(Ti1='Ti.fch.upf')
 
-control = dict(restart_mode='from_scratch',
-               wf_collect=True)
-
-#set ecutwfc and ecutrho to match the fch psp
-system = dict(
-    ecutwfc=40,
-    ecutrho=320,
-    occupations='smearing',
-    smearing='mv',
-    degauss=0.002,
-    nspin=1)
-
-electrons = dict(mixing_beta=0.4, conv_thr=1E-8)
-
-ions = dict()
-cell = dict()
-###### end QE/xspectra defaults
-
-# Move lower to update ecut
-#input = dict(
-#    control=control, system=system, electrons=electrons, ions=ions, cell=cell)
 
 ###### ocean defaultes
 ocean_input = { 'dft': 'qe', 'opf.program': 'hamann', 'para_prefix': 'mpirun -n 8',
                 'pp_database': 'ONCVPSP-PBE-PDv0.4-stringent', 'edges': '-22 1 0',
                 'ecut': '-1', 'diemac': '5', 'dft_energy_range': 50, 'screen_energy_range': 150, 
                 'ecut.quality': 'high' }
-
-
-def ortho(lat, i, j):
-    o = np.linalg.solve(lat.T, np.cross(lat[i], lat[j]))
-    return tuple(o / np.linalg.norm(o))
-
-def xinput(mode, iabs, dirs, xkvec, plot=False):
-
-    inp =  ["&input_xspectra",
-            "    calculation = 'xanes_%s'" % mode,
-            "    edge = 'K'",
-            "    prefix = 'pwscf'",
-            "    outdir = '../'",
-            "    xniter = 5000",
-            "    xiabs = %d" % iabs,
-            "    xerror = 0.01",
-            "    wf_collect = .true.",
-            "    xcheck_conv = 200",
-            "    xepsilon(%d) = 1.0" % dirs[0],
-            "    xepsilon(%d) = 0.0" % dirs[1],
-            "    xepsilon(%d) = 0.0" % dirs[2]]
-
-    if mode == "quadrupole":
-
-        inp += ["    xkvec(1) = %.10f" % xkvec[0],
-                "    xkvec(2) = %.10f" % xkvec[1],
-                "    xkvec(3) = %.10f" % xkvec[2] ]
-
-    if plot:
-        inp += ["    xonly_plot = .true."]
-
-    inp += ["/",
-            "&plot",
-            "    xnepoint = 400",
-            "    xemin = -5.0",
-            "    xemax = 60",
-            "    terminator = .true.",
-            "    cut_occ_states = .true."]
-    if plot:
-        inp += [
-            "    xgamma = 0.05",
-            "    gamma_mode = 'constant'",
-            "/"]
-    else:
-        inp += [
-            "    gamma_mode = 'variable'",
-            "    gamma_energy(1) = 7",
-            "    gamma_energy(2) = 23",
-            "    gamma_value(1)  = 0.89",
-            "    gamma_value(2)  = 2.1",
-            "/"]
-
-    inp += ["&pseudos",
-            "    filecore = '../../../Ti.wfc'",
-            "/",
-            "&cut_occ",
-            "    cut_desmooth = 0.3",
-            "/",
-            "2 2 2 0 0 0"]
-    return '\n'.join(inp) + '\n'
 
 
 
@@ -174,20 +65,25 @@ elif data[0]['band_gap'] is not None:
     ocean_input['diemac'] = exp( 3.5/data[0]['band_gap'] )
     print(ocean_input['diemac'])
 
-## Set OCEAN conv threshold
-conv_thr = defaultConvPerAtom * len( unitC.numbers )
-ocean_input['toldfe'] = conv_thr
 
-
-us = {}
-ph = ()
-#photonSymm( unitC, us, ph)
 
 params = dict(defaultConvPerAtom=1E-10, photonOrder=6)
 
 makeXspectra( mpid, unitC, params )
 
+###############
+############## JTV !!!!
+###############
 exit()
+###############
+############## JTV !!!!
+###############
+
+
+## Set OCEAN conv threshold
+conv_thr = defaultConvPerAtom * len( unitC.numbers )
+ocean_input['toldfe'] = conv_thr
+
 ## Make supercell for QE/xspectra
 atoms = smaller( unitC )
 
