@@ -1,21 +1,13 @@
 # coding: latin-1
 import numpy as np
-import pathlib
-import spglib
 
 from ase.atoms import Atoms
-from ase.io import write
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
-from os import environ as env
-import sys
-from OCEAN.fakeASE import write_ocean_in
-import json
 
-from pprint import pprint
+import sys
 from math import exp
 
-from photonSym import photonSymm
 from Xspectra.makeXspectraInputs import makeXspectra
 from OCEAN.makeOceanInputs import makeOcean
 from EXCITING.makeExcitingInputs import makeExciting
@@ -38,12 +30,16 @@ with open('mp.key', 'r' ) as f:
 mp = MPRester( str(mpkey) )
 
 
+# These params should be off-loaded into a json file
+params = dict(defaultConvPerAtom=1E-10, photonOrder=6)
+
+# Build the unit cell within ASE by querying the material project api
 unitC = ase.get_atoms(mp.get_structure_by_material_id(mpid, conventional_unit_cell=False))
 
+#
+# Grab some additional data from materials project (if it exists )
 data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
-print( data[0] )
-
-params = dict(defaultConvPerAtom=1E-10, photonOrder=6)
+#print( data[0] )
 
 ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
 if  data[0]['diel'] is not None: 
