@@ -1,0 +1,12 @@
+{
+    "dft": "qe",
+    "dft_energy_range": 50,
+    "diemac": "5",
+    "ecut": "-1",
+    "ecut.quality": "high",
+    "edges": "-22 1 0",
+    "opf.program": "hamann",
+    "para_prefix": "mpirun -n 8",
+    "pp_database": "ONCVPSP-PBE-PDv0.4-stringent",
+    "screen_energy_range": 150
+}
