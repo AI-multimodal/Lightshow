@@ -18,6 +18,7 @@ from math import exp
 from photonSym import photonSymm
 from Xspectra.makeXspectraInputs import makeXspectra
 from OCEAN.makeOceanInputs import makeOcean
+from EXCITING.makeExcitingInputs import makeExciting
 
 # The script takes a single, positive integer to grab a system from materials project
 if len(sys.argv) < 2 :
@@ -77,6 +78,7 @@ makeXspectra( mpid, unitC, params )
 
 makeOcean( mpid, unitC, params )
 
+makeExciting( mpid, unitC, params )
 ###############
 ############## JTV !!!!
 ###############
