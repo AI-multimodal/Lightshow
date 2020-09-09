@@ -24,6 +24,8 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     with open ("OCEAN/ocean.json", 'r') as fd:
         oceanJSON = json.load(fd)
 
+    if params['diemac'] is not None:
+        oceanJSON['diemac'] = params['diemac']
     
     us = {}
     ph = []
