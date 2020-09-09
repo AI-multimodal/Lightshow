@@ -4,7 +4,6 @@
 Make all the xspectra/qe inputs
 """
 from ase.atoms import Atoms
-import ase.io.espresso
 from ase.io import write
 import spglib
 import pathlib
@@ -133,7 +132,6 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 
-#    input = xsJSON['QE']
     folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     try:
@@ -155,13 +153,6 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
         found.add(symbol)
 
     prev = None
-    XY = np.array(([0, 1, 0], [1, 0, 0], [0, 0, 1]))
-    XZ = np.array(([0, 0, 1], [0, 1, 0], [1, 0, 0]))
-    YZ = np.array(([1, 0, 0], [0, 0, 1], [0, 1, 0]))
-
-    directions = {1, 2, 3}
-
-
     for i, sym in enumerate(symbols):
 
       if i == equiv[i] and sym == symTarg:
@@ -183,7 +174,6 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           totalweight = 0
           for photon in ph:
               totalweight += photon["dipole"][3]
-#          totalweight *= Somethingforthesymmetry
           
           photonCount = 0
           for photon in ph:
