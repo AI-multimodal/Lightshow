@@ -7,7 +7,7 @@ from ase.atoms import Atoms
 from ase.io import write
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
-from os import environ as env
+
 import sys
 from OCEAN.fakeASE import write_ocean_in
 import json
