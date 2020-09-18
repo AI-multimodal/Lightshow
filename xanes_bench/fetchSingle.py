@@ -1,26 +1,18 @@
 # coding: latin-1
-import numpy as np
-import pathlib
-import spglib
 
-from ase.atoms import Atoms
-from ase.io import write
+import json
+import sys
+import time
+from math import exp
+import os
+
+#from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
+# TODO: add implementation of photonSym to avoid import error
+from xanes_bench.OCEAN.makeOceanInputs import makeOcean
+from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
-
-import sys
-from OCEAN.fakeASE import write_ocean_in
-import json
-
-from pprint import pprint
-from math import exp
-import time
-from pymatgen.ext.matproj import TaskType
-
-from photonSym import photonSymm
-from Xspectra.makeXspectraInputs import makeXspectra
-from OCEAN.makeOceanInputs import makeOcean
-from EXCITING.makeExcitingInputs import makeExciting
+import xanes_bench
 
 
 def main():
@@ -34,7 +26,8 @@ def main():
         mpid = 'mp-' + sys.argv[1]
 
     # Your hashe materials project key needs to be in a file called mp.key
-    with open('mp.key', 'r' ) as f:
+    mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
+    with open(mpkey_fn, 'r' ) as f:
         mpkey = f.read()
         mpkey = mpkey.strip()
 
@@ -45,7 +38,13 @@ def main():
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
-    with open(f"../data/mp_structures/{mpid}.json", 'w') as f:
+    json_dir = f"../data"
+    if not os.path.exists(json_dir):
+        json_dir = "data"
+    json_fn = f"{json_dir}/mp_structures/{mpid}.json"
+    if not os.path.exists(os.path.dirname(json_fn)):
+        os.makedirs(os.path.dirname(json_fn))
+    with open(json_fn, 'w') as f:
         json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
 
@@ -74,7 +73,7 @@ def main():
 
     makeOcean( mpid, unitC, params )
 
-    makeExciting( mpid, unitC, params )
+    #makeExciting( mpid, unitC, params )
 
 
 if __name__ == '__main__':

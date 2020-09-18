@@ -11,9 +11,9 @@ import pathlib
 from os import environ as env
 import sys
 import numpy as np
-from photonSym import photonSymm
+#from photonSym import photonSymm
 import json
-from OCEAN.fakeASE import write_ocean_in
+from xanes_bench.OCEAN.fakeASE import write_ocean_in
 
 
 

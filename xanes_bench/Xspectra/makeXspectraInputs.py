@@ -10,10 +10,12 @@ import pathlib
 from os import environ as env
 import sys
 import numpy as np
-from photonSym import photonSymm
+#from photonSym import photonSymm
 import json
+import xanes_bench.Xspectra
+import os
 
-
+module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
 def smaller(atoms: Atoms, Rmin=9.0):
 #    # starting from the primitive cell, give a supercell
 #    # that has at least 9 Å in each direction; either using
@@ -95,14 +97,16 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     symTarg = 'Ti'
     ####
 
-    with open ("Xspectra/xspectra.json", 'r') as fd:
+    xs_fn = os.path.join(module_path, 'xspectra.json')
+    with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
 
     atoms = smaller( unitCell )
 
     us = {}
     ph = []
-    photonSymm( atoms, us, ph, params['photonOrder'])
+    #photonSymm( atoms, us, ph, params['photonOrder'])
+    # TODO: Add photonSymm call
 
     print( ph )
 
@@ -118,7 +122,8 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    with open ('Xspectra/SSSP_precision.json', 'r' ) as pspDatabaseFile:
+    sssp_fn = os.path.join(module_path, 'SSSP_precision.json')
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     minSymbols = set( symbols )
     for symbol in minSymbols:
