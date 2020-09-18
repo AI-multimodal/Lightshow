@@ -8,7 +8,7 @@ with open("requirements.txt") as f_req:
 setup(
     name='xanes_bench',
     version='0.01',
-    packages=['runScripts'],
+    packages=['xanes_bench'],
     url='',
     license='MIT License',
     author='xiaqu',
@@ -18,8 +18,8 @@ setup(
     install_requires=required_list,
     entry_points={
         "console_scripts": [
-            "fetchSingle = runScripts.fetchSingle:main",
-            "makeXspectraInputs = runScripts.makeXspectraInputs"
+            "fetchSingle = xanes_bench.fetchSingle:main",
+            "makeXspectraInputs = xanes_bench.makeXspectraInputs"
         ]
     }
 )
