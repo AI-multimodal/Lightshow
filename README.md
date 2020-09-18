@@ -5,7 +5,7 @@
 ## Quickstart
 1. Put your materials project API key in the file mp.key ( https://materialsproject.org/dashboard )
 2. Overwrite the defaults ase/io/espresso.py file with the one in Xspectra
-  - Either: copy it into the installed location of ase (site-packages/ase/io/epresso.py )
+  - Either: copy it into the installed location of ase ( site-packages/ase/io/epresso.py )
   - Or: copy all of ase locally, and write over ./ase/io/espresso.py
 3. Run "python fetchSingle.py 390" (will run anatase)
 
