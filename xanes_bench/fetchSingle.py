@@ -60,10 +60,14 @@ def main():
             params['diemac'] = data[0]['diel']['poly_electronic']
             if data[0]['band_gap'] is not None:
                 print( data[0]['band_gap'] )
-                print( exp( 3.5/data[0]['band_gap'] ) )
+                if data[0]['band_gap'] > 0.000001:
+                    print( exp( 3.5/data[0]['band_gap'] ) )
     elif data[0]['band_gap'] is not None:
         print( data[0]['band_gap'] )
-        params['diemac'] = exp( 3.5/data[0]['band_gap'] )
+        if data[0]['band_gap'] > 0.000001:
+            params['diemac'] = exp( 3.5/data[0]['band_gap'] )
+        else:
+            params['diemac'] = 1000000
         print(params['diemac'])
 
 
