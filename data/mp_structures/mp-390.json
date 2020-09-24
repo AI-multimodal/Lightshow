@@ -2,7 +2,8 @@
     "@class": "Structure",
     "@module": "pymatgen.core.structure",
     "charge": null,
-    "download_at": "Fri Sep 11 15:46:19 2020",
+    "created_at": "2011-05-13 00:36:00",
+    "download_at": "Wed Sep 23 10:09:26 2020",
     "lattice": {
         "a": 5.5664143697200625,
         "alpha": 140.05412509664004,
