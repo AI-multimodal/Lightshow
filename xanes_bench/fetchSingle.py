@@ -38,6 +38,7 @@ def main():
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
+    st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
     json_dir = f"../data"
     if not os.path.exists(json_dir):
         json_dir = "data"
