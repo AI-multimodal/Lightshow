@@ -21,6 +21,11 @@
 ```console
 conda create --name xas_ben python=3
 conda activate xas_ben
+conda install pip
+git clone git@github.com:vorwerkc/pymatgen.git pm-dev
+cd pm-dev
+pip install -e .
+cd ../
 git clone:git@github.com:xhqu1981/xanes_bench.git
 cd xanes_bench
 python setup.py develop
