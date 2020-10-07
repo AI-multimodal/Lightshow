@@ -10,7 +10,7 @@ import pathlib
 from os import environ as env
 import sys
 import numpy as np
-#from photonSym import photonSymm
+from photonSym import photonSymm
 import json
 import xanes_bench.Xspectra
 import os
@@ -46,9 +46,9 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "    xerror = " + str(XSparams['input_xspectra']['xerror']),
             "    wf_collect = .true.",
             "    xcheck_conv = " + str(XSparams['input_xspectra']['xcheck_conv']),
-            "    xepsilon(%d) = 1.0" % dirs[0],
-            "    xepsilon(%d) = 0.0" % dirs[1],
-            "    xepsilon(%d) = 0.0" % dirs[2]]
+            "    xepsilon(1) = %d" % dirs[0],
+            "    xepsilon(2) = %d" % dirs[1],
+            "    xepsilon(3) = %d" % dirs[2]]
 
     if mode == "quadrupole":
 
@@ -105,7 +105,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     us = {}
     ph = []
-    #photonSymm( atoms, us, ph, params['photonOrder'])
+    photonSymm( atoms, us, ph, params['photonOrder'])
     # TODO: Add photonSymm call
 
     print( ph )
