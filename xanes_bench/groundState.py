@@ -54,6 +54,9 @@ def main():
     
     
     # Grab and parse k-point information
+    # This will return a list of task IDs, but then we need to pick out the "correct" one
+#    data = mp.get_data( mpid, prop="task_ids" )
+#    print( data[0] )
     # We will want to change this up to search for a specific calculation type associated with mpid
     data = mp.get_task_data( mpid, prop="kpoints" )
     # Returns a vasp kpoint object, so we need to convert to a dict
