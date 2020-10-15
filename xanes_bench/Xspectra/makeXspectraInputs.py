@@ -142,8 +142,6 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',
             input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
-        write(str(folder / "gs_unit.in"), unitCell, format='espresso-in',
-              input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
     except:
         print(xsJSON['QE'], atoms, psp)
         raise Exception("FAILED while trying to write qe.in")
