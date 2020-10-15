@@ -140,7 +140,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     try:
-        write(str(folder / "qe.in"), atoms, format='espresso-in',
+        write(str(folder / "gs.in"), atoms, format='espresso-in',
             input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
     except:
         print(xsJSON['QE'], atoms, psp)
@@ -171,7 +171,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           subfolder = folder / str(i)
           subfolder.mkdir(parents=True, exist_ok=True)
 
-          write(str(subfolder / "input.txt"), atoms, format='espresso-in',
+          write(str(subfolder / "es.in"), atoms, format='espresso-in',
               input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
 
           # OCEAN photon labeling is continuous, so we will do that here too
