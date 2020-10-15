@@ -3,7 +3,7 @@
 import json
 import sys
 import time
-import os
+import os, shutil
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
@@ -14,6 +14,8 @@ from ase.io import write
 
 import pathlib
 from os import environ as env
+
+module_path = os.path.dirname(xanes_bench.__file__)
 
 def main():
 
@@ -71,6 +73,8 @@ def main():
     # Might need to parse this, but it looks like most use Gamma-centered grids
     print( type( koffset ) )
 
+    folder = pathlib.Path(env['PWD']) / mpid / "XS"
+    folder.mkdir(parents=True, exist_ok=True)
 
     # defaults 
 #    xs_fn = os.path.join(module_path, 'qe.json')
@@ -100,12 +104,20 @@ def main():
             if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
 
+        shutil.copy(
+            os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "neutral",
+                         pspDatabase[ symbol ]['filename']),
+            str(folder / pspDatabase[symbol]['filename'])
+        )
 
+    shutil.copy(
+        os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "orbital",
+                     "Ti.wfc"),
+        str(folder / "Ti.wfc")
+    )
 
-    folder = pathlib.Path(env['PWD']) / mpid / "XS"
-    folder.mkdir(parents=True, exist_ok=True)
     try:
-        write(str(folder / "qe.in"), unitC, format='espresso-in',
+        write(str(folder / "qs.in"), unitC, format='espresso-in',
             input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], unitC, psp)
