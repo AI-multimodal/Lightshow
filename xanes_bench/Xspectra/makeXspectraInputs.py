@@ -10,7 +10,7 @@ import pathlib
 from os import environ as env
 import sys
 import numpy as np
-from photonSym import photonSymm
+from xanes_bench import photonSymm
 import json
 import xanes_bench.Xspectra
 import os
