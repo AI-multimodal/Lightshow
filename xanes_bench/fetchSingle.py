@@ -38,6 +38,7 @@ def main():
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
+    st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
     json_dir = f"../data"
     if not os.path.exists(json_dir):
         json_dir = "data"
@@ -60,10 +61,14 @@ def main():
             params['diemac'] = data[0]['diel']['poly_electronic']
             if data[0]['band_gap'] is not None:
                 print( data[0]['band_gap'] )
-                print( exp( 3.5/data[0]['band_gap'] ) )
+                if data[0]['band_gap'] > 0.000001:
+                    print( exp( 3.5/data[0]['band_gap'] ) )
     elif data[0]['band_gap'] is not None:
         print( data[0]['band_gap'] )
-        params['diemac'] = exp( 3.5/data[0]['band_gap'] )
+        if data[0]['band_gap'] > 0.000001:
+            params['diemac'] = exp( 3.5/data[0]['band_gap'] )
+        else:
+            params['diemac'] = 1000000
         print(params['diemac'])
 
 

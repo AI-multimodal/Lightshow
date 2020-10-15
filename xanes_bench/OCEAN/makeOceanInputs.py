@@ -11,18 +11,24 @@ import pathlib
 from os import environ as env
 import sys
 import numpy as np
-#from photonSym import photonSymm
+from xanes_bench.photonSym import photonSymm
 import json
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
+import xanes_bench.OCEAN
+import os
 
 
+module_path = os.path.dirname(xanes_bench.OCEAN.__file__)
 
 
 def makeOcean( mpid, atoms: Atoms, params: dict ):
 
 
-    with open ("OCEAN/ocean.json", 'r') as fd:
+    xs_fn = os.path.join(module_path, 'ocean.json')
+    with open (xs_fn, 'r') as fd:
         oceanJSON = json.load(fd)
+#    with open ("OCEAN/ocean.json", 'r') as fd:
+#        oceanJSON = json.load(fd)
 
     if params['diemac'] is not None:
         oceanJSON['diemac'] = params['diemac']
