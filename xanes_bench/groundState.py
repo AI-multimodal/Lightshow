@@ -15,6 +15,8 @@ from ase.io import write
 import pathlib
 from os import environ as env
 
+import base64, bz2, hashlib
+
 module_path = os.path.dirname(xanes_bench.__file__)
 
 def main():
@@ -76,9 +78,9 @@ def main():
     folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
 
-    # defaults 
-#    xs_fn = os.path.join(module_path, 'qe.json')
-    qe_fn = 'qe.json'
+    # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
+    qe_fn = os.path.join(module_path, 'QE', 'qe.json')
+#    qe_fn = 'qe.json'
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
@@ -86,11 +88,17 @@ def main():
 
     qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-#    sssp_fn = os.path.join(module_path, 'SSSP_precision.json')
-    sssp_fn = 'SSSP_precision.json'
-    psp = dict()
+    sssp_fn = os.path.join(module_path, "pseudos", "data", 'SSSP_precision.json')
+#    sssp_fn = 'SSSP_precision.json'
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
+    
+    sssp_fn = os.path.join(module_path, "pseudos", "data", "SSSP_precision_pseudos.json")
+    with open ( sssp_fn, 'r' ) as pspDatabaseFile:
+        pspFullData = json.load( pspDatabaseFile )
+
+
+    psp = dict()
     minSymbols = set( symbols )
     for symbol in minSymbols:
         print( symbol )
@@ -104,20 +112,32 @@ def main():
             if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
 
-        shutil.copy(
-            os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "neutral",
-                         pspDatabase[ symbol ]['filename']),
-            str(folder / pspDatabase[symbol]['filename'])
-        )
+        if pspDatabase[ symbol ]['filename'] not in pspFullData:
+            print( "Incomplete psp database" )
+            exit()
 
-    shutil.copy(
-        os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "orbital",
-                     "Ti.wfc"),
-        str(folder / "Ti.wfc")
-    )
+        pspString = bz2.decompress(base64.b64decode( pspFullData[pspDatabase[ symbol ]['filename']] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+
+
+        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
+        with open( fileName, 'w' ) as f:
+            f.write( pspString.decode("utf-8") )
+#        shutil.copy(
+#            os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "neutral",
+#                         pspDatabase[ symbol ]['filename']),
+#            str(folder / pspDatabase[symbol]['filename'])
+#        )
+
+#    shutil.copy(
+#        os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "orbital",
+#                     "Ti.wfc"),
+#        str(folder / "Ti.wfc")
+#    )
 
     try:
-        write(str(folder / "qs.in"), unitC, format='espresso-in',
+        write(str(folder / "qe.in"), unitC, format='espresso-in',
             input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], unitC, psp)
