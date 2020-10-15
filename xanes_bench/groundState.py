@@ -105,7 +105,7 @@ def main():
     folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     try:
-        write(str(folder / "qe.in"), unitC, format='espresso-in',
+        write(str(folder / "qs.in"), unitC, format='espresso-in',
             input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], unitC, psp)
