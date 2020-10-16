@@ -1,5 +1,6 @@
 {
    "Ag": {
+      "Z_val": 19,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "Ag_ONCV_PBE-1.0.oncvpsp.upf",
@@ -8,6 +9,7 @@
       "rho_cutoff": 220.0
    },
    "Al": {
+      "Z_val": 3,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Al.pbe-n-kjpaw_psl.1.0.0.UPF",
@@ -16,6 +18,7 @@
       "rho_cutoff": 240.0
    },
    "Ar": {
+      "Z_val": 8,
       "cutoff": 120.0,
       "dual": 4.0,
       "filename": "Ar_ONCV_PBE-1.1.oncvpsp.upf",
@@ -24,6 +27,7 @@
       "rho_cutoff": 480.0
    },
    "As": {
+      "Z_val": 5,
       "cutoff": 35.0,
       "dual": 8.0,
       "filename": "As.pbe-n-rrkjus_psl.0.2.UPF",
@@ -32,6 +36,7 @@
       "rho_cutoff": 280.0
    },
    "Au": {
+      "Z_val": 19,
       "cutoff": 50.0,
       "dual": 4.0,
       "filename": "Au_ONCV_PBE-1.0.oncvpsp.upf",
@@ -40,6 +45,7 @@
       "rho_cutoff": 200.0
    },
    "B": {
+      "Z_val": 3,
       "cutoff": 55.0,
       "dual": 8.0,
       "filename": "B_pbe_v1.01.uspp.F.UPF",
@@ -48,6 +54,7 @@
       "rho_cutoff": 440.0
    },
    "Ba": {
+      "Z_val": 10,
       "cutoff": 35.0,
       "dual": 8.0,
       "filename": "Ba.pbe-spn-kjpaw_psl.1.0.0.UPF",
@@ -56,6 +63,7 @@
       "rho_cutoff": 280.0
    },
    "Be": {
+      "Z_val": 4,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "Be_ONCV_PBE-1.0.oncvpsp.upf",
@@ -64,6 +72,7 @@
       "rho_cutoff": 220.0
    },
    "Bi": {
+      "Z_val": 15,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "Bi_pbe_v1.uspp.F.UPF",
@@ -72,6 +81,7 @@
       "rho_cutoff": 400.0
    },
    "Br": {
+      "Z_val": 7,
       "cutoff": 90.0,
       "dual": 8.0,
       "filename": "br_pbe_v1.4.uspp.F.UPF",
@@ -80,6 +90,7 @@
       "rho_cutoff": 720.0
    },
    "C": {
+      "Z_val": 4,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "C.pbe-n-kjpaw_psl.1.0.0.UPF",
@@ -88,6 +99,7 @@
       "rho_cutoff": 360.0
    },
    "Ca": {
+      "Z_val": 10,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Ca_pbe_v1.uspp.F.UPF",
@@ -96,6 +108,7 @@
       "rho_cutoff": 240.0
    },
    "Cd": {
+      "Z_val": 12,
       "cutoff": 90.0,
       "dual": 8.0,
       "filename": "Cd.pbe-dn-rrkjus_psl.0.3.1.UPF",
@@ -104,6 +117,7 @@
       "rho_cutoff": 720.0
    },
    "Ce": {
+      "Z_val": 12,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "Ce.GGA-PBE-paw-v1.0.UPF",
@@ -112,6 +126,7 @@
       "rho_cutoff": 400.0
    },
    "Cl": {
+      "Z_val": 7,
       "cutoff": 100.0,
       "dual": 8.0,
       "filename": "Cl.pbe-n-rrkjus_psl.1.0.0.UPF",
@@ -120,6 +135,7 @@
       "rho_cutoff": 800.0
    },
    "Co": {
+      "Z_val": 17,
       "cutoff": 90.0,
       "dual": 12.0,
       "filename": "Co_pbe_v1.2.uspp.F.UPF",
@@ -128,6 +144,7 @@
       "rho_cutoff": 1080.0
    },
    "Cr": {
+      "Z_val": 14,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "cr_pbe_v1.5.uspp.F.UPF",
@@ -136,6 +153,7 @@
       "rho_cutoff": 320.0
    },
    "Cs": {
+      "Z_val": 9,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Cs_pbe_v1.uspp.F.UPF",
@@ -144,6 +162,7 @@
       "rho_cutoff": 240.0
    },
    "Cu": {
+      "Z_val": 19,
       "cutoff": 90.0,
       "dual": 4.0,
       "filename": "Cu_ONCV_PBE-1.0.oncvpsp.upf",
@@ -152,6 +171,7 @@
       "rho_cutoff": 360.0
    },
    "Dy": {
+      "Z_val": 20,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Dy.GGA-PBE-paw-v1.0.UPF",
@@ -160,6 +180,7 @@
       "rho_cutoff": 320.0
    },
    "Er": {
+      "Z_val": 22,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Er.GGA-PBE-paw-v1.0.UPF",
@@ -168,6 +189,7 @@
       "rho_cutoff": 320.0
    },
    "Eu": {
+      "Z_val": 17,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Eu.GGA-PBE-paw-v1.0.UPF",
@@ -176,6 +198,7 @@
       "rho_cutoff": 320.0
    },
    "F": {
+      "Z_val": 7,
       "cutoff": 90.0,
       "dual": 4.0,
       "filename": "F.oncvpsp.upf",
@@ -184,6 +207,7 @@
       "rho_cutoff": 360.0
    },
    "Fe": {
+      "Z_val": 16,
       "cutoff": 90.0,
       "dual": 12.0,
       "filename": "Fe.pbe-spn-kjpaw_psl.0.2.1.UPF",
@@ -192,6 +216,7 @@
       "rho_cutoff": 1080.0
    },
    "Ga": {
+      "Z_val": 13,
       "cutoff": 90.0,
       "dual": 8.0,
       "filename": "Ga.pbe-dn-kjpaw_psl.1.0.0.UPF",
@@ -200,6 +225,7 @@
       "rho_cutoff": 720.0
    },
    "Gd": {
+      "Z_val": 18,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Gd.GGA-PBE-paw-v1.0.UPF",
@@ -208,6 +234,7 @@
       "rho_cutoff": 320.0
    },
    "Ge": {
+      "Z_val": 14,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "ge_pbe_v1.4.uspp.F.UPF",
@@ -216,6 +243,7 @@
       "rho_cutoff": 360.0
    },
    "H": {
+      "Z_val": 1,
       "cutoff": 80.0,
       "dual": 4.0,
       "filename": "H_ONCV_PBE-1.0.oncvpsp.upf",
@@ -224,6 +252,7 @@
       "rho_cutoff": 320.0
    },
    "He": {
+      "Z_val": 2,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "He_ONCV_PBE-1.0.oncvpsp.upf",
@@ -232,6 +261,7 @@
       "rho_cutoff": 220.0
    },
    "Hf": {
+      "Z_val": 12,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "Hf-sp.oncvpsp.upf",
@@ -240,6 +270,7 @@
       "rho_cutoff": 220.0
    },
    "Hg": {
+      "Z_val": 20,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "Hg_ONCV_PBE-1.0.oncvpsp.upf",
@@ -248,6 +279,7 @@
       "rho_cutoff": 220.0
    },
    "Ho": {
+      "Z_val": 21,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Ho.GGA-PBE-paw-v1.0.UPF",
@@ -256,6 +288,7 @@
       "rho_cutoff": 320.0
    },
    "I": {
+      "Z_val": 7,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "I.pbe-n-kjpaw_psl.0.2.UPF",
@@ -264,6 +297,7 @@
       "rho_cutoff": 360.0
    },
    "In": {
+      "Z_val": 13,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "In.pbe-dn-rrkjus_psl.0.2.2.UPF",
@@ -272,6 +306,7 @@
       "rho_cutoff": 400.0
    },
    "Ir": {
+      "Z_val": 15,
       "cutoff": 65.0,
       "dual": 8.0,
       "filename": "Ir_pbe_v1.2.uspp.F.UPF",
@@ -280,6 +315,7 @@
       "rho_cutoff": 520.0
    },
    "K": {
+      "Z_val": 9,
       "cutoff": 60.0,
       "dual": 8.0,
       "filename": "K.pbe-spn-kjpaw_psl.1.0.0.UPF",
@@ -288,6 +324,7 @@
       "rho_cutoff": 480.0
    },
    "Kr": {
+      "Z_val": 8,
       "cutoff": 50.0,
       "dual": 4.0,
       "filename": "Kr_ONCV_PBE-1.0.oncvpsp.upf",
@@ -296,6 +333,7 @@
       "rho_cutoff": 200.0
    },
    "La": {
+      "Z_val": 11,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "La.GGA-PBE-paw-v1.0.UPF",
@@ -304,6 +342,7 @@
       "rho_cutoff": 320.0
    },
    "Li": {
+      "Z_val": 3,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "li_pbe_v1.4.uspp.F.UPF",
@@ -312,6 +351,7 @@
       "rho_cutoff": 320.0
    },
    "Lu": {
+      "Z_val": 25,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "Lu.GGA-PBE-paw-v1.0.UPF",
@@ -320,6 +360,7 @@
       "rho_cutoff": 360.0
    },
    "Mg": {
+      "Z_val": 10,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "mg_pbe_v1.4.uspp.F.UPF",
@@ -328,6 +369,7 @@
       "rho_cutoff": 360.0
    },
    "Mn": {
+      "Z_val": 15,
       "cutoff": 90.0,
       "dual": 12.0,
       "filename": "mn_pbe_v1.5.uspp.F.UPF",
@@ -336,6 +378,7 @@
       "rho_cutoff": 1080.0
    },
    "Mo": {
+      "Z_val": 14,
       "cutoff": 35.0,
       "dual": 4.0,
       "filename": "Mo_ONCV_PBE-1.0.oncvpsp.upf",
@@ -344,6 +387,7 @@
       "rho_cutoff": 140.0
    },
    "N": {
+      "Z_val": 5,
       "cutoff": 80.0,
       "dual": 4.0,
       "filename": "N.oncvpsp.upf",
@@ -352,6 +396,7 @@
       "rho_cutoff": 320.0
    },
    "Na": {
+      "Z_val": 9,
       "cutoff": 100.0,
       "dual": 4.0,
       "filename": "Na_ONCV_PBE-1.0.oncvpsp.upf",
@@ -360,6 +405,7 @@
       "rho_cutoff": 400.0
    },
    "Nb": {
+      "Z_val": 13,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Nb.pbe-spn-kjpaw_psl.0.3.0.UPF",
@@ -368,6 +414,7 @@
       "rho_cutoff": 320.0
    },
    "Nd": {
+      "Z_val": 14,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Nd.GGA-PBE-paw-v1.0.UPF",
@@ -376,6 +423,7 @@
       "rho_cutoff": 320.0
    },
    "Ne": {
+      "Z_val": 8,
       "cutoff": 50.0,
       "dual": 4.0,
       "filename": "Ne_ONCV_PBE-1.0.oncvpsp.upf",
@@ -384,6 +432,7 @@
       "rho_cutoff": 200.0
    },
    "Ni": {
+      "Z_val": 18,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "ni_pbe_v1.4.uspp.F.UPF",
@@ -392,6 +441,7 @@
       "rho_cutoff": 400.0
    },
    "O": {
+      "Z_val": 6,
       "cutoff": 75.0,
       "dual": 8.0,
       "filename": "O.pbe-n-kjpaw_psl.0.1.UPF",
@@ -400,6 +450,7 @@
       "rho_cutoff": 600.0
    },
    "Os": {
+      "Z_val": 16,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Os_pbe_v1.2.uspp.F.UPF",
@@ -408,6 +459,7 @@
       "rho_cutoff": 320.0
    },
    "P": {
+      "Z_val": 5,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "P.pbe-n-rrkjus_psl.1.0.0.UPF",
@@ -416,6 +468,7 @@
       "rho_cutoff": 240.0
    },
    "Pb": {
+      "Z_val": 14,
       "cutoff": 45.0,
       "dual": 8.0,
       "filename": "Pb.pbe-dn-kjpaw_psl.0.2.2.UPF",
@@ -424,6 +477,7 @@
       "rho_cutoff": 360.0
    },
    "Pd": {
+      "Z_val": 18,
       "cutoff": 50.0,
       "dual": 4.0,
       "filename": "Pd_ONCV_PBE-1.0.oncvpsp.upf",
@@ -432,6 +486,7 @@
       "rho_cutoff": 200.0
    },
    "Pm": {
+      "Z_val": 15,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Pm.GGA-PBE-paw-v1.0.UPF",
@@ -440,6 +495,7 @@
       "rho_cutoff": 320.0
    },
    "Po": {
+      "Z_val": 16,
       "cutoff": 80.0,
       "dual": 8.0,
       "filename": "Po.pbe-dn-rrkjus_psl.1.0.0.UPF",
@@ -448,6 +504,7 @@
       "rho_cutoff": 640.0
    },
    "Pr": {
+      "Z_val": 13,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Pr.GGA-PBE-paw-v1.0.UPF",
@@ -456,6 +513,7 @@
       "rho_cutoff": 320.0
    },
    "Pt": {
+      "Z_val": 32,
       "cutoff": 100.0,
       "dual": 8.0,
       "filename": "Pt.pbe-spfn-rrkjus_psl.1.0.0.UPF",
@@ -464,6 +522,7 @@
       "rho_cutoff": 800.0
    },
    "Rb": {
+      "Z_val": 9,
       "cutoff": 30.0,
       "dual": 4.0,
       "filename": "Rb_ONCV_PBE-1.0.oncvpsp.upf",
@@ -472,6 +531,7 @@
       "rho_cutoff": 120.0
    },
    "Re": {
+      "Z_val": 15,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Re_pbe_v1.2.uspp.F.UPF",
@@ -480,6 +540,7 @@
       "rho_cutoff": 240.0
    },
    "Rh": {
+      "Z_val": 17,
       "cutoff": 55.0,
       "dual": 4.0,
       "filename": "Rh_ONCV_PBE-1.0.oncvpsp.upf",
@@ -488,6 +549,7 @@
       "rho_cutoff": 220.0
    },
    "Rn": {
+      "Z_val": 18,
       "cutoff": 200.0,
       "dual": 8.0,
       "filename": "Rn.pbe-dn-kjpaw_psl.1.0.0.UPF",
@@ -496,6 +558,7 @@
       "rho_cutoff": 1600.0
    },
    "Ru": {
+      "Z_val": 16,
       "cutoff": 35.0,
       "dual": 4.0,
       "filename": "Ru_ONCV_PBE-1.0.oncvpsp.upf",
@@ -504,6 +567,7 @@
       "rho_cutoff": 140.0
    },
    "S": {
+      "Z_val": 6,
       "cutoff": 35.0,
       "dual": 8.0,
       "filename": "s_pbe_v1.4.uspp.F.UPF",
@@ -512,6 +576,7 @@
       "rho_cutoff": 280.0
    },
    "Sb": {
+      "Z_val": 15,
       "cutoff": 55.0,
       "dual": 8.0,
       "filename": "sb_pbe_v1.4.uspp.F.UPF",
@@ -520,6 +585,7 @@
       "rho_cutoff": 440.0
    },
    "Sc": {
+      "Z_val": 11,
       "cutoff": 90.0,
       "dual": 8.0,
       "filename": "Sc.pbe-spn-kjpaw_psl.0.2.3.UPF",
@@ -528,6 +594,7 @@
       "rho_cutoff": 720.0
    },
    "Se": {
+      "Z_val": 6,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Se_pbe_v1.uspp.F.UPF",
@@ -536,6 +603,7 @@
       "rho_cutoff": 240.0
    },
    "Si": {
+      "Z_val": 4,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Si.pbe-n-rrkjus_psl.1.0.0.UPF",
@@ -544,6 +612,7 @@
       "rho_cutoff": 240.0
    },
    "Sm": {
+      "Z_val": 16,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Sm.GGA-PBE-paw-v1.0.UPF",
@@ -552,6 +621,7 @@
       "rho_cutoff": 320.0
    },
    "Sn": {
+      "Z_val": 14,
       "cutoff": 70.0,
       "dual": 8.0,
       "filename": "Sn_pbe_v1.uspp.F.UPF",
@@ -560,6 +630,7 @@
       "rho_cutoff": 560.0
    },
    "Sr": {
+      "Z_val": 10,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Sr_pbe_v1.uspp.F.UPF",
@@ -568,6 +639,7 @@
       "rho_cutoff": 320.0
    },
    "Ta": {
+      "Z_val": 13,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "Ta_pbe_v1.uspp.F.UPF",
@@ -576,6 +648,7 @@
       "rho_cutoff": 400.0
    },
    "Tb": {
+      "Z_val": 19,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Tb.GGA-PBE-paw-v1.0.UPF",
@@ -584,6 +657,7 @@
       "rho_cutoff": 320.0
    },
    "Tc": {
+      "Z_val": 15,
       "cutoff": 40.0,
       "dual": 4.0,
       "filename": "Tc_ONCV_PBE-1.0.oncvpsp.upf",
@@ -592,6 +666,7 @@
       "rho_cutoff": 160.0
    },
    "Te": {
+      "Z_val": 6,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Te_pbe_v1.uspp.F.UPF",
@@ -600,6 +675,7 @@
       "rho_cutoff": 240.0
    },
    "Ti": {
+      "Z_val": 12,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "ti_pbe_v1.4.uspp.F.UPF",
@@ -608,6 +684,7 @@
       "rho_cutoff": 320.0
    },
    "Tl": {
+      "Z_val": 13,
       "cutoff": 70.0,
       "dual": 8.0,
       "filename": "Tl_pbe_v1.2.uspp.F.UPF",
@@ -616,6 +693,7 @@
       "rho_cutoff": 560.0
    },
    "Tm": {
+      "Z_val": 23,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Tm.GGA-PBE-paw-v1.0.UPF",
@@ -624,6 +702,7 @@
       "rho_cutoff": 320.0
    },
    "V": {
+      "Z_val": 13,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "v_pbe_v1.4.uspp.F.UPF",
@@ -632,6 +711,7 @@
       "rho_cutoff": 320.0
    },
    "W": {
+      "Z_val": 14,
       "cutoff": 50.0,
       "dual": 8.0,
       "filename": "W_pbe_v1.2.uspp.F.UPF",
@@ -640,6 +720,7 @@
       "rho_cutoff": 400.0
    },
    "Xe": {
+      "Z_val": 18,
       "cutoff": 80.0,
       "dual": 4.0,
       "filename": "Xe_ONCV_PBE-1.1.oncvpsp.upf",
@@ -648,6 +729,7 @@
       "rho_cutoff": 320.0
    },
    "Y": {
+      "Z_val": 11,
       "cutoff": 35.0,
       "dual": 8.0,
       "filename": "Y_pbe_v1.uspp.F.UPF",
@@ -656,6 +738,7 @@
       "rho_cutoff": 280.0
    },
    "Yb": {
+      "Z_val": 24,
       "cutoff": 40.0,
       "dual": 8.0,
       "filename": "Yb.GGA-PBE-paw-v1.0.UPF",
@@ -664,6 +747,7 @@
       "rho_cutoff": 320.0
    },
    "Zn": {
+      "Z_val": 20,
       "cutoff": 90.0,
       "dual": 8.0,
       "filename": "Zn_pbe_v1.uspp.F.UPF",
@@ -672,6 +756,7 @@
       "rho_cutoff": 720.0
    },
    "Zr": {
+      "Z_val": 12,
       "cutoff": 30.0,
       "dual": 8.0,
       "filename": "Zr_pbe_v1.uspp.F.UPF",
