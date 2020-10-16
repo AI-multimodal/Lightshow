@@ -56,6 +56,10 @@ def main():
         json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
     
+    unitVolume = unitC.get_volume()
+    eRange = 1 #Ryd
+    conductionBands = round( 0.256 * unitVolume * ( eRange**(3/2) ) )
+    print( "Conduction bands: ", conductionBands )
     
     # Grab and parse k-point information
     # This will return a list of task IDs, but then we need to pick out the "correct" one
@@ -136,6 +140,13 @@ def main():
 #        str(folder / "Ti.wfc")
 #    )
 
+    nelectron = 0
+    for symbol in symbols:
+        nelectron += pspDatabase[ symbol ]["Z_val"]
+
+    print( "N electron: ", nelectron)
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
+
     try:
         write(str(folder / "qe.in"), unitC, format='espresso-in',
             input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
@@ -196,6 +207,12 @@ def main():
         with open( fileName, 'w' ) as f:
             f.write( pspString.decode("utf-8") )
 
+    nelectron = 0
+    for symbol in symbols:
+        nelectron += pspDatabase[ symbol ]["Z_val"]
+
+    print( "N electron: ", nelectron)
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
 
     try:
         write(str(folder / "qe.in"), unitC, format='espresso-in',
