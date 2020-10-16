@@ -141,6 +141,8 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     folder.mkdir(parents=True, exist_ok=True)
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                 str(folder / "Ti.wfc"))
+    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
+                str(folder / "Ti.fch.upf"))
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',
             input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
@@ -172,6 +174,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
           subfolder = folder / str(i)
           subfolder.mkdir(parents=True, exist_ok=True)
+          xsJSON['QE']['control']['pseudo_dir'] = "../"
 
           write(str(subfolder / "es.in"), atoms, format='espresso-in',
               input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
