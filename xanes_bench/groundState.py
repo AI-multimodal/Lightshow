@@ -144,6 +144,68 @@ def main():
         raise Exception("FAILED while trying to write qe.in")
 
 
+#### Repeat with OCEAN info (move to subroutine in future!)
+    folder = pathlib.Path(env['PWD']) / mpid / "OCEAN"
+    folder.mkdir(parents=True, exist_ok=True)
+
+    # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
+    qe_fn = os.path.join(module_path, 'QE', 'qe.json')
+
+    with open (qe_fn, 'r') as fd:
+        qeJSON = json.load(fd)
+
+    symbols = unitC.get_chemical_symbols()
+
+    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+
+
+    sssp_fn = os.path.join(module_path, "pseudos", "data", 'PD_stringent.json')
+#    sssp_fn = 'SSSP_precision.json'
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+
+    sssp_fn = os.path.join(module_path, "pseudos", "data", "PD_stringent_pseudos.json")
+    with open ( sssp_fn, 'r' ) as pspDatabaseFile:
+        pspFullData = json.load( pspDatabaseFile )
+
+
+    psp = dict()
+    minSymbols = set( symbols )
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if qeJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+            qeJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+        if 'rho_cutoff' in pspDatabase[ symbol ]:
+            if 'ecutrho' not in qeJSON['QE']['system'] :
+                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+            if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
+                qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+        if pspDatabase[ symbol ]['filename'] not in pspFullData:
+            print( "Incomplete psp database" )
+            exit()
+
+        pspString = bz2.decompress(base64.b64decode( pspFullData[pspDatabase[ symbol ]['filename']] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+
+
+        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
+        with open( fileName, 'w' ) as f:
+            f.write( pspString.decode("utf-8") )
+
+
+    try:
+        write(str(folder / "qe.in"), unitC, format='espresso-in',
+            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+    except:
+        print(qeJSON['QE'], unitC, psp)
+        raise Exception("FAILED while trying to write qe.in")
+
+
+
 
 if __name__ == '__main__':
     main()
