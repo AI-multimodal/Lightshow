@@ -13,7 +13,7 @@ import numpy as np
 from xanes_bench.photonSym import photonSymm
 import json
 import xanes_bench.Xspectra
-import os
+import os, shutil
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
 def smaller(atoms: Atoms, Rmin=9.0):
@@ -81,7 +81,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "/"]
 
     inp += ["&pseudos",
-            "    filecore = '../../../Ti.wfc'",
+            "    filecore = '../../Ti.wfc'",
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str( XSparams['cut_occ']['cut_desmooth']),
@@ -139,6 +139,10 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     folder = pathlib.Path(env['PWD']) / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
+    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
+                str(folder / "Ti.wfc"))
+    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
+                str(folder / "Ti.fch.upf"))
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',
             input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
@@ -170,6 +174,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
           subfolder = folder / str(i)
           subfolder.mkdir(parents=True, exist_ok=True)
+          xsJSON['QE']['control']['pseudo_dir'] = "../"
 
           write(str(subfolder / "es.in"), atoms, format='espresso-in',
               input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
