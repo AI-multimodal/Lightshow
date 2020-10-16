@@ -4,9 +4,10 @@
         "control": {
             "restart_mode": "from_scratch",
             "wf_collect": true,
-            "calculations": "scf",
+            "calculation": "scf",
             "tstress": true,
-            "tprnfor": true
+            "tprnfor": true,
+            "pseudo_dir": "./"
         },
         "electrons": {
             "conv_thr": 1e-08,
