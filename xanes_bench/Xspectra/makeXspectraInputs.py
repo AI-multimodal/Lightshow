@@ -137,7 +137,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 
-    folder = pathlib.Path(env['PWD']) / mpid / "XS"
+    folder = pathlib.Path(env["PWD"]).parent / "data" / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',

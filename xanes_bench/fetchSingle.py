@@ -42,7 +42,7 @@ def main():
     json_dir = f"../data"
     if not os.path.exists(json_dir):
         json_dir = "data"
-    json_fn = f"{json_dir}/mp_structures/{mpid}.json"
+    json_fn = f"{json_dir}/mp_structures/{mpid}/{mpid}.json"
     if not os.path.exists(os.path.dirname(json_fn)):
         os.makedirs(os.path.dirname(json_fn))
     with open(json_fn, 'w') as f:
