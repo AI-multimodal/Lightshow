@@ -31,13 +31,14 @@ occBands = int( nelectron / 2 )
 nband = int(root.find('output').find('band_structure').find('nbnd').text)
 print( "N_electron: ", nelectron, "Occupied: ", occBands, "Total bands: ", nband )
 
+delta = np.float64( 0.0000000000001 )
 
 # Now parse and store the first run
 for kpt in root.find('output').find('band_structure').findall('ks_energies'):
     
     kvec = np.asarray( kpt.find('k_point').text.split(), dtype=np.double )
     kvecReal = acell.dot( kvec ) / alat
-    kvecString = '{:22.12e} {:22.12e} {:22.12e}'.format( kvecReal[0], kvecReal[1], kvecReal[2] )
+    kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
     weight = kpt.find('k_point').get('weight')
   
     eigs = kpt.find('eigenvalues').text.split()
@@ -45,6 +46,7 @@ for kpt in root.find('output').find('band_structure').findall('ks_energies'):
     XSkptDict[kvecString] = dict()
     XSkptDict[kvecString]["weight"] = weight
     XSkptDict[kvecString]["eigenvalues"] = eigs
+    print( kvecString )
 
 
 # Now parse the second run
@@ -55,7 +57,7 @@ for kpt in root.find('output').find('band_structure').findall('ks_energies'):
     
     kvec = np.asarray( kpt.find('k_point').text.split(), dtype=np.double )
     kvecReal = acell.dot( kvec ) / alat
-    kvecString = '{:22.12e} {:22.12e} {:22.12e}'.format( kvecReal[0], kvecReal[1], kvecReal[2] )
+    kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
     weight = kpt.find('k_point').get('weight')
   
     eigs = kpt.find('eigenvalues').text.split()
