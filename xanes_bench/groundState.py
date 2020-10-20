@@ -62,17 +62,15 @@ def main():
     print( "Conduction bands: ", conductionBands )
     
     # Grab and parse k-point information
-    # This will return a list of task IDs, but then we need to pick out the "correct" one
-#    data = mp.get_data( mpid, prop="task_ids" )
-#    print( data[0] )
-    # We will want to change this up to search for a specific calculation type associated with mpid
-    data = mp.get_task_data( mpid, prop="kpoints" )
+    taskid = mp.query( criteria = {'task_id': mpid}, properties =
+            ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
+    data = mp.get_task_data( taskid, prop="kpoints" )
     # Returns a vasp kpoint object, so we need to convert to a dict
     kpointDict  = data[0]['kpoints'].as_dict()
     # We'll need to figure out the other types of grids, I thought I also saw Gamma
-    if kpointDict['generation_style'] != 'Monkhorst' :
-        print( "Requires Monkhorst scheme" )
-        exit()
+    #if kpointDict['generation_style'] != 'Monkhorst' :
+    #    print( "Requires Monkhorst scheme" )
+    #    exit()
     kpoints = kpointDict['kpoints'][0]
     koffset = kpointDict['usershift']
     print( koffset )
