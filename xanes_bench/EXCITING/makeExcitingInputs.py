@@ -68,7 +68,7 @@ def makeExciting( mpid, atoms: Atoms, params: dict ):
     # write input file for electronic-structure calculation
     try:
         excitinginput.write_file('primitive', filepath_grst, 
-                paramdict= excitingJSON, bandstr=True)
+                                 bandstr=True, **excitingJSON)
     except:
         raise Exception("FAILED while trying to write input.xml")
 
@@ -80,6 +80,6 @@ def makeExciting( mpid, atoms: Atoms, params: dict ):
 
         try:
             excitinginput.write_file('primitive', filepath_xas, 
-                    paramdict= excitingxasJSON, bandstr=False)
+                                     bandstr=False, **excitingxasJSON)
         except:
             raise Exception("FAILED while trying to write input.xml")
