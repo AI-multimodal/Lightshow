@@ -7,6 +7,7 @@ import os
 XSkptDict = dict()
 OkptDict = dict()
 
+# Hartree to eV based on 2018 CODATA
 Ha_c2018 = np.float64( 27.211386245988 )
 
 

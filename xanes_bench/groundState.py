@@ -19,6 +19,80 @@ import base64, bz2, hashlib
 
 module_path = os.path.dirname(xanes_bench.__file__)
 
+# Return a guess at the number of conduction bands that a given unit-cell volume needs to 
+# cover a given energy range (in Ryd)
+def getCondBands( volume, eRange):
+    return round( 0.256 * volume * ( eRange**(3/2) ) )
+
+
+def writeQE( unitC, dirname, qe_fn, pspName, params, conductionBands, kpoints ):
+
+    folder = pathlib.Path(env['PWD']) / dirname
+    folder.mkdir(parents=True, exist_ok=True)
+
+    with open (qe_fn, 'r') as fd:
+        qeJSON = json.load(fd)
+
+    symbols = unitC.get_chemical_symbols()
+
+    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+
+    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + ".json" )
+    with open (psp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+    
+    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + "_pseudos.json")
+    with open ( psp_fn, 'r' ) as pspDatabaseFile:
+        pspFullData = json.load( pspDatabaseFile )
+
+
+    psp = dict()
+    minSymbols = set( symbols )
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if qeJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+            qeJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+        if 'rho_cutoff' in pspDatabase[ symbol ]:
+            if 'ecutrho' not in qeJSON['QE']['system'] :
+                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+            if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
+                qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+        if pspDatabase[ symbol ]['filename'] not in pspFullData:
+            print( "Incomplete psp database" )
+            exit()
+
+        pspString = bz2.decompress(base64.b64decode( pspFullData[pspDatabase[ symbol ]['filename']] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+
+
+        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
+        with open( fileName, 'w' ) as f:
+            f.write( pspString.decode("utf-8") )
+
+
+    nelectron = 0
+    for symbol in symbols:
+        nelectron += pspDatabase[ symbol ]["Z_val"]
+
+    print( "N electron: ", nelectron)
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
+
+    try:
+        write(str(folder / "qe.in"), unitC, format='espresso-in',
+            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+    except:
+        print(qeJSON['QE'], unitC, psp)
+        raise Exception("FAILED while trying to write qe.in")
+
+
+
+
+
+    
 def main():
 
     # The script takes a single, positive integer to grab a system from materials project
@@ -56,9 +130,10 @@ def main():
         json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
     
-    unitVolume = unitC.get_volume()
-    eRange = 2 #Ryd
-    conductionBands = round( 0.256 * unitVolume * ( eRange**(3/2) ) )
+#    unitVolume = unitC.get_volume()
+#    eRange = 2 #Ryd
+#    conductionBands = round( 0.256 * unitVolume * ( eRange**(3/2) ) )
+    conductionBands = getCondBands( unitC.get_volume(), 1.5 )
     print( "Conduction bands: ", conductionBands )
     
     # Grab and parse k-point information
@@ -73,152 +148,21 @@ def main():
     #    exit()
     kpoints = kpointDict['kpoints'][0]
     koffset = kpointDict['usershift']
-    print( koffset )
+#    print( koffset )
     # Might need to parse this, but it looks like most use Gamma-centered grids
-    print( type( koffset ) )
+#    print( type( koffset ) )
 
-    folder = pathlib.Path(env['PWD']) / mpid / "XS"
-    folder.mkdir(parents=True, exist_ok=True)
 
-    # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
-    qe_fn = os.path.join(module_path, 'QE', 'qe.json')
-#    qe_fn = 'qe.json'
-    with open (qe_fn, 'r') as fd:
-        qeJSON = json.load(fd)
-
-    symbols = unitC.get_chemical_symbols()
-
-    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
-
-    sssp_fn = os.path.join(module_path, "pseudos", "data", 'SSSP_precision.json')
-#    sssp_fn = 'SSSP_precision.json'
-    with open (sssp_fn, 'r' ) as pspDatabaseFile:
-        pspDatabase = json.load( pspDatabaseFile )
     
-    sssp_fn = os.path.join(module_path, "pseudos", "data", "SSSP_precision_pseudos.json")
-    with open ( sssp_fn, 'r' ) as pspDatabaseFile:
-        pspFullData = json.load( pspDatabaseFile )
-
-
-    psp = dict()
-    minSymbols = set( symbols )
-    for symbol in minSymbols:
-        print( symbol )
-        print( pspDatabase[ symbol ]['filename'] )
-        psp[symbol] = pspDatabase[ symbol ]['filename']
-        if qeJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
-            qeJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
-        if 'rho_cutoff' in pspDatabase[ symbol ]:
-            if 'ecutrho' not in qeJSON['QE']['system'] :
-                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
-            if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
-                qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
-
-        if pspDatabase[ symbol ]['filename'] not in pspFullData:
-            print( "Incomplete psp database" )
-            exit()
-
-        pspString = bz2.decompress(base64.b64decode( pspFullData[pspDatabase[ symbol ]['filename']] ))
-        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
-        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
-
-
-        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
-        with open( fileName, 'w' ) as f:
-            f.write( pspString.decode("utf-8") )
-#        shutil.copy(
-#            os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "neutral",
-#                         pspDatabase[ symbol ]['filename']),
-#            str(folder / pspDatabase[symbol]['filename'])
-#        )
-
-#    shutil.copy(
-#        os.path.join(module_path, "..", "data", "pseudopotential", "xspectral", "orbital",
-#                     "Ti.wfc"),
-#        str(folder / "Ti.wfc")
-#    )
-
-    nelectron = 0
-    for symbol in symbols:
-        nelectron += pspDatabase[ symbol ]["Z_val"]
-
-    print( "N electron: ", nelectron)
-    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
-
-    try:
-        write(str(folder / "qe.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
-    except:
-        print(qeJSON['QE'], unitC, psp)
-        raise Exception("FAILED while trying to write qe.in")
-
-
-#### Repeat with OCEAN info (move to subroutine in future!)
-    folder = pathlib.Path(env['PWD']) / mpid / "OCEAN"
-    folder.mkdir(parents=True, exist_ok=True)
-
     # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
     qe_fn = os.path.join(module_path, 'QE', 'qe.json')
 
-    with open (qe_fn, 'r') as fd:
-        qeJSON = json.load(fd)
-
-    symbols = unitC.get_chemical_symbols()
-
-    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+    subdir = os.path.join( mpid, "XS" )
+    writeQE( unitC, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
 
 
-    sssp_fn = os.path.join(module_path, "pseudos", "data", 'PD_stringent.json')
-#    sssp_fn = 'SSSP_precision.json'
-    with open (sssp_fn, 'r' ) as pspDatabaseFile:
-        pspDatabase = json.load( pspDatabaseFile )
-
-    sssp_fn = os.path.join(module_path, "pseudos", "data", "PD_stringent_pseudos.json")
-    with open ( sssp_fn, 'r' ) as pspDatabaseFile:
-        pspFullData = json.load( pspDatabaseFile )
-
-
-    psp = dict()
-    minSymbols = set( symbols )
-    for symbol in minSymbols:
-        print( symbol )
-        print( pspDatabase[ symbol ]['filename'] )
-        psp[symbol] = pspDatabase[ symbol ]['filename']
-        if qeJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
-            qeJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
-        if 'rho_cutoff' in pspDatabase[ symbol ]:
-            if 'ecutrho' not in qeJSON['QE']['system'] :
-                 qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
-            if qeJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff'] :
-                qeJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
-
-        if pspDatabase[ symbol ]['filename'] not in pspFullData:
-            print( "Incomplete psp database" )
-            exit()
-
-        pspString = bz2.decompress(base64.b64decode( pspFullData[pspDatabase[ symbol ]['filename']] ))
-        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
-        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
-
-
-        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
-        with open( fileName, 'w' ) as f:
-            f.write( pspString.decode("utf-8") )
-
-    nelectron = 0
-    for symbol in symbols:
-        nelectron += pspDatabase[ symbol ]["Z_val"]
-
-    print( "N electron: ", nelectron)
-    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
-
-    try:
-        write(str(folder / "qe.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
-    except:
-        print(qeJSON['QE'], unitC, psp)
-        raise Exception("FAILED while trying to write qe.in")
-
+    subdir = os.path.join( mpid, "OCEAN" )
+    writeQE( unitC, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
 
 
 
