@@ -19,7 +19,7 @@
             "ecutwfc": 40,
             "nspin": 1,
             "occupations": "smearing",
-            "smearing": "mv"
+            "smearing": "gauss"
         }
     }
 }

@@ -57,7 +57,7 @@ def main():
     unitC = ase.get_atoms(st)
     
     unitVolume = unitC.get_volume()
-    eRange = 1 #Ryd
+    eRange = 2 #Ryd
     conductionBands = round( 0.256 * unitVolume * ( eRange**(3/2) ) )
     print( "Conduction bands: ", conductionBands )
     
