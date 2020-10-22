@@ -25,10 +25,10 @@ def getCondBands( volume, eRange):
     return round( 0.256 * volume * ( eRange**(3/2) ) )
 
 
-def writeQE( unitC, dirname, qe_fn, pspName, params, conductionBands, kpoints ):
+def writeQE( unitC, folder, qe_fn, pspName, params, conductionBands, kpoints ):
 
-    folder = pathlib.Path(env['PWD']) / dirname
-    folder.mkdir(parents=True, exist_ok=True)
+#    folder = pathlib.Path(env['PWD']) / dirname
+#    folder.mkdir(parents=True, exist_ok=True)
 
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
@@ -117,6 +117,8 @@ def main():
     mp = MPRester( str(mpkey) )
 
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
+    #TODO gracefully report errors with connection, fetching structure
+
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
     st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
@@ -130,40 +132,56 @@ def main():
         json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
     
-#    unitVolume = unitC.get_volume()
-#    eRange = 2 #Ryd
-#    conductionBands = round( 0.256 * unitVolume * ( eRange**(3/2) ) )
     conductionBands = getCondBands( unitC.get_volume(), 1.5 )
     print( "Conduction bands: ", conductionBands )
     
     # Grab and parse k-point information
+    # TODO error checking
     taskid = mp.query( criteria = {'task_id': mpid}, properties =
             ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
     data = mp.get_task_data( taskid, prop="kpoints" )
+
+    # If MP data set is incomplete, fail gracefully
+    if 'kpoints' not in data[0]:
+        print( "Failed to get kpoints from task id :", taskid )
+        exit()
+
     # Returns a vasp kpoint object, so we need to convert to a dict
     kpointDict  = data[0]['kpoints'].as_dict()
+
     # We'll need to figure out the other types of grids, I thought I also saw Gamma
     #if kpointDict['generation_style'] != 'Monkhorst' :
     #    print( "Requires Monkhorst scheme" )
     #    exit()
+
     kpoints = kpointDict['kpoints'][0]
     koffset = kpointDict['usershift']
-#    print( koffset )
-    # Might need to parse this, but it looks like most use Gamma-centered grids
-#    print( type( koffset ) )
+
+
+    # Make sure k-point grid is reasonable
+    if kpoints[0]*kpoints[1]*kpoints[2] < 1 or kpoints[0]*kpoints[1]*kpoints[2] > 1000000 :
+        print( "Bad k-point grid! ", kpoints )
+        exit()
+
+
+    # Right now we are not checking for grid shifts. QE will just use a Gamma-centered grid
 
 
     
     # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
     qe_fn = os.path.join(module_path, 'QE', 'qe.json')
 
-    subdir = os.path.join( mpid, "XS" )
+    # subdir says where to put the input and psps 
+    subdir = pathlib.Path(env['PWD'], mpid, "XS" )
+    subdir.mkdir(parents=True, exist_ok=True)
     writeQE( unitC, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
 
 
-    subdir = os.path.join( mpid, "OCEAN" )
+    subdir = pathlib.Path(env['PWD'], mpid, "OCEAN" )
+    subdir.mkdir(parents=True, exist_ok=True)
     writeQE( unitC, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
 
+    #TODO should be able to add in calls to exciting io here
 
 
 if __name__ == '__main__':
