@@ -45,6 +45,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "    xiabs = %d" % iabs,
             "    xerror = " + str(XSparams['input_xspectra']['xerror']),
             "    wf_collect = .true.",
+            "    xcoordcrys = .false.",
             "    xcheck_conv = " + str(XSparams['input_xspectra']['xcheck_conv']),
             "    xepsilon(1) = %d" % dirs[0],
             "    xepsilon(2) = %d" % dirs[1],
@@ -116,15 +117,15 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
         photonSymm(atoms, us, ph, params['photonOrder'])
     else:
         directions = {1, 2, 3}
-        for dir in (1, 2, 3):
-            dir1, dir2 = directions - set((dir,))
+        for dir in range(3):
             dirs = np.zeros(4)
             dirs[-1] = 1.0
+            odirs = dirs.copy()
             dirs[dir] = 1.0
+            odirs[(dir-1) % 3] = 1.0
             ph.append({
                         "dipole": dirs,
-                        "quad":  [dirs,
-                                  np.array(ortho(atoms.cell, dir - 1, (dir2 if dir == 2 else dir1) - 1) + (1.0, ))]
+                        "quad":  [odirs]
                       })
         for i in equiv:
             if i in us:
