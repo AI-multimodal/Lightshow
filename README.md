@@ -26,3 +26,8 @@ cd xanes_bench
 python setup.py develop
 python apply_patch.py --force
 ```
+# test systems
+| MP ID | Name |
+|---------|---------|
+|mp-390 | rutile TiO2|
+|mp-1203 | TiO |
