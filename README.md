@@ -21,8 +21,13 @@
 ```console
 conda create --name xas_ben python=3
 conda activate xas_ben
-git clone:git@github.com:xhqu1981/xanes_bench.git
+git clone git@github.com:xhqu1981/xanes_bench.git
 cd xanes_bench
 python setup.py develop
 python apply_patch.py --force
 ```
+# test systems
+| MP ID | Name |
+|---------|---------|
+|mp-390 | rutile TiO2|
+|mp-1203 | TiO |
