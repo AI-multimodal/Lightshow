@@ -1,0 +1,3 @@
+data/mp_structures/*
+data/pseudopotential/*
+*.egg-info/
