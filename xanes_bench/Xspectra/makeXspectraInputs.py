@@ -104,18 +104,36 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     atoms = smaller( unitCell )
 
     us = {}
-    ph = []
-    photonSymm( atoms, us, ph, params['photonOrder'])
-    # TODO: Add photonSymm call
-
-    print( ph )
-
-    symm= spglib.get_symmetry((atoms.get_cell(),
+    symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
                              atoms.get_atomic_numbers()),
                              symprec=0.1, angle_tolerance=15)
-
     equiv = symm['equivalent_atoms']
+
+    use_photonSymm = False
+    ph = []
+    if use_photonSymm:
+        photonSymm(atoms, us, ph, params['photonOrder'])
+    else:
+        directions = {1, 2, 3}
+        for dir in (1, 2, 3):
+            dir1, dir2 = directions - set((dir,))
+            dirs = np.zeros(4)
+            dirs[-1] = 1.0
+            dirs[dir] = 1.0
+            ph.append({
+                        "dipole": dirs,
+                        "quad":  [dirs,
+                                  np.array(ortho(atoms.cell, dir - 1, (dir2 if dir == 2 else dir1) - 1) + (1.0, ))]
+                      })
+        for i in equiv:
+            if i in us:
+                us[i] = us[i] + 1
+            else:
+                us[i] = 1
+    print( ph )
+
+
 
     symbols = atoms.get_chemical_symbols()
 
