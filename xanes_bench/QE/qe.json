@@ -1,0 +1,25 @@
+{
+    "QE": {
+        "cell": {},
+        "control": {
+            "restart_mode": "from_scratch",
+            "wf_collect": true,
+            "calculation": "scf",
+            "tstress": true,
+            "tprnfor": true,
+            "pseudo_dir": "./"
+        },
+        "electrons": {
+            "conv_thr": 1e-08,
+            "mixing_beta": 0.4
+        },
+        "ions": {},
+        "system": {
+            "degauss": 0.002,
+            "ecutwfc": 40,
+            "nspin": 1,
+            "occupations": "smearing",
+            "smearing": "gauss"
+        }
+    }
+}
