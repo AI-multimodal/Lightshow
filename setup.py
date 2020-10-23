@@ -19,6 +19,7 @@ setup(
     entry_points={
         "console_scripts": [
             "fetchSingle = xanes_bench.fetchSingle:main",
+            "groundState = xanes_bench.groundState:main",
             "makeXspectraInputs = xanes_bench.makeXspectraInputs"
         ]
     }
