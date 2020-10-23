@@ -45,6 +45,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "    xiabs = %d" % iabs,
             "    xerror = " + str(XSparams['input_xspectra']['xerror']),
             "    wf_collect = .true.",
+            "    xcoordcrys = .false.",
             "    xcheck_conv = " + str(XSparams['input_xspectra']['xcheck_conv']),
             "    xepsilon(1) = %d" % dirs[0],
             "    xepsilon(2) = %d" % dirs[1],
@@ -104,18 +105,36 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     atoms = smaller( unitCell )
 
     us = {}
-    ph = []
-    photonSymm( atoms, us, ph, params['photonOrder'])
-    # TODO: Add photonSymm call
-
-    print( ph )
-
-    symm= spglib.get_symmetry((atoms.get_cell(),
+    symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
                              atoms.get_atomic_numbers()),
                              symprec=0.1, angle_tolerance=15)
-
     equiv = symm['equivalent_atoms']
+
+    use_photonSymm = False
+    ph = []
+    if use_photonSymm:
+        photonSymm(atoms, us, ph, params['photonOrder'])
+    else:
+        directions = {1, 2, 3}
+        for dir in range(3):
+            dirs = np.zeros(4)
+            dirs[-1] = 1.0
+            odirs = dirs.copy()
+            dirs[dir] = 1.0
+            odirs[(dir-1) % 3] = 1.0
+            ph.append({
+                        "dipole": dirs,
+                        "quad":  [odirs]
+                      })
+        for i in equiv:
+            if i in us:
+                us[i] = us[i] + 1
+            else:
+                us[i] = 1
+    print( ph )
+
+
 
     symbols = atoms.get_chemical_symbols()
 
