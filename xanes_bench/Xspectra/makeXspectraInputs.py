@@ -156,7 +156,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 
-    folder = pathlib.Path(env["PWD"]).parent / "data" / "mp_structures" / mpid / "XS"
+    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                 str(folder / "Ti.wfc"))
