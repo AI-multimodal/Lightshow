@@ -36,6 +36,7 @@ def writeQE( unitC, folder, qe_fn, pspName, params, conductionBands, kpoints ):
     symbols = unitC.get_chemical_symbols()
 
     qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+    qeJSON['QE']['control']['pseudo_dir'] = "../"
 
     psp_fn = os.path.join(module_path, "pseudos", "data", pspName + ".json" )
     with open (psp_fn, 'r' ) as pspDatabaseFile:
@@ -69,7 +70,7 @@ def writeQE( unitC, folder, qe_fn, pspName, params, conductionBands, kpoints ):
         print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
 
 
-        fileName = os.path.join( folder, pspDatabase[ symbol ]['filename'] )
+        fileName = os.path.join( folder, "..", pspDatabase[ symbol ]['filename'] )
         with open( fileName, 'w' ) as f:
             f.write( pspString.decode("utf-8") )
 
