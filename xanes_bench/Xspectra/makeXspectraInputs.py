@@ -82,7 +82,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "/"]
 
     inp += ["&pseudos",
-            "    filecore = '../../Ti.wfc'",
+            "    filecore = '../../../Ti.wfc'",
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str( XSparams['cut_occ']['cut_desmooth']),
