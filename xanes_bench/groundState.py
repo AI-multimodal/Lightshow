@@ -122,9 +122,7 @@ def main():
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
     st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
-    json_dir = f"../data"
-    if not os.path.exists(json_dir):
-        json_dir = "data"
+    json_dir = "data"
     for spec_type in ["XS", "OCEAN"]:
         json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
         if not os.path.exists(os.path.dirname(json_fn)):
