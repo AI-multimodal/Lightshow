@@ -27,7 +27,7 @@
             "edge": "K",
             "outdir": "../",
             "prefix": "pwscf",
-            "wf_collect": ".true.",
+            "!wf_collect": ".true.",
             "xcheck_conv": 200,
             "xerror": 0.01,
             "xniter": 5000,
