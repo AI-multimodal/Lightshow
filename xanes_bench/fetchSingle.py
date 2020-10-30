@@ -42,11 +42,12 @@ def main():
     json_dir = f"../data"
     if not os.path.exists(json_dir):
         json_dir = "data"
-    json_fn = f"{json_dir}/mp_structures/{mpid}/{mpid}.json"
-    if not os.path.exists(os.path.dirname(json_fn)):
-        os.makedirs(os.path.dirname(json_fn))
-    with open(json_fn, 'w') as f:
-        json.dump(st_dict, f, indent=4, sort_keys=True)
+    for spec_type in ["XS", "OCEAN"]:
+        json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json"
+        if not os.path.exists(os.path.dirname(json_fn)):
+            os.makedirs(os.path.dirname(json_fn))
+        with open(json_fn, 'w') as f:
+            json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
 
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])

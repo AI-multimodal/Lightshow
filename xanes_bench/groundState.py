@@ -125,11 +125,12 @@ def main():
     json_dir = f"../data"
     if not os.path.exists(json_dir):
         json_dir = "data"
-    json_fn = f"{json_dir}/mp_structures/{mpid}.json"
-    if not os.path.exists(os.path.dirname(json_fn)):
-        os.makedirs(os.path.dirname(json_fn))
-    with open(json_fn, 'w') as f:
-        json.dump(st_dict, f, indent=4, sort_keys=True)
+    for spec_type in ["XS", "OCEAN"]:
+        json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
+        if not os.path.exists(os.path.dirname(json_fn)):
+            os.makedirs(os.path.dirname(json_fn))
+        with open(json_fn, 'w') as f:
+            json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
     
     conductionBands = getCondBands( unitC.get_volume(), 1.5 )
@@ -172,12 +173,12 @@ def main():
     qe_fn = os.path.join(module_path, 'QE', 'qe.json')
 
     # subdir says where to put the input and psps 
-    subdir = pathlib.Path(env['PWD'], mpid, "XS" )
+    subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mpid, "XS", "groundState")
     subdir.mkdir(parents=True, exist_ok=True)
     writeQE( unitC, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
 
 
-    subdir = pathlib.Path(env['PWD'], mpid, "OCEAN" )
+    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "OCEAN", "groundState" )
     subdir.mkdir(parents=True, exist_ok=True)
     writeQE( unitC, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
 

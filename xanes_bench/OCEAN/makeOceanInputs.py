@@ -54,7 +54,7 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     oceanJSON['toldfe'] = params['defaultConvPerAtom'] * len( symbols )
 
     
-    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN"
+    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
 
     try:
