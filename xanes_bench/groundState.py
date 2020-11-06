@@ -126,6 +126,7 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints
         NSCFtemp = re.sub('K_POINTS\s+gamma', '', f.read(), flags=re.IGNORECASE)
 
     ## Now do k-path
+    qeJSON['QE']['control']['calculation'] = 'bands'
     ## Might have multiple k-point paths, best to break them into separate files
 
     # Might want to set the tolerances for this
