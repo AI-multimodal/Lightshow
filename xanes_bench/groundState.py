@@ -17,6 +17,11 @@ from os import environ as env
 
 import base64, bz2, hashlib
 
+import re
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.symmetry.bandstructure import HighSymmKpath
+import numpy as np
+
 module_path = os.path.dirname(xanes_bench.__file__)
 
 # Return a guess at the number of conduction bands that a given unit-cell volume needs to 
@@ -24,11 +29,8 @@ module_path = os.path.dirname(xanes_bench.__file__)
 def getCondBands( volume, eRange):
     return round( 0.256 * volume * ( eRange**(3/2) ) )
 
-
-def writeQE( unitC, folder, qe_fn, pspName, params, conductionBands, kpoints ):
-
-#    folder = pathlib.Path(env['PWD']) / dirname
-#    folder.mkdir(parents=True, exist_ok=True)
+#TODO add types for a bit of help
+def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints ):
 
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
@@ -80,15 +82,103 @@ def writeQE( unitC, folder, qe_fn, pspName, params, conductionBands, kpoints ):
         nelectron += pspDatabase[ symbol ]["Z_val"]
 
     print( "N electron: ", nelectron)
-    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
+#    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
 
+    # Write SCF input
     try:
-        write(str(folder / "qe.in"), unitC, format='espresso-in',
+        write(str(folder / "scf.in"), unitC, format='espresso-in',
             input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], unitC, psp)
-        raise Exception("FAILED while trying to write qe.in")
+        raise Exception("FAILED while trying to write scf.in")
 
+
+
+    # Write NSCF input for DOS (regular k-point mesh)
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
+    qeJSON['QE']['control']['calculation'] = 'nscf'
+    qeJSON['QE']['control']['tstress'] = False
+    qeJSON['QE']['control']['tprnfor'] = False
+    # This is new option as of 6.6, but should failsafe to default in earlier
+    qeJSON['QE']['control']['disk_io'] = 'nowf'
+
+    try:
+        write(str(folder / "nscf.in"), unitC, format='espresso-in',
+            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+    except:
+        print(qeJSON['QE'], unitC, psp)
+        raise Exception("FAILED while trying to write nscf.in")
+
+
+    # Now we want the band struture version
+    #TODO revist number of bands?
+    #TODO This is a hack to get around lack of k-path support
+    ## We don't pass a kpoint spec which should give us "K_POINTS gamma"
+    try:
+        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
+            input_data=qeJSON['QE'], pseudopotentials=psp )
+    except:
+        print(qeJSON['QE'], unitC, psp)
+        raise Exception("FAILED while trying to write nscf_temp.in")
+
+    ## Now, slurp in entire file and get rid of K_POINT
+    with open ( str(folder / "nscf_temp.in"), 'r' ) as f:
+        NSCFtemp = re.sub('K_POINTS\s+gamma', '', f.read(), flags=re.IGNORECASE)
+
+    ## Now do k-path
+    ## Might have multiple k-point paths, best to break them into separate files
+
+    # Might want to set the tolerances for this
+    finder = SpacegroupAnalyzer(st)
+    # This should be ok since MP is returning the primitive 
+    new_struct = finder.get_primitive_standard_structure(international_monoclinic=False)
+
+    kpath = HighSymmKpath(new_struct)
+    # kpath has two parts
+    # 'kpoints' gives the names of each high-symmetry point and its location
+    # 'kpath' is a list of lists. There can be several paths that aren't connected
+
+    #TODO This will need to be unified with Exciting
+    ## Right now going for a target reciprocal space division, but I think 
+    ## we might want to set an integer number to divide out instead
+    targetKpointSpacing = 0.05
+
+    bMatrix = new_struct.lattice.reciprocal_lattice.matrix
+
+    # Loop over the separate paths
+    for i in range(len(kpath.kpath['path'])):
+        KString = "K_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
+        # Loop within a path
+        symbol = kpath.kpath['path'][i][0]
+        prevCoords = kpath.kpath['kpoints'][symbol]
+        prevCart = np.dot( bMatrix, prevCoords )
+        kpointCount = []
+        totKpointCount = 0
+        for j in range(1,len(kpath.kpath['path'][i])):
+            symbol = kpath.kpath['path'][i][j]
+            coords = kpath.kpath['kpoints'][symbol]
+            cart = np.dot( bMatrix, coords )
+            dist = np.linalg.norm(cart-prevCart)
+            kpointCount.append( int( dist/targetKpointSpacing ) )
+    #        prevCoords = coords
+            prevCart = cart
+            totKpointCount += int( dist/targetKpointSpacing )
+
+        kpointCount.append( int(1) )
+#        print( totKpointCount )
+#        print( len(kpath.kpath['path'][i]) )
+
+        for j in range(len(kpath.kpath['path'][i])):
+            symbol = kpath.kpath['path'][i][j]
+            coords = kpath.kpath['kpoints'][symbol]
+#            print( "%16.12f %16.12f %16.12f %i" % (coords[0],coords[1],coords[2],kpointCount[j]) )
+            KString += "%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j])
+
+#        print( "  " )
+
+        with open ( str(folder / "nscf_band" ) + ".%i.in" % (i+1), 'w' ) as f:
+            f.write( NSCFtemp )
+            f.write( KString )
 
 
 
@@ -174,12 +264,12 @@ def main():
     # subdir says where to put the input and psps 
     subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mpid, "XS", "groundState")
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
+    writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
 
 
     subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "OCEAN", "groundState" )
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
+    writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
 
     #TODO should be able to add in calls to exciting io here
 
