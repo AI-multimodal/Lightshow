@@ -16,7 +16,7 @@
             "ecutwfc": 40,
             "nspin": 1,
             "occupations": "smearing",
-            "smearing": "mv"
+            "smearing": "gauss"
         }
     },
     "XS": {
@@ -27,10 +27,11 @@
             "edge": "K",
             "outdir": "../",
             "prefix": "pwscf",
-            "wf_collect": ".true.",
+            "!wf_collect": ".true.",
             "xcheck_conv": 200,
             "xerror": 0.01,
-            "xniter": 5000
+            "xniter": 5000,
+            "xcoordcrys": ".false."
         },
         "kpts": {
             "kpts": "2 2 2",
