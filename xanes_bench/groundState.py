@@ -8,6 +8,7 @@ import os, shutil
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
 import xanes_bench
+from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
 
 from ase.atoms import Atoms
 from ase.io import write
@@ -215,7 +216,7 @@ def main():
     st_dict["download_at"] = time.ctime()
     st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
     json_dir = "data"
-    for spec_type in ["XS", "OCEAN"]:
+    for spec_type in ["XS", "OCEAN", "EXCITING"]:
         json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
         if not os.path.exists(os.path.dirname(json_fn)):
             os.makedirs(os.path.dirname(json_fn))
@@ -272,8 +273,9 @@ def main():
     subdir.mkdir(parents=True, exist_ok=True)
     writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
 
-    #TODO should be able to add in calls to exciting io here
-
+    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "EXCITING", "groundState" )
+    subdir.mkdir(parents=True, exist_ok=True)
+    makeExcitingGRST(mpid, unitC, kpoints, subdir)
 
 if __name__ == '__main__':
     main()
