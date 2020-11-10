@@ -26,8 +26,13 @@ git clone git@github.com:vorwerkc/pymatgen.git pm-dev
 cd pm-dev
 pip install -e .
 cd ../
-git clone:git@github.com:xhqu1981/xanes_bench.git
+git clone git@github.com:xhqu1981/xanes_bench.git
 cd xanes_bench
 python setup.py develop
 python apply_patch.py --force
 ```
+# Test systems
+| MP ID | Name |
+|---------|---------|
+|mp-390 | rutile TiO2|
+|mp-1203 | TiO |
