@@ -1,4 +1,9 @@
 # This is a simple tool to find the rmsd E(n,k) between two QE runs
+"""
+#TODO 
+1. move k-point maps (prints and formats) to a separate function or to integers in conjunction
+   with the k-point mesh and shift
+"""
 
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -80,12 +85,12 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
     delta = np.float64( 0.0000000000001 )
     kpointFullMap = {}
     for ik in range(0,nk[0]*nk[1]*nk[2]):
-        kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( xkg[ik][0]+delta, xkg[ik][1]+delta, xkg[ik][2]+delta )
+        kvecString = '{:16.8f} {:16.8f} {:16.8f}'.format( xkg[ik][0]+delta, xkg[ik][1]+delta, xkg[ik][2]+delta )
         if equiv[ik] == ik:
             kpointFullMap[kvecString] = []
         else:
-            newList = []
-            targString = '{:18.10f} {:18.10f} {:18.10f}'.format( xkg[equiv[ik]][0]+delta, xkg[equiv[ik]][1]+delta, xkg[equiv[ik]][2]+delta )
+            targString = '{:16.8f} {:16.8f} {:16.8f}'.format( xkg[equiv[ik]][0]+delta, xkg[equiv[ik]][1]+delta, xkg[equiv[ik]][2]+delta )
+            newList = [targString]
             for i in kpointFullMap[targString]:
                 newList.append( i )
                 kpointFullMap[ i ].append( kvecString )
@@ -132,7 +137,12 @@ def parseQE( filename: str ):
 
         kvec = np.asarray( kpt.find('k_point').text.split(), dtype=np.double )
         kvecReal = acell.dot( kvec ) / alat
-        kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
+        for i in range(0,3):
+            if kvecReal[i]+delta < 0.0:
+                kvecReal[i]+=1.0
+            if kvecReal[i]+delta >= 1.0:
+                kvecReal[i]-=1.0
+        kvecString = '{:16.8f} {:16.8f} {:16.8f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
         weight = kpt.find('k_point').get('weight')
       
         eigs = kpt.find('eigenvalues').text.split()
@@ -154,7 +164,7 @@ def parseQE( filename: str ):
     i = 0
     sym = np.zeros((nrot,3,3))
     for s in root.find('output').find('symmetries').findall('symmetry'):
-        sym[i] = np.array( list(map(float,s.find('rotation').text.split())),dtype=int).reshape(3,3)
+        sym[i] = np.array( list(map(float,s.find('rotation').text.split())),dtype=int).reshape((3,3),order='F')
         i += 1
 
     # make kmap dictionary
@@ -181,79 +191,45 @@ occBands = int( nelectron / 2 )
 nband = len( XSkptDict[list(XSkptDict.keys())[0]]["eigenvalues"] )
 
 
-"""
-tree = ET.parse( os.path.join( "./XS", "pwscf.save", "data-file-schema.xml" ) )
-root = tree.getroot()
-
-# We will want to convert from the QE format to "crystal" format"
-cellList = []
-cellList.append( root.findall('output')[0].find('atomic_structure').find('cell')[0].text.split() )
-cellList.append( root.findall('output')[0].find('atomic_structure').find('cell')[1].text.split() )
-cellList.append( root.findall('output')[0].find('atomic_structure').find('cell')[2].text.split() )
-acell = np.asarray( cellList, dtype=np.double )
-alat = np.float64( root.find('output').find('atomic_structure').get("alat") )
-
-
-# Go ahead and count electrons (occupied bands)
-nelectron = int(float( root.find('output').find('band_structure').find('nelec').text ))
-occBands = int( nelectron / 2 )
-
-# And grab total number of bands
-nband = int(root.find('output').find('band_structure').find('nbnd').text)
-print( "N_electron: ", nelectron, "Occupied: ", occBands, "Total bands: ", nband )
-
-delta = np.float64( 0.0000000000001 )
-
-# Now parse and store the first run
-for kpt in root.find('output').find('band_structure').findall('ks_energies'):
-    
-    kvec = np.asarray( kpt.find('k_point').text.split(), dtype=np.double )
-    kvecReal = acell.dot( kvec ) / alat
-    kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
-    weight = kpt.find('k_point').get('weight')
-  
-    eigs = kpt.find('eigenvalues').text.split()
-
-    XSkptDict[kvecString] = dict()
-    XSkptDict[kvecString]["weight"] = weight
-    XSkptDict[kvecString]["eigenvalues"] = eigs
-    print( kvecString )
-
-
-# Now parse the second run
-tree = ET.parse( os.path.join( "./OCEAN", "pwscf.save", "data-file-schema.xml" ) )
-root = tree.getroot()
-
-for kpt in root.find('output').find('band_structure').findall('ks_energies'):
-    
-    kvec = np.asarray( kpt.find('k_point').text.split(), dtype=np.double )
-    kvecReal = acell.dot( kvec ) / alat
-    kvecString = '{:18.10f} {:18.10f} {:18.10f}'.format( kvecReal[0]+delta, kvecReal[1]+delta, kvecReal[2]+delta )
-    weight = kpt.find('k_point').get('weight')
-  
-    eigs = kpt.find('eigenvalues').text.split()
-
-    OkptDict[kvecString] = dict()
-    OkptDict[kvecString]["weight"] = weight
-    OkptDict[kvecString]["eigenvalues"] = eigs
-"""
-
     
 # First calculate the RMSD over the occupied states
 rmsd = np.float64( 0.0 )
 totalWeight = np.float64( 0.0 )
 
 for kpt in XSkptDict:
+    okpt = kpt
     if kpt not in OkptDict:
-        print( "Incompatible k-point meshes!" )
-        exit()
+        if kpt not in Okmap:
+            print(kpt)
+            print(list(Okmap.keys()))
+            print( "Incompatible k-point meshes!" )
+            exit()
+        else:
+# The method used below for the full range is probably better/faster
+            for testKpt in OkptDict:
+                for i in Okmap[testKpt]:
+#                    print( i, kpt )
+                    if i == kpt:
+#                        print( "Success: ", testKpt, kpt )
+                        okpt = testKpt
+                        break
+        if okpt == kpt:
+            print( "Incompatible k-point meshes!" )
+            print( kpt )
+            print( Okmap[kpt] )
+            print("############")
+            print( list(OkptDict.keys()))
+            print("############")
+            for testKpt in Okmap[kpt]:
+                print( Okmap[testKpt] )
+            exit()
 
     weight = np.float64( XSkptDict[kpt]["weight"] )
     totalWeight += weight
 #    print( weight, totalWeight )
 
     XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
 
     for j in range( occBands ):
         rmsd += weight*(XSeigs[j]-Oeigs[j])**2
@@ -268,16 +244,28 @@ rmsd = np.float64( 0.0 )
 totalWeight = np.float64( 0.0 )
 
 for kpt in XSkptDict:
+    okpt = kpt
     if kpt not in OkptDict:
-        print( "Incompatible k-point meshes!" )
-        exit()
+        if kpt not in Okmap:
+            print( "Incompatible k-point meshes!" )
+            exit()
+        else:
+            if kpt not in Okmap:
+                print( "Incompatible k-point meshes!" )
+                exit()
+            for testKpt in Okmap[kpt]:
+                if testKpt in OkptDict:
+                    okpt = testKpt
+                    break
+        if okpt == kpt:
+            print( "Incompatible k-point meshes!" )
+            exit()
 
     weight = np.float64( XSkptDict[kpt]["weight"] )
     totalWeight += weight
-#    print( weight, totalWeight )
 
     XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
 
     for j in range( len( Oeigs ) ):
         rmsd += weight*(XSeigs[j]-Oeigs[j])**2
