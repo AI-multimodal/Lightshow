@@ -1,0 +1,11 @@
+{
+    "MPI": 8,
+    "OPENMP": 1,
+    "nodes": 1,
+    "memory": 64,
+    "para_prefix": "mpirun",
+    "task_flag": "-n",
+    "bonus_flag": "",
+    "QE_BIN": "/Users/jtv1/Documents/Code/QE/q-e-qe-6.5/bin",
+    "EXCITING_BIN": ""
+}
