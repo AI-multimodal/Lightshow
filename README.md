@@ -31,5 +31,5 @@ python apply_patch.py --force
 |---------|---------|
 |mp-2657 | rutile TiO2|
 |mp-390 | anatase TiO2|
-|mp-1840 | Brookite TiO2|
+|mp-1840 | brookite TiO2|
 |mp-1203 | TiO |
