@@ -275,7 +275,7 @@ def main():
 
     subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "EXCITING", "groundState" )
     subdir.mkdir(parents=True, exist_ok=True)
-    makeExcitingGRST(mpid, unitC, kpoints, subdir)
+    makeExcitingGRST(mpid, unitC, kpoints, conductionBands, subdir)
 
 if __name__ == '__main__':
     main()
