@@ -76,7 +76,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
         except:
             raise Exception("FAILED while trying to write input.xml")
 
-def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, filepath):
+def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
     
     # read default grst parameters from JSON file
     param_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "EXCITING",
@@ -85,6 +85,7 @@ def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, filepath):
         excitingJSON = json.load(fd)
     # set kpoints
     excitingJSON['groundstate']['ngridk']=" ".join([str(entry) for entry in kpoints])
+    excitingJSON['groundstate']['nempty']=str(nempty)
     excitingJSON['structure']={}
     excitingJSON['structure']['autormt']="True"
     # generate pymatgen structure from ASE atoms
