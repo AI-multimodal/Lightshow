@@ -20,7 +20,9 @@ setup(
         "console_scripts": [
             "fetchSingle = xanes_bench.fetchSingle:main",
             "groundState = xanes_bench.groundState:main",
-            "makeXspectraInputs = xanes_bench.makeXspectraInputs"
+            "makeXspectraInputs = xanes_bench.makeXspectraInputs",
+            "computeQErmsd = xanes_bench.computeQErmsd:main",
+            "runQE = xanes_bench.RunScripts.runQE:main",
         ]
     }
 )
