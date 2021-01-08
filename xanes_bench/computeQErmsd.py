@@ -8,7 +8,7 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 import os
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 
 #XSkptDict = dict()
 #OkptDict = dict()
@@ -121,9 +121,11 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
 
 ## Optional arguments
 # 
-def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, XSlower=0.0, Olower=0.0, bLower=-1.0 ) :
+def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, 
+             XSlower=0.0, Olower=0.0, bLower=-1.0, returnDelta=False ) :
     rmsd = np.float64( 0.0 )
     bandWeight = np.float64( 0.0 )
+    maxDelta = np.float64( 0.0 )
     for kpt in XSkptDict:
         okpt = kpt
         if kpt not in OkptDict:
@@ -163,7 +165,7 @@ def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, X
                 xsff = fermiFactor( XSeigs[j], XSupper, bUpper )
                 ff = np.sqrt( xsff * off )
             else:
-                ff - np.float64( 1.0 )
+                ff = np.float64( 1.0 )
             if bLower > 0 :
                 # Note for lower bound just flip the eigenvalue and energy cut-off
                 off = fermiFactor( Olower, Oeigs[j], bLower )
@@ -171,7 +173,13 @@ def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, X
                 ff = ff * np.sqrt( xsff * off )
             bandWeight += weight * ff
             rmsd += weight*(XSeigs[j]-Oeigs[j]+omega)**2*ff
+            m = ff*abs( XSeigs[j]-Oeigs[j]+omega )
+            if m > maxDelta:
+                maxDelta = m
 
+
+    if returnDelta:
+        return np.sqrt( rmsd/bandWeight ), maxDelta
     return np.sqrt( rmsd/bandWeight )
 
 
@@ -269,6 +277,9 @@ def parseQE( filename: str ):
     return kmesh, kshift, kmap, nelectron, energyNK, eFermi, bandClips
     
 
+
+
+
 #XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
 XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
 XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
@@ -282,9 +293,90 @@ Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileNa
 print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}. Total bands: {:d}\n"
        .format( Okmesh[0], Okmesh[1], Okmesh[2], Onelectron))
 
+print( "#    Val min   Val max  Con min  Con max  gap")
+print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018 ) )
+print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018 ) )
 
-print( "XS clips {:f} {:f} {:f} {:f} {:f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018 ) )
-print( "O  clips {:f} {:f} {:f} {:f} {:f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018 ) )
+
+print( "\nEntire valence band")
+omega = 0
+res = minimize( eigRMSD, omega, method='nelder-mead',args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xatol': 1e-8, 'disp': False})
+
+if res.success:
+    print( "Shift = {:f} eV".format(res.x[0]*Ha_c2018) )
+    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+else:
+    print( "Optmizing energy shift failed" )
+    exit()
+omega = res.x[0]
+rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam, returnDelta=True)
+#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+valenceWindowParam = 20.0
+"""
+print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
+omega = 0
+lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
+lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
+res = minimize( eigRMSD, omega, method='nelder-mead', 
+                args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam, lb1, lb2, BroadenParam), 
+                options={'xatol': 1e-8, 'disp': False})
+
+if res.success:
+    print( "Shift = {:f} eV".format(res.x[0]*Ha_c2018) )
+    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+else:
+    print( "Optmizing energy shift failed" )
+    exit()
+"""
+
+print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
+omega = 0
+lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
+lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
+res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
+if res.success:
+    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
+    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+else:
+    print( "Optmizing energy shift failed" )
+    exit()
+
+omega = res.x
+rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
+#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+
+
+for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
+    ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
+    ub2 = Oclips[2] + conductionWindowParam/Ha_c2018
+    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam, 
+                              XSeFermi, OeFermi, BroadenParam, True)
+    print( "\nConduction band with {:f} eV upper bound".format(conductionWindowParam))
+    print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+    print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+    
+
+print( "\nConduction band with moving 10 eV window")
+print( "Window RMSD (eV) Delta (eV)")
+for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0]:
+    XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
+    Omid = Oclips[2] + conductionWindowParam/Ha_c2018
+    lb1 = max( XSmid - 5.0/Ha_c2018, XSeFermi )
+    lb2 = max( Omid - 5/Ha_c2018, OeFermi )
+    ub1 = XSmid + 5.0/Ha_c2018
+    ub2 = Omid + 5.0/Ha_c2018
+    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam,
+                              lb1, lb2, BroadenParam, True)
+    print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
+
+
+exit()
+
+
 
 ### Will need to build work on per-code alignment for if XS/Ocean use different semi-core
 ### and to bring in Exciting
@@ -495,6 +587,3 @@ for kpt in XSkptDict:
 rmsd = np.sqrt( rmsd / totalWeight / nband )
 print( "Full range:       ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018 )
 
-omega = 0
-res = minimize( eigRMSD, omega, method='nelder-mead',args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xatol': 1e-8, 'disp': True})
-print( res )
