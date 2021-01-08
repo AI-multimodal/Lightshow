@@ -291,9 +291,9 @@ Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileNa
 print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}. Total bands: {:d}\n"
        .format( Okmesh[0], Okmesh[1], Okmesh[2], Onelectron))
 
-print( "#    Val min   Val max  Con min  Con max  gap")
-print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018 ) )
-print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018 ) )
+print( "#    Val min   Val max  Con min  Con max  gap  Con width")
+print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018, (XSclips[3]-XSclips[2])*Ha_c2018)  )
+print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018, (Oclips[3]-Oclips[2])*Ha_c2018 ) )
 
 
 print( "\nEntire valence band")
@@ -342,9 +342,9 @@ for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
     print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
     
 
-print( "\nConduction band with moving 10 eV window")
+print( "\nConduction band with moving 15 eV window")
 print( "Window RMSD (eV) Delta (eV)")
-for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0]:
+for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
     XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
     Omid = Oclips[2] + conductionWindowParam/Ha_c2018
     lb1 = max( XSmid - 5.0/Ha_c2018, XSeFermi )
