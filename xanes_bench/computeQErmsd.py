@@ -8,10 +8,8 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 import os
-from scipy.optimize import minimize, minimize_scalar
+from scipy.optimize import minimize_scalar
 
-#XSkptDict = dict()
-#OkptDict = dict()
 
 # Hartree to eV based on 2018 CODATA
 Ha_c2018 = np.float64( 27.211386245988 )
@@ -300,36 +298,20 @@ print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, 
 
 print( "\nEntire valence band")
 omega = 0
-res = minimize( eigRMSD, omega, method='nelder-mead',args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xatol': 1e-8, 'disp': False})
-
+res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
 if res.success:
-    print( "Shift = {:f} eV".format(res.x[0]*Ha_c2018) )
+    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
     print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
 else:
     print( "Optmizing energy shift failed" )
     exit()
-omega = res.x[0]
+
+omega = res.x
 rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam, returnDelta=True)
 #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
 print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
 
 valenceWindowParam = 20.0
-"""
-print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
-omega = 0
-lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
-lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
-res = minimize( eigRMSD, omega, method='nelder-mead', 
-                args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam, lb1, lb2, BroadenParam), 
-                options={'xatol': 1e-8, 'disp': False})
-
-if res.success:
-    print( "Shift = {:f} eV".format(res.x[0]*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
-"""
 
 print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
 omega = 0
@@ -372,218 +354,4 @@ for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0]:
     rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam,
                               lb1, lb2, BroadenParam, True)
     print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
-
-
-exit()
-
-
-
-### Will need to build work on per-code alignment for if XS/Ocean use different semi-core
-### and to bring in Exciting
-nelectron = XSnelectron
-occBands = int( nelectron / 2 )
-nband = len( XSkptDict[list(XSkptDict.keys())[0]]["eigenvalues"] )
-
-
-    
-# First calculate the RMSD over the occupied states
-rmsd = np.float64( 0.0 )
-totalWeight = np.float64( 0.0 )
-
-for kpt in XSkptDict:
-    okpt = kpt
-    if kpt not in OkptDict:
-        if kpt not in Okmap:
-            print(kpt)
-            print(list(Okmap.keys()))
-            print( "Incompatible k-point meshes!" )
-            exit()
-        else:
-# The method used below for the full range is probably better/faster
-            for testKpt in OkptDict:
-                for i in Okmap[testKpt]:
-#                    print( i, kpt )
-                    if i == kpt:
-#                        print( "Success: ", testKpt, kpt )
-                        okpt = testKpt
-                        break
-        if okpt == kpt:
-            print( "Incompatible k-point meshes!" )
-            print( kpt )
-            print( Okmap[kpt] )
-            print("############")
-            print( list(OkptDict.keys()))
-            print("############")
-            for testKpt in Okmap[kpt]:
-                print( Okmap[testKpt] )
-            exit()
-
-    weight = np.float64( XSkptDict[kpt]["weight"] )
-    totalWeight += weight
-#    print( weight, totalWeight )
-
-    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
-
-    for j in range( occBands ):
-        rmsd += weight*(XSeigs[j]-Oeigs[j])**2
-
-rmsd = np.sqrt( rmsd / totalWeight / occBands )
-print( "Occupied :        ", rmsd, rmsd*Ha_c2018)
-
-# SSSP
-rmsd = np.float64( 0.0 )
-totalWeight = np.float64( 0.0 )
-bandWeight = 0
-maxDelta = 0
-
-for kpt in XSkptDict:
-    okpt = kpt
-    if kpt not in OkptDict:
-        if kpt not in Okmap:
-            print(kpt)
-            print(list(Okmap.keys()))
-            print( "Incompatible k-point meshes!" )
-            exit()
-        else:
-# The method used below for the full range is probably better/faster
-            for testKpt in OkptDict:
-                for i in Okmap[testKpt]:
-#                    print( i, kpt )
-                    if i == kpt:
-#                        print( "Success: ", testKpt, kpt )
-                        okpt = testKpt
-                        break
-        if okpt == kpt:
-            print( "Incompatible k-point meshes!" )
-            print( kpt )
-            print( Okmap[kpt] )
-            print("############")
-            print( list(OkptDict.keys()))
-            print("############")
-            for testKpt in Okmap[kpt]:
-                print( Okmap[testKpt] )
-            exit()
-
-    weight = np.float64( XSkptDict[kpt]["weight"] )
-    totalWeight += weight
-#    print( weight, totalWeight )
-
-    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
-
-    for j in range( len( Oeigs )  ):
-#        print( Oeigs[j], OeFermi, BroadenParam )
-        off = fermiFactor( Oeigs[j], OeFermi, BroadenParam )
-        xsff = fermiFactor( XSeigs[j], XSeFermi, BroadenParam )
-        ff = np.sqrt( xsff * off )
-        bandWeight += weight * ff
-        rmsd += weight*(XSeigs[j]-Oeigs[j])**2*ff
-        if ff > 0.01:
-            if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
-                maxDelta = abs( XSeigs[j]-Oeigs[j] )
-
-
-
-#rmsd = np.sqrt( rmsd / totalWeight / occBands )
-rmsd = np.sqrt( rmsd / bandWeight )
-print( "Occupied (SSSP):  ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018)
-
-
-# SSSP
-rmsd = np.float64( 0.0 )
-totalWeight = np.float64( 0.0 )
-bandWeight = np.float64( 0.0 )
-maxDelta = 0
-
-for kpt in XSkptDict:
-    okpt = kpt
-    if kpt not in OkptDict:
-        if kpt not in Okmap:
-            print(kpt)
-            print(list(Okmap.keys()))
-            print( "Incompatible k-point meshes!" )
-            exit()
-        else:
-# The method used below for the full range is probably better/faster
-            for testKpt in OkptDict:
-                for i in Okmap[testKpt]:
-#                    print( i, kpt )
-                    if i == kpt:
-#                        print( "Success: ", testKpt, kpt )
-                        okpt = testKpt
-                        break
-        if okpt == kpt:
-            print( "Incompatible k-point meshes!" )
-            print( kpt )
-            print( Okmap[kpt] )
-            print("############")
-            print( list(OkptDict.keys()))
-            print("############")
-            for testKpt in Okmap[kpt]:
-                print( Okmap[testKpt] )
-            exit()
-
-    weight = np.float64( XSkptDict[kpt]["weight"] )
-    totalWeight += weight
-#    print( weight, totalWeight )
-
-    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
-
-    for j in range( len( Oeigs )  ):
-#        print( Oeigs[j], OeFermi, BroadenParam )
-        off = fermiFactor( Oeigs[j], OeFermi+10/Ha_c2018, BroadenParamMetal )
-        xsff = fermiFactor( XSeigs[j], XSeFermi+10/Ha_c2018, BroadenParamMetal )
-        ff = np.sqrt( xsff * off )
-        bandWeight += weight * ff
-        rmsd += weight*(XSeigs[j]-Oeigs[j])**2*ff
-        if ff > 0.01:
-            if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
-                maxDelta = abs( XSeigs[j]-Oeigs[j] )
-
-
-
-#rmsd = np.sqrt( rmsd / totalWeight / occBands )
-rmsd = np.sqrt( rmsd / bandWeight )
-print( "Occ + 10 (SSSP):  ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018)
-
-
-# Now calculate the RMSD over all the states
-rmsd = np.float64( 0.0 )
-totalWeight = np.float64( 0.0 )
-maxDelta = 0
-
-
-for kpt in XSkptDict:
-    okpt = kpt
-    if kpt not in OkptDict:
-        if kpt not in Okmap:
-            print( "Incompatible k-point meshes!" )
-            exit()
-        else:
-            if kpt not in Okmap:
-                print( "Incompatible k-point meshes!" )
-                exit()
-            for testKpt in Okmap[kpt]:
-                if testKpt in OkptDict:
-                    okpt = testKpt
-                    break
-        if okpt == kpt:
-            print( "Incompatible k-point meshes!" )
-            exit()
-
-    weight = np.float64( XSkptDict[kpt]["weight"] )
-    totalWeight += weight
-
-    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
-    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
-
-    for j in range( len( Oeigs ) ):
-        rmsd += weight*(XSeigs[j]-Oeigs[j])**2
-        if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
-            maxDelta = abs( XSeigs[j]-Oeigs[j] )
-
-rmsd = np.sqrt( rmsd / totalWeight / nband )
-print( "Full range:       ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018 )
 
