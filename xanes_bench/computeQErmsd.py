@@ -8,13 +8,28 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 import os
+from scipy.optimize import minimize
 
 #XSkptDict = dict()
 #OkptDict = dict()
 
 # Hartree to eV based on 2018 CODATA
 Ha_c2018 = np.float64( 27.211386245988 )
+BroadenParam = 0.01 / Ha_c2018
+BroadenParamMetal = 0.3 / Ha_c2018
 
+
+# Broadening cannot be 0!
+def fermiFactor( eig, eFermi, broaden ):
+#    ff = ( eig - eFermi )/broaden
+    s = (eig - eFermi )/broaden
+    if s > 20:
+        ff = np.exp( -s ) + np.exp( -2.0*s)
+    elif s < -20 :
+        ff = 1.0 - np.exp( s ) + np.exp( 2.0*s)
+    else:
+        ff = 1.0 / ( np.exp( s ) + 1 )
+    return ff
 
 # This takes the k-point mesh nk (and eventually its shift kshift)
 # And then using the rotation matrixes sym
@@ -99,6 +114,66 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
     return kpointFullMap
 
 
+# Function for calculating the rmsd between two sets of energies
+#TODO better error handling?
+# omega is the relative offset between them
+# XSkptDict and OkptDict are dictionaries containing the two sets of energies
+
+## Optional arguments
+# 
+def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, XSlower=0.0, Olower=0.0, bLower=-1.0 ) :
+    rmsd = np.float64( 0.0 )
+    bandWeight = np.float64( 0.0 )
+    for kpt in XSkptDict:
+        okpt = kpt
+        if kpt not in OkptDict:
+            if kpt not in Okmap:
+                print(kpt)
+                print(list(Okmap.keys()))
+                print( "Incompatible k-point meshes!" )
+                exit()
+            else:
+    # The method used below for the full range is probably better/faster
+                for testKpt in OkptDict:
+                    for i in Okmap[testKpt]:
+    #                    print( i, kpt )
+                        if i == kpt:
+    #                        print( "Success: ", testKpt, kpt )
+                            okpt = testKpt
+                            break
+            if okpt == kpt:
+                print( "Incompatible k-point meshes!" )
+                print( kpt )
+                print( Okmap[kpt] )
+                print("############")
+                print( list(OkptDict.keys()))
+                print("############")
+                for testKpt in Okmap[kpt]:
+                    print( Okmap[testKpt] )
+                exit()
+
+        weight = np.float64( XSkptDict[kpt]["weight"] )
+
+        XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+        Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
+
+        for j in range( len( Oeigs )  ):
+            if bUpper > 0 :
+                off = fermiFactor( Oeigs[j], Oupper, bUpper )
+                xsff = fermiFactor( XSeigs[j], XSupper, bUpper )
+                ff = np.sqrt( xsff * off )
+            else:
+                ff - np.float64( 1.0 )
+            if bLower > 0 :
+                # Note for lower bound just flip the eigenvalue and energy cut-off
+                off = fermiFactor( Olower, Oeigs[j], bLower )
+                xsff = fermiFactor( XSlower, XSeigs[j], bLower )
+                ff = ff * np.sqrt( xsff * off )
+            bandWeight += weight * ff
+            rmsd += weight*(XSeigs[j]-Oeigs[j]+omega)**2*ff
+
+    return np.sqrt( rmsd/bandWeight )
+
 
 #def parseQE( filename: str, kmesh: np.array, kshift: np.array, kmap: dict, nelectron: int, energyNK: dict ):
 # Opens the QE output xml file filename
@@ -130,6 +205,13 @@ def parseQE( filename: str ):
     # rounding fudge to avoid -0
     delta = np.float64( 0.0000000000001 )
 
+    # Grab Fermi
+    #TODO deal with insulating case if we make changes
+    eFermi = float(root.find('output').find('band_structure').find('fermi_energy').text)
+    valMin = np.finfo(np.float64 ).max
+    valMax = np.finfo(np.float64 ).min
+    condMin = np.finfo(np.float64 ).max
+    condMax = np.finfo(np.float64 ).min
     
     energyNK = dict()
     # Now parse and store the first run
@@ -150,6 +232,17 @@ def parseQE( filename: str ):
         energyNK[kvecString] = dict()
         energyNK[kvecString]["weight"] = weight
         energyNK[kvecString]["eigenvalues"] = eigs
+        for e in np.asarray( eigs, dtype=np.float64 ):
+            if e <= eFermi:
+                if e > valMax:
+                    valMax = e
+                if e < valMin:
+                    valMin = e
+            else:
+                if e > condMax:
+                    condMax = e
+                if e < condMin:
+                    condMin = e
 #        print( kvecString )
         
 
@@ -157,6 +250,7 @@ def parseQE( filename: str ):
     kdict = root.find('input').find('k_points_IBZ')[0].attrib
     kmesh = np.array( [kdict['nk1'], kdict['nk2'], kdict['nk3']], dtype=int )
     kshift = np.array( [kdict['k1'], kdict['k2'], kdict['k3']], dtype=int )
+
 
 
     # Now make symmetry matrices 
@@ -169,20 +263,28 @@ def parseQE( filename: str ):
 
     # make kmap dictionary
     kmap = mapFullKpoints( kmesh, kshift, sym )
-    return kmesh, kshift, kmap, nelectron, energyNK
+
+    bandClips = [ valMin, valMax, condMin, condMax ]
+
+    return kmesh, kshift, kmap, nelectron, energyNK, eFermi, bandClips
     
 
-XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
-XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict = parseQE( XSfileName )
+#XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
+XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
+XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
 print( "XS parsed.    K-point mesh: {:d} {:d} {:d}. Total bands: {:d}\n"
        .format( XSkmesh[0],XSkmesh[1],XSkmesh[2], XSnelectron))
 
 
-OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
-Okmesh, Okshift, Okmap, Onelectron, OkptDict = parseQE( OfileName )
+#OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
+OfileName = os.path.join( "./OCEAN", "groundState", "nscf", "pwscf.xml" )
+Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileName )
 print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}. Total bands: {:d}\n"
        .format( Okmesh[0], Okmesh[1], Okmesh[2], Onelectron))
 
+
+print( "XS clips {:f} {:f} {:f} {:f} {:f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018 ) )
+print( "O  clips {:f} {:f} {:f} {:f} {:f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018 ) )
 
 ### Will need to build work on per-code alignment for if XS/Ocean use different semi-core
 ### and to bring in Exciting
@@ -235,13 +337,131 @@ for kpt in XSkptDict:
         rmsd += weight*(XSeigs[j]-Oeigs[j])**2
 
 rmsd = np.sqrt( rmsd / totalWeight / occBands )
-print( "Occupied :  ", rmsd, rmsd*Ha_c2018)
+print( "Occupied :        ", rmsd, rmsd*Ha_c2018)
 
+# SSSP
+rmsd = np.float64( 0.0 )
+totalWeight = np.float64( 0.0 )
+bandWeight = 0
+maxDelta = 0
+
+for kpt in XSkptDict:
+    okpt = kpt
+    if kpt not in OkptDict:
+        if kpt not in Okmap:
+            print(kpt)
+            print(list(Okmap.keys()))
+            print( "Incompatible k-point meshes!" )
+            exit()
+        else:
+# The method used below for the full range is probably better/faster
+            for testKpt in OkptDict:
+                for i in Okmap[testKpt]:
+#                    print( i, kpt )
+                    if i == kpt:
+#                        print( "Success: ", testKpt, kpt )
+                        okpt = testKpt
+                        break
+        if okpt == kpt:
+            print( "Incompatible k-point meshes!" )
+            print( kpt )
+            print( Okmap[kpt] )
+            print("############")
+            print( list(OkptDict.keys()))
+            print("############")
+            for testKpt in Okmap[kpt]:
+                print( Okmap[testKpt] )
+            exit()
+
+    weight = np.float64( XSkptDict[kpt]["weight"] )
+    totalWeight += weight
+#    print( weight, totalWeight )
+
+    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
+
+    for j in range( len( Oeigs )  ):
+#        print( Oeigs[j], OeFermi, BroadenParam )
+        off = fermiFactor( Oeigs[j], OeFermi, BroadenParam )
+        xsff = fermiFactor( XSeigs[j], XSeFermi, BroadenParam )
+        ff = np.sqrt( xsff * off )
+        bandWeight += weight * ff
+        rmsd += weight*(XSeigs[j]-Oeigs[j])**2*ff
+        if ff > 0.01:
+            if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
+                maxDelta = abs( XSeigs[j]-Oeigs[j] )
+
+
+
+#rmsd = np.sqrt( rmsd / totalWeight / occBands )
+rmsd = np.sqrt( rmsd / bandWeight )
+print( "Occupied (SSSP):  ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018)
+
+
+# SSSP
+rmsd = np.float64( 0.0 )
+totalWeight = np.float64( 0.0 )
+bandWeight = np.float64( 0.0 )
+maxDelta = 0
+
+for kpt in XSkptDict:
+    okpt = kpt
+    if kpt not in OkptDict:
+        if kpt not in Okmap:
+            print(kpt)
+            print(list(Okmap.keys()))
+            print( "Incompatible k-point meshes!" )
+            exit()
+        else:
+# The method used below for the full range is probably better/faster
+            for testKpt in OkptDict:
+                for i in Okmap[testKpt]:
+#                    print( i, kpt )
+                    if i == kpt:
+#                        print( "Success: ", testKpt, kpt )
+                        okpt = testKpt
+                        break
+        if okpt == kpt:
+            print( "Incompatible k-point meshes!" )
+            print( kpt )
+            print( Okmap[kpt] )
+            print("############")
+            print( list(OkptDict.keys()))
+            print("############")
+            for testKpt in Okmap[kpt]:
+                print( Okmap[testKpt] )
+            exit()
+
+    weight = np.float64( XSkptDict[kpt]["weight"] )
+    totalWeight += weight
+#    print( weight, totalWeight )
+
+    XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+    Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
+
+    for j in range( len( Oeigs )  ):
+#        print( Oeigs[j], OeFermi, BroadenParam )
+        off = fermiFactor( Oeigs[j], OeFermi+10/Ha_c2018, BroadenParamMetal )
+        xsff = fermiFactor( XSeigs[j], XSeFermi+10/Ha_c2018, BroadenParamMetal )
+        ff = np.sqrt( xsff * off )
+        bandWeight += weight * ff
+        rmsd += weight*(XSeigs[j]-Oeigs[j])**2*ff
+        if ff > 0.01:
+            if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
+                maxDelta = abs( XSeigs[j]-Oeigs[j] )
+
+
+
+#rmsd = np.sqrt( rmsd / totalWeight / occBands )
+rmsd = np.sqrt( rmsd / bandWeight )
+print( "Occ + 10 (SSSP):  ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018)
 
 
 # Now calculate the RMSD over all the states
 rmsd = np.float64( 0.0 )
 totalWeight = np.float64( 0.0 )
+maxDelta = 0
+
 
 for kpt in XSkptDict:
     okpt = kpt
@@ -269,6 +489,12 @@ for kpt in XSkptDict:
 
     for j in range( len( Oeigs ) ):
         rmsd += weight*(XSeigs[j]-Oeigs[j])**2
+        if abs( XSeigs[j]-Oeigs[j] ) > maxDelta:
+            maxDelta = abs( XSeigs[j]-Oeigs[j] )
 
 rmsd = np.sqrt( rmsd / totalWeight / nband )
-print( "Full range: ", rmsd, rmsd*Ha_c2018 )
+print( "Full range:       ", rmsd, rmsd*Ha_c2018, maxDelta*Ha_c2018 )
+
+omega = 0
+res = minimize( eigRMSD, omega, method='nelder-mead',args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xatol': 1e-8, 'disp': True})
+print( res )
