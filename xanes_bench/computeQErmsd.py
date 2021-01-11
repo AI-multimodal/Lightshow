@@ -281,15 +281,15 @@ def parseQE( filename: str ):
 #XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
 XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
 XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
-print( "XS parsed.    K-point mesh: {:d} {:d} {:d}. Total bands: {:d}\n"
-       .format( XSkmesh[0],XSkmesh[1],XSkmesh[2], XSnelectron))
+print( "XS parsed.    K-point mesh: {:d} {:d} {:d}.\n"
+       .format( XSkmesh[0],XSkmesh[1],XSkmesh[2]))
 
 
 #OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
 OfileName = os.path.join( "./OCEAN", "groundState", "nscf", "pwscf.xml" )
 Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileName )
-print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}. Total bands: {:d}\n"
-       .format( Okmesh[0], Okmesh[1], Okmesh[2], Onelectron))
+print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}.\n"
+       .format( Okmesh[0], Okmesh[1], Okmesh[2] ))
 
 print( "#    Val min   Val max  Con min  Con max  gap  Con width")
 print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018, (XSclips[3]-XSclips[2])*Ha_c2018)  )
@@ -347,10 +347,10 @@ print( "Window RMSD (eV) Delta (eV)")
 for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
     XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
     Omid = Oclips[2] + conductionWindowParam/Ha_c2018
-    lb1 = max( XSmid - 5.0/Ha_c2018, XSeFermi )
-    lb2 = max( Omid - 5/Ha_c2018, OeFermi )
-    ub1 = XSmid + 5.0/Ha_c2018
-    ub2 = Omid + 5.0/Ha_c2018
+    lb1 = max( XSmid - 7.5/Ha_c2018, XSeFermi )
+    lb2 = max( Omid - 7.5/Ha_c2018, OeFermi )
+    ub1 = XSmid + 7.5/Ha_c2018
+    ub2 = Omid + 7.5/Ha_c2018
     rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam,
                               lb1, lb2, BroadenParam, True)
     print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))

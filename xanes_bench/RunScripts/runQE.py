@@ -234,6 +234,23 @@ def runPW( rundir: str, clusterJSON: dict ):
         if os.path.isdir(bandDir):
             shutil.rmtree(bandDir)
         shutil.move('pwscf.save', bandDir )    
+
+
+    # Run DOS calculation    
+    dos = pathlib.Path( clusterJSON["QE_BIN"], "dos.x" )
+    print( "Run DOS with {:d} MPI tasks".format( clusterJSON["MPI"] ))
+    run = subprocess.run([clusterJSON["para_prefix"], clusterJSON["task_flag"],str(clusterJSON["MPI"]),
+                          dos,"-inp","dos.in"], capture_output=True,text=True)
+
+    # Write out the output file, and if non-zero, the errors
+    with open( 'dos.out', 'w' ) as fd:
+        fd.write(run.stdout)
+    if len( run.stderr ) > 0 :
+        with open( 'dos.err', 'w' ) as fd:
+            fd.write(run.stderr)
+
+
+  
         
 
 def main():
