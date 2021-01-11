@@ -56,6 +56,15 @@ def collectPW( rundir: str, savedir: str ):
     shutil.copyfile( 'nscf.out', os.path.join(targDir, 'nscf.out') )
     shutil.copyfile( xmlFile, os.path.join(targDir, 'pwscf.xml' ) )
 
+    # DOS, but drop into NSCF
+    for f in ["dos.in", "dos.out", "nscf.dos"]:
+        if not os.path.isfile(f):
+            print( "Failed to find {:s}".format(f) )
+            exit()
+        else:
+            shutil.copyfile( f,  os.path.join(targDir, f ) )
+
+
     bandList = glob.glob("nscf_band*.in")
 
     for bandFile in bandList:
