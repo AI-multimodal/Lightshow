@@ -7,7 +7,8 @@
             "calculation": "scf",
             "tstress": true,
             "tprnfor": true,
-            "pseudo_dir": "./"
+            "pseudo_dir": "./",
+            "verbosity": "high"
         },
         "electrons": {
             "conv_thr": 1e-08,
