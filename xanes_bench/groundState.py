@@ -1,4 +1,6 @@
 # coding: latin-1
+#TODO
+# 1. Remove hard-coded values in DOS and conduction band construction
   
 import json
 import sys
@@ -30,7 +32,7 @@ def getCondBands( volume, eRange):
     return round( 0.256 * volume * ( eRange**(3/2) ) )
 
 #TODO add types for a bit of help
-def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints ):
+def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
 
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
@@ -95,13 +97,13 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints
 
 
     # Write NSCF input for DOS (regular k-point mesh)
-    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + NSCFBands )
     qeJSON['QE']['control']['calculation'] = 'nscf'
     qeJSON['QE']['control']['tstress'] = False
     qeJSON['QE']['control']['tprnfor'] = False
     qeJSON['QE']['electrons']['diago_full_acc'] = True
-    # This is new option as of 6.6, but should failsafe to default in earlier
-    qeJSON['QE']['control']['disk_io'] = 'nowf'
+#   # This is new option as of 6.6, but should failsafe to default in earlier
+#    qeJSON['QE']['control']['disk_io'] = 'nowf'
 
     try:
         write(str(folder / "nscf.in"), unitC, format='espresso-in',
@@ -111,6 +113,7 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints
         raise Exception("FAILED while trying to write nscf.in")
 
 
+    qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + conductionBands )
     # Now we want the band struture version
     #TODO revist number of bands?
     #TODO This is a hack to get around lack of k-path support
@@ -183,6 +186,12 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, conductionBands, kpoints
             f.write( KString )
 
 
+    #TODO move these options to the json
+    with open ( str( folder / "dos.in") , 'w' ) as f:
+        f.write("&DOS\n  outdir = './'\n  prefix = 'nscf'\n  fildos = 'nscf.dos'\n  degauss = 0.018374661087827\n  deltaE = 0.02\n/\n")
+    
+
+
 
 
     
@@ -224,8 +233,9 @@ def main():
             json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
     
+    NSCFBands = getCondBands( unitC.get_volume(), 3.5 )
     conductionBands = getCondBands( unitC.get_volume(), 1.5 )
-    print( "Conduction bands: ", conductionBands )
+    print( "Conduction bands: ", NSCFBands, conductionBands )
     
     # Grab and parse k-point information
     # TODO error checking
@@ -266,12 +276,12 @@ def main():
     # subdir says where to put the input and psps 
     subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mpid, "XS", "groundState")
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, conductionBands, kpoints )
+    writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
 
 
     subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "OCEAN", "groundState" )
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, conductionBands, kpoints )
+    writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
 
     #TODO should be able to add in calls to exciting io here
 
