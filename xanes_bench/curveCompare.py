@@ -33,10 +33,17 @@ def CosSimilar( omega, plot1, plot2, inverse=False ):
 
 
 
-def comparePlots( saveFiles ):
+def comparePlots( saveFiles, shiftAvg=True ):
 
     plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
     plot2 = np.loadtxt( saveFiles[1],  dtype=np.float64, usecols=(0,1))
+
+    if shiftAvg:
+        plot1Avg = np.mean( plot1[:,1] )
+        plot1[:,1] = plot1[:,1] - plot1Avg
+        plot2Avg = np.mean( plot2[:,1] )
+        plot2[:,1] = plot2[:,1] - plot2Avg
+
 
     omega = 0.0
     cosSimilarity = CosSimilar( omega, plot1, plot2 )
