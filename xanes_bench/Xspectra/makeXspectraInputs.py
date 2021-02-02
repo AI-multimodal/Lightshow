@@ -197,7 +197,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
           write(str(subfolder / "es.in"), atoms, format='espresso-in',
-              input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
+              input_data=xsJSON['QE'], pseudopotentials=psp)
 
           # OCEAN photon labeling is continuous, so we will do that here too
           #  not sure that we will actually want dipole-only spectra(?)
