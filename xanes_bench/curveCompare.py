@@ -8,7 +8,17 @@ import os
 from os import environ as env
 
 
-
+# Function to calculate the cosine similarity between two curves (vectors)
+# omega: relative energy shift between the two curves
+# plot1: curve one as a numpy array, plot1[:,0] are the energies, plot1[:,1] are the values
+# plot2: same as plot1
+# inverse: boolean to return (1 - cosine similarity) instead (useful for optimization)
+#
+# plot1 and plot2 don't need to be on the same energy grid, a cubic interpolation is used
+#
+# LIMITATIONS: 
+# 1. Assumes that the plots are on uniform energy grids, otherwise the cossimilarity should include a dx(?)
+#
 def CosSimilar( omega, plot1, plot2, inverse=False ):
     interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
                                     bounds_error=False, fill_value=0.0 )
@@ -32,7 +42,17 @@ def CosSimilar( omega, plot1, plot2, inverse=False ):
 
 
 
-
+# Takes a list of two files, assumes both files are formated with two columns 
+# compares the two datasets using cosineSimilarity
+#
+# saveFiles: list of files to read
+# shiftAvg: Option to shift the y-values of each data set such that the average value is 0
+#
+#TODO: 
+#  1. Column flexibility, e.g., 1:3 [(0,2)]
+#  2. Different comparison methods
+#  3. Default shift for the search
+#
 def comparePlots( saveFiles, shiftAvg=True ):
 
     plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
