@@ -77,6 +77,8 @@ def parsePWforParal( stdout: str, runText: str, maxMem: int, maxCPU: int ):
                 # Will break if fewer than 1 band per processor in a pool
                 if tcpus/tPool > KSstates:
                     continue
+                if tPool > NKpoints:
+                    continue
                 tScore = NKpoints/(tPool*math.ceil(NKpoints/tPool)) \
                        * ( 1.0-0.02*tcpus/tPool ) * tcpus/maxCPU
                 if tScore > bestScore:
@@ -181,7 +183,7 @@ def runPW( rundir: str, clusterJSON: dict ):
 
             
     # TODO loop over k-point paths, but for now, just run the first
-    bandList = glob.glob("nscf_band*.in")
+    bandList = sorted(glob.glob("nscf_band*.in"))
     print( "Run NSCF for {:d} band segments".format(len(bandList)))
     bandIter = 0
 
@@ -200,7 +202,7 @@ def runPW( rundir: str, clusterJSON: dict ):
 
 
         pathlib.Path("pwscf.EXIT").touch()
-        print( "Test NSCF band 1")
+        print( "Test NSCF band", bandFile)
         run = subprocess.run([clusterJSON["para_prefix"], clusterJSON["task_flag"],"1", 
                               pw,"-inp",bandFile],
                             capture_output=True,text=True)
@@ -256,7 +258,7 @@ def runPW( rundir: str, clusterJSON: dict ):
 def main():
 
     mpid = "mp-" + input("Input the mp number: ")
-    program = input("[O]cean, [X]spectra, or [E]xciting? ")
+    program = input("[O]cean, [X]spectra, and/or [E]xciting? ")
     method = 'g'
     print ("Method hardwired for ground state!")
 
@@ -269,24 +271,34 @@ def main():
         print("Couldn't find ", subdir )
         exit()
 
-
-    if( program[0] == 'O' or program[0] == 'o' ):
-        rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
-        if not os.path.isdir(rundir):
-            print("Couldn't find ", rundir )
-            exit()
-        runPW( rundir, clusterJSON )
-    elif( program[0] == 'X' or program[0] == 'x' ):
-        rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
-        if not os.path.isdir(rundir):
-            print("Couldn't find ", rundir )
-            exit()
-        runPW( rundir, clusterJSON )
-    elif( program[0] == 'E' or program[0] == 'e' ):
-        print("Exciting not implemented!")
-        exit()
-    else:
-        print( "Didn't recognize program selected: ", program )
+    # Maybe make this more robust to keep someone from running 'ooooooooooo', but for now ...
+    #  ie, could use a hash/dictionary
+    for p in program:
+        if( p == 'O' or p == 'o' ):
+            print( "Running OCEAN" )
+            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
+            if not os.path.isdir(rundir):
+                print("Couldn't find ", rundir )
+                exit()
+            runPW( rundir, clusterJSON )
+            print( "OCEAN complete" )
+            print( "######################" )
+        elif( p == 'X' or p == 'x' ):
+            print( "Running Xspectra" )
+            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
+            if not os.path.isdir(rundir):
+                print("Couldn't find ", rundir )
+                exit()
+            runPW( rundir, clusterJSON )
+            print( "Xspectra complete" )
+            print( "######################" )
+        elif( p == 'E' or p == 'e' ):
+            print("Exciting not implemented!")
+#            exit()
+            print( "EXCITING complete" )
+            print( "######################" )
+        else:
+            print( "Didn't recognize program selected: ", p )
 
 
 if __name__ == '__main__':
