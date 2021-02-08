@@ -113,6 +113,52 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
             kpointFullMap[kvecString] = newList
     return kpointFullMap
 
+def eigPrint( omega, XSkptDict, OkptDict, Okmap ):
+    k = 0
+    for kpt in XSkptDict:
+        k += 1
+        okpt = kpt
+        if kpt not in OkptDict:
+            if kpt not in Okmap:
+                print(kpt)
+                print(list(Okmap.keys()))
+                print( "Incompatible k-point meshes!" )
+                exit()
+            else:
+    # The method used below for the full range is probably better/faster
+                for testKpt in OkptDict:
+                    for i in Okmap[testKpt]:
+    #                    print( i, kpt )
+                        if i == kpt:
+                            print( "Success: ", testKpt, kpt )
+                            okpt = testKpt
+                            break
+            if okpt == kpt:
+                print( "Incompatible k-point meshes!" )
+                print( kpt )
+                print( Okmap[kpt] )
+                print("############")
+                print( list(OkptDict.keys()))
+                print("############")
+                for testKpt in Okmap[kpt]:
+                    print( Okmap[testKpt] )
+                exit()
+
+        weight = np.float64( XSkptDict[kpt]["weight"] )
+
+        XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+        Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
+
+        print( "#####" )
+        print( kpt )
+        print( okpt )
+        print( "#####" )
+        for j in range( min(len( Oeigs ), len(XSeigs) )  ):
+            print( "{:16.8f} {:16.8f} {:16.8f} {:16.8f}".format( XSeigs[j], XSeigs[j]+omega, Oeigs[j], (XSeigs[j]-Oeigs[j]+omega)*Ha_c2018 ) )
+
+        if k > 1:
+            break
+
 
 # Function for calculating the rmsd between two sets of energies
 #TODO better error handling?
@@ -283,7 +329,8 @@ def parseEXCITING( filepath: str ):
     kdata_ = np.genfromtxt(os.path.join( filepath, "KPOINTS.OUT" ),
             skip_header=1)
     kvec_ = np.zeros((kdata_.shape[0],4))
-    kvec_[:,:] = kdata_[:,[3,2,1,4]]
+    kvec_[:,:] = kdata_[:,[1,2,3,4]]
+#    kvec_[:,:] = kdata_[:,[3,2,1,4]]
     #kvec_[:,:] = kdata_[:,1:5]
     
     ExkptDict = dict()
@@ -430,6 +477,9 @@ omega = res.x
 rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
 #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
 print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+#eigPrint( omega, EXkptDict, OkptDict, Okmap )
+#exit()
 
 
 for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
