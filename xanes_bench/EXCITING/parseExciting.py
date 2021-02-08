@@ -31,7 +31,7 @@ def readEigval(filename):
             bdata.append(float(line.split()[1]))
             bdata2.append(float(line.split()[2]))
         elif (nr == 3+(4+nstsv)*(block-1)+1):
-            kvec.append('{:18.10f} {:18.10f} {:18.10f}'.format(
+            kvec.append('{:16.8f} {:16.8f} {:16.8f}'.format(
                 float(line.split()[3]),
                 float(line.split()[2]), float(line.split()[1])))
         elif (nr == 3+(4+nstsv)*block):
