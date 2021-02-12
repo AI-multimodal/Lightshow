@@ -104,26 +104,26 @@ def main():
         print("Couldn't find ", subdir )
         exit()
 
-
-    if( program[0] == 'O' or program[0] == 'o' ):
-        rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
-        savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'OCEAN', 'groundState' )
-        if not os.path.isdir(rundir):
-            print("Couldn't find ", rundir )
+    for p in program:
+        if( p == 'O' or p == 'o' ):
+            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
+            savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'OCEAN', 'groundState' )
+            if not os.path.isdir(rundir):
+                print("Couldn't find ", rundir )
+                exit()
+            collectPW( rundir, savedir )
+        elif( p == 'X' or p == 'x' ):
+            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
+            savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'XS', 'groundState' )
+            if not os.path.isdir(rundir):
+                print("Couldn't find ", rundir )
+                exit()
+            collectPW( rundir, savedir )
+        elif( p == 'E' or p == 'e' ):
+            print("Exciting not implemented!")
             exit()
-        collectPW( rundir, savedir )
-    elif( program[0] == 'X' or program[0] == 'x' ):
-        rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
-        savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'XS', 'groundState' )
-        if not os.path.isdir(rundir):
-            print("Couldn't find ", rundir )
-            exit()
-        collectPW( rundir, savedir )
-    elif( program[0] == 'E' or program[0] == 'e' ):
-        print("Exciting not implemented!")
-        exit()
-    else:
-        print( "Didn't recognize program selected: ", program )
+        else:
+            print( "Didn't recognize program selected: ", program )
 
 
 if __name__ == '__main__':
