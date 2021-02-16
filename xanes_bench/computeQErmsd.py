@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import os
 from os import environ as env
+from os import path
 from scipy.optimize import minimize_scalar
 
 from xanes_bench.EXCITING.parseExciting import readEigval
@@ -421,6 +422,30 @@ def main():
             nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
             AllData.append( dict( { "Name" : "EXCITING", "nElectron" : nelectron, "kptDict" : kptDict, 
                                     "eFermi" : eFermi, "clips" : clips } ))
+
+        elif( p == 'C' or p == 'c' ):
+            customDirName = input("Input the custom directory name: ")
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
+                                    'groundState', "nscf", "pwscf.xml" )
+            if ( path.exists( os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
+                                    'groundState', "nscf", "pwscf.xml" ) ) ):
+                fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
+                                    'groundState', "nscf", "pwscf.xml" )
+                kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
+                AllData.append( dict( { "Name" : "OCEAN", "nElectron" : nelectron,
+                                        "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips,
+                                        "kmesh" : kmesh, "kshift" : kshift, "kmap" : kmap } ) )
+            elif ( path.exists( os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
+                                    'groundState', "KPOINTS.OUT" ) ) ):
+                fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
+                                    'groundState' )
+                nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
+                AllData.append( dict( { "Name" : "EXCITING", "nElectron" : nelectron, "kptDict" : kptDict,
+                                        "eFermi" : eFermi, "clips" : clips } ) )
+            else :
+                print("Failed to parse custom options")
+        else:
+            print("Unrecognized program options")
         
 
     print( "#          Val min   Val max  Con min  Con max  gap  Con width")
