@@ -102,9 +102,9 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     qeJSON['QE']['control']['calculation'] = 'nscf'
     qeJSON['QE']['control']['tstress'] = False
     qeJSON['QE']['control']['tprnfor'] = False
-    qeJSON['QE']['electrons']['diago_full_acc'] = True
+    qeJSON['QE']['electrons']['diago_full_acc'] = False
 #   # This is new option as of 6.6, but should failsafe to default in earlier
-#    qeJSON['QE']['control']['disk_io'] = 'nowf'
+    qeJSON['QE']['control']['disk_io'] = 'nowf'
 
     try:
         write(str(folder / "nscf.in"), unitC, format='espresso-in',
