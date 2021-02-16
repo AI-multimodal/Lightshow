@@ -172,6 +172,7 @@ def eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSupper=0.0, Oupper=0.0, bUpper=
     rmsd = np.float64( 0.0 )
     bandWeight = np.float64( 0.0 )
     maxDelta = np.float64( 0.0 )
+    minAllowedWeight = np.float64( 0.00000001 )
     for kpt in XSkptDict:
         okpt = kpt
         if kpt not in OkptDict:
@@ -223,6 +224,12 @@ def eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSupper=0.0, Oupper=0.0, bUpper=
             if m > maxDelta:
                 maxDelta = m
 
+    #TODO 
+    # Need better error handling for this!
+    if bandWeight < minAllowedWeight:
+        print( "Not enough band weight to calculated rmsd!" )
+        rmsd = max( minAllowedWeight*10000, rmsd )
+        bandWeight = minAllowedWeight
 
     if returnDelta:
         return np.sqrt( rmsd/bandWeight ), maxDelta
@@ -460,7 +467,6 @@ rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, 
 print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
 
 
-
 print( "\nValence band with {:f} eV lower bound OCEAN v EXCITING".format(valenceWindowParam))
 omega = 0
 lb1 = EXclips[1] - valenceWindowParam/Ha_c2018
@@ -480,7 +486,6 @@ print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
 
 #eigPrint( omega, EXkptDict, OkptDict, Okmap )
 #exit()
-
 
 for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
     ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
