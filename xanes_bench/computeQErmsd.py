@@ -8,7 +8,10 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 import os
+from os import environ as env
 from scipy.optimize import minimize_scalar
+
+from xanes_bench.EXCITING.parseExciting import readEigval
 
 
 # Hartree to eV based on 2018 CODATA
@@ -45,7 +48,7 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
 
     #  equiv(nk) =nk : k-point nk is not equivalent to any previous k-point
     #  equiv(nk)!=nk : k-point nk is equivalent to k-point equiv(nk)
-    equiv = np.zeros((nk[0]*nk[1]*nk[2]),dtype=np.int)
+    equiv = np.zeros((nk[0]*nk[1]*nk[2]),dtype=np.int32)
     for i in range(0,nk[0]*nk[1]*nk[2]):
         equiv[i] = i
 
@@ -111,6 +114,52 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
             kpointFullMap[kvecString] = newList
     return kpointFullMap
 
+def eigPrint( omega, XSkptDict, OkptDict, Okmap ):
+    k = 0
+    for kpt in XSkptDict:
+        k += 1
+        okpt = kpt
+        if kpt not in OkptDict:
+            if kpt not in Okmap:
+                print(kpt)
+                print(list(Okmap.keys()))
+                print( "Incompatible k-point meshes!" )
+                exit()
+            else:
+    # The method used below for the full range is probably better/faster
+                for testKpt in OkptDict:
+                    for i in Okmap[testKpt]:
+    #                    print( i, kpt )
+                        if i == kpt:
+                            print( "Success: ", testKpt, kpt )
+                            okpt = testKpt
+                            break
+            if okpt == kpt:
+                print( "Incompatible k-point meshes!" )
+                print( kpt )
+                print( Okmap[kpt] )
+                print("############")
+                print( list(OkptDict.keys()))
+                print("############")
+                for testKpt in Okmap[kpt]:
+                    print( Okmap[testKpt] )
+                exit()
+
+        weight = np.float64( XSkptDict[kpt]["weight"] )
+
+        XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
+        Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
+
+        print( "#####" )
+        print( kpt )
+        print( okpt )
+        print( "#####" )
+        for j in range( min(len( Oeigs ), len(XSeigs) )  ):
+            print( "{:16.8f} {:16.8f} {:16.8f} {:16.8f}".format( XSeigs[j], XSeigs[j]+omega, Oeigs[j], (XSeigs[j]-Oeigs[j]+omega)*Ha_c2018 ) )
+
+        if k > 1:
+            break
+
 
 # Function for calculating the rmsd between two sets of energies
 #TODO better error handling?
@@ -119,11 +168,12 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
 
 ## Optional arguments
 # 
-def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0, 
+def eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSupper=0.0, Oupper=0.0, bUpper=-1.0, 
              XSlower=0.0, Olower=0.0, bLower=-1.0, returnDelta=False ) :
     rmsd = np.float64( 0.0 )
     bandWeight = np.float64( 0.0 )
     maxDelta = np.float64( 0.0 )
+    minAllowedWeight = np.float64( 0.00000001 )
     for kpt in XSkptDict:
         okpt = kpt
         if kpt not in OkptDict:
@@ -157,7 +207,7 @@ def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0,
         XSeigs = np.asarray( XSkptDict[kpt]["eigenvalues"], dtype=np.float64 )
         Oeigs = np.asarray( OkptDict[okpt]["eigenvalues"], dtype=np.float64 )
 
-        for j in range( len( Oeigs )  ):
+        for j in range( min(len( Oeigs ), len(XSeigs) )  ):
             if bUpper > 0 :
                 off = fermiFactor( Oeigs[j], Oupper, bUpper )
                 xsff = fermiFactor( XSeigs[j], XSupper, bUpper )
@@ -175,6 +225,12 @@ def eigRMSD( omega, XSkptDict, OkptDict, XSupper=0.0, Oupper=0.0, bUpper=-1.0,
             if m > maxDelta:
                 maxDelta = m
 
+    #TODO 
+    # Need better error handling for this!
+    if bandWeight < minAllowedWeight:
+        print( "Not enough band weight to calculated rmsd!" )
+        rmsd = max( minAllowedWeight*10000, rmsd )
+        bandWeight = minAllowedWeight
 
     if returnDelta:
         return np.sqrt( rmsd/bandWeight ), maxDelta
@@ -249,8 +305,6 @@ def parseQE( filename: str ):
                     condMax = e
                 if e < condMin:
                     condMin = e
-#        print( kvecString )
-        
 
     # Grab k-point grid and shift
     kdict = root.find('input').find('k_points_IBZ')[0].attrib
@@ -273,85 +327,234 @@ def parseQE( filename: str ):
     bandClips = [ valMin, valMax, condMin, condMax ]
 
     return kmesh, kshift, kmap, nelectron, energyNK, eFermi, bandClips
+
+
+def parseEXCITING( filepath: str ):
+    # Parse exciting input
+    # Get information on kpoints first 
+#    kdata_ = np.genfromtxt(os.path.join( "./EXCITING", "KPOINTS.OUT" ),
+#            skip_header=1)
+    kdata_ = np.genfromtxt(os.path.join( filepath, "KPOINTS.OUT" ),
+            skip_header=1)
+    kvec_ = np.zeros((kdata_.shape[0],4))
+    kvec_[:,:] = kdata_[:,[1,2,3,4]]
+#    kvec_[:,:] = kdata_[:,[3,2,1,4]]
+    #kvec_[:,:] = kdata_[:,1:5]
     
+    ExkptDict = dict()
+    for i in range(kvec_.shape[0]):
+        kvecString = '{:16.8f} {:16.8f} {:16.8f}'.format( kvec_[i,0],
+                kvec_[i,1], kvec_[i,2] )
+        ExkptDict[kvecString] = dict()
+        ExkptDict[kvecString]["point"] = kvec_[i,:3]
+        ExkptDict[kvecString]["weight"] = kvec_[i,3]
+    # shift such that the kpoints lie in [-0.5:0.5] interval
+    for entry in ExkptDict.keys():
+        for i in range(3):
+            if ExkptDict[entry]['point'][i] >= 1.0:
+                ExkptDict[entry]['point'][i]=ExkptDict[entry]['point'][i]-1.0
+            if ExkptDict[entry]['point'][i] <  0.0:
+                ExkptDict[entry]['point'][i]=ExkptDict[entry]['point'][i]+1.0
+#        print(ExkptDict[entry]['point'])
 
+    # Load up Fermi level
+    fname = os.path.join( filepath, "EFERMI.OUT" )
+    eFermi = np.genfromtxt( fname ).item()
+    valMin = np.finfo(np.float64 ).max
+    valMax = np.finfo(np.float64 ).min
+    condMin = np.finfo(np.float64 ).max
+    condMax = np.finfo(np.float64 ).min
+        
+    # now read the EIGVAL.OUT file
+    fname=os.path.join( filepath, "EIGVAL.OUT")
+    eigval_, occBands_exciting, unoccBands_exciting=readEigval(fname)
+    print( "Occupied: ", occBands_exciting, "Total bands: ",
+            occBands_exciting+unoccBands_exciting)
+    for key in ExkptDict:
+        ExkptDict[key]["eigenvalues"]=eigval_[key]
+        
+        for e in np.asarray( eigval_[key], dtype=np.float64 ):
+            if e <= eFermi:
+                if e > valMax:
+                    valMax = e
+                if e < valMin:
+                    valMin = e
+            else:
+                if e > condMax:
+                    condMax = e
+                if e < condMin:
+                    condMin = e
+        
+    bandClips = [ valMin, valMax, condMin, condMax ]
 
-
-
-#XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
-XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
-XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
-print( "XS parsed.    K-point mesh: {:d} {:d} {:d}.\n"
-       .format( XSkmesh[0],XSkmesh[1],XSkmesh[2]))
-
-
-#OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
-OfileName = os.path.join( "./OCEAN", "groundState", "nscf", "pwscf.xml" )
-Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileName )
-print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}.\n"
-       .format( Okmesh[0], Okmesh[1], Okmesh[2] ))
-
-print( "#    Val min   Val max  Con min  Con max  gap  Con width")
-print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018, (XSclips[3]-XSclips[2])*Ha_c2018)  )
-print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018, (Oclips[3]-Oclips[2])*Ha_c2018 ) )
-
-
-print( "\nEntire valence band")
-omega = 0
-res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
-
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam, returnDelta=True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-
-valenceWindowParam = 20.0
-
-print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
-omega = 0
-lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
-lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
-res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
-
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-
-
-
-for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
-    ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
-    ub2 = Oclips[2] + conductionWindowParam/Ha_c2018
-    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam, 
-                              XSeFermi, OeFermi, BroadenParam, True)
-    print( "\nConduction band with {:f} eV upper bound".format(conductionWindowParam))
-    print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-    print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
     
+    nelectron = occBands_exciting * 2
+    return nelectron, ExkptDict, eFermi, bandClips
 
-print( "\nConduction band with moving 15 eV window")
-print( "Window RMSD (eV) Delta (eV)")
-for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
-    XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
-    Omid = Oclips[2] + conductionWindowParam/Ha_c2018
-    lb1 = max( XSmid - 7.5/Ha_c2018, XSeFermi )
-    lb2 = max( Omid - 7.5/Ha_c2018, OeFermi )
-    ub1 = XSmid + 7.5/Ha_c2018
-    ub2 = Omid + 7.5/Ha_c2018
-    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, ub1, ub2, BroadenParam,
-                              lb1, lb2, BroadenParam, True)
-    print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
 
+def main():
+
+    mpid = "mp-" + input("Input the mp number: ")
+    program = input("[O]cean, [X]spectra, and/or [E]xciting? ")
+
+    AllData = []
+
+    for p in program:
+        if( p == 'O' or p == 'o' ):
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, 'OCEAN', 
+                                    'groundState', "nscf", "pwscf.xml" )
+            kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
+            AllData.append( dict( { "Name" : "OCEAN", "nElectron" : nelectron, 
+                                    "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips, 
+                                    "kmesh" : kmesh, "kshift" : kshift, "kmap" : kmap } ) )
+
+        elif( p == 'X' or p == 'x' ):
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, 'XS', 
+                                    'groundState', "nscf", "pwscf.xml" )
+            kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
+            AllData.append( dict( { "Name" : "XSPECTRA", "nElectron" : nelectron, 
+                                    "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips, 
+                                    "kmesh" : kmesh, "kshift" : kshift, "kmap" : kmap } ) )
+
+        elif( p == 'E' or p == 'e' ):
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "EXCITING", "groundState" )
+            nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
+            AllData.append( dict( { "Name" : "EXCITING", "nElectron" : nelectron, "kptDict" : kptDict, 
+                                    "eFermi" : eFermi, "clips" : clips } ))
+        
+
+    print( "#          Val min   Val max  Con min  Con max  gap  Con width")
+    for i in range( len(AllData) ) :
+        print( "{:8s} {: 8.2f} {: 8.2f} {: 8.2f} {: 8.2f} {:7.2f} {:7.2f}"
+             .format( AllData[i]["Name"], AllData[i]["clips"][0]*Ha_c2018, AllData[i]["clips"][1]*Ha_c2018,
+                      AllData[i]["clips"][2]*Ha_c2018, AllData[i]["clips"][3]*Ha_c2018, 
+                      (AllData[i]["clips"][2]-AllData[i]["clips"][1])*Ha_c2018,
+                      (AllData[i]["clips"][3]-AllData[i]["clips"][2])*Ha_c2018 ) )
+
+
+
+    print( "\nEntire valence band:" )
+
+    for i in range( len(AllData) ) :
+        for j in range (i):
+    
+            print( "  {:8s} vs. {:8s}:".format( AllData[i]["Name"], AllData[j]["Name"] ) )
+            if "kmap" in AllData[i]:
+                k = i
+                m = j
+            elif "kmap" in AllData[j]:
+                m = i
+                k = j
+            else :
+                print( "!!!At least one data set must have a k-map!!!" )
+                exit()
+
+            res = minimize_scalar( eigRMSD, args = (AllData[m]["kptDict"], AllData[k]["kptDict"], 
+                    AllData[k]["kmap"], AllData[m]["eFermi"], AllData[k]["eFermi"], BroadenParam), 
+                    options={'xtol': 1e-8})
+            if res.success:
+                print( "    Shift = {: f} eV".format(res.x*Ha_c2018) )
+                print( "    RMSD  = {: f} eV".format(res.fun*Ha_c2018) )
+            else:
+                print( "!!!Optmizing energy shift failed!!!" )
+                exit()
+            omega = res.x
+            rmsd, maxDelta = eigRMSD( omega, AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], AllData[m]["eFermi"], AllData[k]["eFermi"], BroadenParam, returnDelta=True)
+            print( "    Max D = {: f} eV\n".format(maxDelta*Ha_c2018) )
+                
+
+
+    valenceWindowParam = 20.0
+
+    print( "\nValence band with {:f} eV lower bound:".format(valenceWindowParam))
+
+    for i in range( len(AllData) ) :
+        for j in range (i):
+
+            print( "  {:8s} vs. {:8s}:".format( AllData[i]["Name"], AllData[j]["Name"] ) )
+            if "kmap" in AllData[i]:
+                k = i
+                m = j
+            elif "kmap" in AllData[j]:
+                m = i
+                k = j
+            else :
+                print( "!!!At least one data set must have a k-map!!!" )
+                exit()
+
+            lb1 = AllData[m]["clips"][1] - valenceWindowParam/Ha_c2018
+            lb2 = AllData[k]["clips"][1]  - valenceWindowParam/Ha_c2018
+            res = minimize_scalar( eigRMSD, args = (AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], AllData[m]["eFermi"], AllData[k]["eFermi"], BroadenParam, 
+                    lb1, lb2, BroadenParam), options={'xtol': 1e-8})
+
+            if res.success:
+                print( "    Shift = {: f} eV".format(res.x*Ha_c2018) )
+                print( "    RMSD  = {: f} eV".format(res.fun*Ha_c2018) )
+            else:
+                print( "!!!Optmizing energy shift failed!!!" )
+                exit()
+            omega = res.x
+            rmsd, maxDelta = eigRMSD( omega, AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], AllData[m]["eFermi"], AllData[k]["eFermi"], BroadenParam, 
+                    lb1, lb2, BroadenParam, True )
+            print( "    Max D = {: f} eV\n".format(maxDelta*Ha_c2018) )
+
+
+    #TODO Might be more efficient to move this up into previous to avoid a second optimization step
+    for i in range( len(AllData) ) :
+        for j in range (i):
+
+            print( "\n{:8s} vs. {:8s}:".format( AllData[i]["Name"], AllData[j]["Name"] ) )
+            if "kmap" in AllData[i]:
+                k = i
+                m = j
+            elif "kmap" in AllData[j]:
+                m = i
+                k = j
+            else :
+                print( "!!!At least one data set must have a k-map!!!" )
+                exit()
+
+            lb1 = AllData[m]["clips"][1] - valenceWindowParam/Ha_c2018
+            lb2 = AllData[k]["clips"][1]  - valenceWindowParam/Ha_c2018
+            res = minimize_scalar( eigRMSD, args = (AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], AllData[m]["eFermi"], AllData[k]["eFermi"], BroadenParam, 
+                    lb1, lb2, BroadenParam), options={'xtol': 1e-8})
+
+            if not res.success:
+                print( "!!!Optmizing energy shift failed!!!" )
+                exit()
+            omega = res.x
+
+            print("  Conduction band with upper bounds\n    Bound  RMSD (eV) Delta (eV)")
+
+            for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
+                ub1 = AllData[m]["clips"][2] + conductionWindowParam/Ha_c2018
+                ub2 = AllData[k]["clips"][2] + conductionWindowParam/Ha_c2018
+                rmsd, maxDelta = eigRMSD( omega, AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], ub1, ub2, BroadenParam, AllData[m]["eFermi"], AllData[k]["eFermi"],
+                    BroadenParam, True )
+                print( "    {:5.1f}  {:f}  {:f}".format( conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
+
+
+            print("\n  Conduction band with moving 15 eV window")
+            print( "    Window RMSD (eV) Delta (eV)")
+
+            for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
+                XSmid = AllData[m]["clips"][2] + conductionWindowParam/Ha_c2018
+                Omid = AllData[k]["clips"][2] + conductionWindowParam/Ha_c2018
+                lb1 = max( XSmid - 7.5/Ha_c2018, AllData[m]["eFermi"] )
+                lb2 = max( Omid - 7.5/Ha_c2018, AllData[k]["eFermi"] )
+                ub1 = XSmid + 7.5/Ha_c2018
+                ub2 = Omid + 7.5/Ha_c2018
+
+                rmsd, maxDelta = eigRMSD( omega, AllData[m]["kptDict"], AllData[k]["kptDict"],
+                    AllData[k]["kmap"], ub1, ub2, BroadenParam, lb1, lb2, BroadenParam, True )
+                print( "    {:5.1f}  {:f}  {:f}".format( conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
+
+            print( "" )
+
+if __name__ == '__main__':
+    main()

@@ -10,8 +10,11 @@ import os
 # TODO: add implementation of photonSym to avoid import error
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
 from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
+from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
+
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
+
 import xanes_bench
 
 
@@ -69,7 +72,10 @@ def main():
         else:
             params['diemac'] = 1000000
         print(params['diemac'])
-
+    
+    ## Add absorbing species and edge to parameters
+    params['species']='Ti'
+    params['edge']='K'
 
 
 
@@ -77,7 +83,7 @@ def main():
 
     makeOcean( mpid, unitC, params )
 
-    #makeExciting( mpid, unitC, params )
+    makeExcitingXAS( mpid, unitC, params )
 
 
 if __name__ == '__main__':
