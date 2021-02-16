@@ -391,122 +391,127 @@ def parseEXCITING( filepath: str ):
     return nelectron, ExkptDict, eFermi, bandClips
 
 
-####
-EXfileName = os.path.join( "./EXCITING", "groundState" )
-EXnelectron, EXkptDict, EXeFermi, EXclips = parseEXCITING( EXfileName )
-print( "EXCITING parsed!")
+def main():
+    ####
+    EXfileName = os.path.join( "./EXCITING", "groundState" )
+    EXnelectron, EXkptDict, EXeFermi, EXclips = parseEXCITING( EXfileName )
+    print( "EXCITING parsed!")
 
-#XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
-XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
-XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
-print( "XS parsed.    K-point mesh: {:d} {:d} {:d}.\n"
-       .format( XSkmesh[0],XSkmesh[1],XSkmesh[2]))
-
-
-#OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
-OfileName = os.path.join( "./OCEAN", "groundState", "nscf", "pwscf.xml" )
-Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileName )
-print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}.\n"
-       .format( Okmesh[0], Okmesh[1], Okmesh[2] ))
-
-print( "#    Val min   Val max  Con min  Con max  gap  Con width")
-print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018, (XSclips[3]-XSclips[2])*Ha_c2018)  )
-print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018, (Oclips[3]-Oclips[2])*Ha_c2018 ) )
-print( "EX {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( EXclips[0]*Ha_c2018, EXclips[1]*Ha_c2018, EXclips[2]*Ha_c2018, EXclips[3]*Ha_c2018, (EXclips[2]-EXclips[1])*Ha_c2018, (EXclips[3]-EXclips[2])*Ha_c2018 ) )
+    #XSfileName = os.path.join( "./XS", "groundState", "pwscf.save", "data-file-schema.xml" )
+    XSfileName = os.path.join( "./XS", "groundState", "nscf", "pwscf.xml" )
+    XSkmesh, XSkshift, XSkmap, XSnelectron, XSkptDict, XSeFermi, XSclips = parseQE( XSfileName )
+    print( "XS parsed.    K-point mesh: {:d} {:d} {:d}.\n"
+           .format( XSkmesh[0],XSkmesh[1],XSkmesh[2]))
 
 
-print( "\nEntire valence band: OCEAN v XS")
-omega = 0
-res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
+    #OfileName = os.path.join( "./OCEAN", "groundState", "pwscf.save", "data-file-schema.xml" )
+    OfileName = os.path.join( "./OCEAN", "groundState", "nscf", "pwscf.xml" )
+    Okmesh, Okshift, Okmap, Onelectron, OkptDict, OeFermi, Oclips = parseQE( OfileName )
+    print( "OCEAN parsed. Kpoint mesh {:d} {:d} {:d}.\n"
+           .format( Okmesh[0], Okmesh[1], Okmesh[2] ))
 
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam, returnDelta=True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+    print( "#    Val min   Val max  Con min  Con max  gap  Con width")
+    print( "XS {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( XSclips[0]*Ha_c2018, XSclips[1]*Ha_c2018, XSclips[2]*Ha_c2018, XSclips[3]*Ha_c2018, (XSclips[2]-XSclips[1])*Ha_c2018, (XSclips[3]-XSclips[2])*Ha_c2018)  )
+    print( " O {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( Oclips[0]*Ha_c2018, Oclips[1]*Ha_c2018, Oclips[2]*Ha_c2018, Oclips[3]*Ha_c2018, (Oclips[2]-Oclips[1])*Ha_c2018, (Oclips[3]-Oclips[2])*Ha_c2018 ) )
+    print( "EX {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:7.2f} {:7.2f}".format( EXclips[0]*Ha_c2018, EXclips[1]*Ha_c2018, EXclips[2]*Ha_c2018, EXclips[3]*Ha_c2018, (EXclips[2]-EXclips[1])*Ha_c2018, (EXclips[3]-EXclips[2])*Ha_c2018 ) )
 
 
-print( "\nEntire valence band: OCEAN v EXCITING")
-omega = 0
-res = minimize_scalar( eigRMSD, args = (EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
+    print( "\nEntire valence band: OCEAN v XS")
+    omega = 0
+    res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
+    if res.success:
+        print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
+        print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+    else:
+        print( "Optmizing energy shift failed" )
+        exit()
 
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam, returnDelta=True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-
-
-valenceWindowParam = 20.0
-
-print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
-omega = 0
-lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
-lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
-res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
-
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-
-
-print( "\nValence band with {:f} eV lower bound OCEAN v EXCITING".format(valenceWindowParam))
-omega = 0
-lb1 = EXclips[1] - valenceWindowParam/Ha_c2018
-lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
-res = minimize_scalar( eigRMSD, args = (EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
-if res.success:
-    print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
-    print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
-else:
-    print( "Optmizing energy shift failed" )
-    exit()
-
-omega = res.x
-rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
-#print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
-print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-
-#eigPrint( omega, EXkptDict, OkptDict, Okmap )
-#exit()
-
-for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
-    ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
-    ub2 = Oclips[2] + conductionWindowParam/Ha_c2018
-    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, ub1, ub2, BroadenParam, 
-                              XSeFermi, OeFermi, BroadenParam, True)
-    print( "\nConduction band with {:f} eV upper bound".format(conductionWindowParam))
-    print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+    omega = res.x
+    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam, returnDelta=True)
+    #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
     print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
-    
 
-print( "\nConduction band with moving 15 eV window")
-print( "Window RMSD (eV) Delta (eV)")
-for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
-    XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
-    Omid = Oclips[2] + conductionWindowParam/Ha_c2018
-    lb1 = max( XSmid - 7.5/Ha_c2018, XSeFermi )
-    lb2 = max( Omid - 7.5/Ha_c2018, OeFermi )
-    ub1 = XSmid + 7.5/Ha_c2018
-    ub2 = Omid + 7.5/Ha_c2018
-    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, ub1, ub2, BroadenParam,
-                              lb1, lb2, BroadenParam, True)
-    print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
 
+    print( "\nEntire valence band: OCEAN v EXCITING")
+    omega = 0
+    res = minimize_scalar( eigRMSD, args = (EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam), options={'xtol': 1e-8})
+    if res.success:
+        print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
+        print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+    else:
+        print( "Optmizing energy shift failed" )
+        exit()
+
+    omega = res.x
+    rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam, returnDelta=True)
+    #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+    print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+
+    valenceWindowParam = 20.0
+
+    print( "\nValence band with {:f} eV lower bound".format(valenceWindowParam))
+    omega = 0
+    lb1 = XSclips[1] - valenceWindowParam/Ha_c2018
+    lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
+    res = minimize_scalar( eigRMSD, args = (XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
+    if res.success:
+        print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
+        print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+    else:
+        print( "Optmizing energy shift failed" )
+        exit()
+
+    omega = res.x
+    rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
+    #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+    print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+
+
+    print( "\nValence band with {:f} eV lower bound OCEAN v EXCITING".format(valenceWindowParam))
+    omega = 0
+    lb1 = EXclips[1] - valenceWindowParam/Ha_c2018
+    lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
+    res = minimize_scalar( eigRMSD, args = (EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
+    if res.success:
+        print( "Shift = {:f} eV".format(res.x*Ha_c2018) )
+        print( "RMSD  = {:f} eV".format(res.fun*Ha_c2018) )
+    else:
+        print( "Optmizing energy shift failed" )
+        exit()
+
+    omega = res.x
+    rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
+    #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+    print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+
+    #eigPrint( omega, EXkptDict, OkptDict, Okmap )
+    #exit()
+
+
+    for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
+        ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
+        ub2 = Oclips[2] + conductionWindowParam/Ha_c2018
+        rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, ub1, ub2, BroadenParam, 
+                                  XSeFermi, OeFermi, BroadenParam, True)
+        print( "\nConduction band with {:f} eV upper bound".format(conductionWindowParam))
+        print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
+        print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
+        
+
+    print( "\nConduction band with moving 15 eV window")
+    print( "Window RMSD (eV) Delta (eV)")
+    for conductionWindowParam in [ 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0]:
+        XSmid = XSclips[2] + conductionWindowParam/Ha_c2018
+        Omid = Oclips[2] + conductionWindowParam/Ha_c2018
+        lb1 = max( XSmid - 7.5/Ha_c2018, XSeFermi )
+        lb2 = max( Omid - 7.5/Ha_c2018, OeFermi )
+        ub1 = XSmid + 7.5/Ha_c2018
+        ub2 = Omid + 7.5/Ha_c2018
+        rmsd, maxDelta = eigRMSD( omega, XSkptDict, OkptDict, Okmap, ub1, ub2, BroadenParam,
+                                  lb1, lb2, BroadenParam, True)
+        print( "{:5.1f}  {:f}  {:f}".format(conductionWindowParam, rmsd*Ha_c2018, maxDelta*Ha_c2018))
+
+if __name__ == '__main__':
+    main()
