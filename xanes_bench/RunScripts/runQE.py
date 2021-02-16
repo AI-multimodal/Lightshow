@@ -80,7 +80,7 @@ def parsePWforParal( stdout: str, runText: str, maxMem: int, maxCPU: int ):
                 if tPool > NKpoints:
                     continue
                 tScore = NKpoints/(tPool*math.ceil(NKpoints/tPool)) \
-                       * ( 1.0-0.02*tcpus/tPool ) * tcpus/maxCPU
+                       * ( 1.0-0.05*tcpus/tPool ) * tcpus/maxCPU
                 if tScore > bestScore:
                     memGuess = ( MemPerProcess - WfcMemPerProcess ) \
                              + WfcMemPerProcess * ( poolEfficiency/tPool + (1-poolEfficiency) )
