@@ -47,7 +47,7 @@ def mapFullKpoints( nk: np.array, kshift: np.array, rots: np.array ):
 
     #  equiv(nk) =nk : k-point nk is not equivalent to any previous k-point
     #  equiv(nk)!=nk : k-point nk is equivalent to k-point equiv(nk)
-    equiv = np.zeros((nk[0]*nk[1]*nk[2]),dtype=np.int)
+    equiv = np.zeros((nk[0]*nk[1]*nk[2]),dtype=np.int32)
     for i in range(0,nk[0]*nk[1]*nk[2]):
         equiv[i] = i
 
@@ -470,7 +470,7 @@ def main():
 
 
     print( "\nValence band with {:f} eV lower bound OCEAN v EXCITING".format(valenceWindowParam))
-    omega = 0
+    omega2 = 0
     lb1 = EXclips[1] - valenceWindowParam/Ha_c2018
     lb2 = Oclips[1] - valenceWindowParam/Ha_c2018
     res = minimize_scalar( eigRMSD, args = (EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam), options={'xtol': 1e-8})
@@ -481,8 +481,8 @@ def main():
         print( "Optmizing energy shift failed" )
         exit()
 
-    omega = res.x
-    rmsd, maxDelta = eigRMSD( omega, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
+    omega2 = res.x
+    rmsd, maxDelta = eigRMSD( omega2, EXkptDict, OkptDict, Okmap, EXeFermi, OeFermi, BroadenParam,lb1, lb2, BroadenParam, True)
     #print( "RMSD  = {:f} eV".format(rmsd*Ha_c2018) )
     print( "Max D = {:f} eV".format(maxDelta*Ha_c2018) )
 
@@ -490,6 +490,7 @@ def main():
     #exit()
 
 
+    
     for conductionWindowParam in [ 10.0, 20.0, 30.0, 40.0, 50.0 ]:
         ub1 = XSclips[2] + conductionWindowParam/Ha_c2018
         ub2 = Oclips[2] + conductionWindowParam/Ha_c2018
