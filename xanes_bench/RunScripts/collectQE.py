@@ -90,7 +90,7 @@ def collectPW( rundir: str, savedir: str ):
 
 def main():
 
-    mpid = "mp-" + input("Input the mp number: ")
+    mpid = input("Input the mp number(s): ")
     program = input("[O]cean, [X]spectra, or [E]xciting? ")
     method = 'g'
     print ("Method hardwired for ground state!")
@@ -99,31 +99,35 @@ def main():
     with open ('cluster.json', 'r') as fd:
         clusterJSON = json.load(fd)
 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid )
-    if not os.path.isdir(subdir):
-        print("Couldn't find ", subdir )
-        exit()
-
-    for p in program:
-        if( p == 'O' or p == 'o' ):
-            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
-            savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'OCEAN', 'groundState' )
-            if not os.path.isdir(rundir):
-                print("Couldn't find ", rundir )
-                exit()
-            collectPW( rundir, savedir )
-        elif( p == 'X' or p == 'x' ):
-            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
-            savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mpid, 'XS', 'groundState' )
-            if not os.path.isdir(rundir):
-                print("Couldn't find ", rundir )
-                exit()
-            collectPW( rundir, savedir )
-        elif( p == 'E' or p == 'e' ):
-            print("Exciting not implemented!")
+    for mp in mpid.split():
+        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", "mp-" + mp )
+        if not os.path.isdir(subdir):
+            print("Couldn't find ", subdir )
             exit()
-        else:
-            print( "Didn't recognize program selected: ", program )
+
+    for m in mpid.split():
+        mp = "mp-" + m
+        print( "Collecting {:s}".format( mp ) )
+        for p in program:
+            if( p == 'O' or p == 'o' ):
+                rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'OCEAN', 'groundState' )
+                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, 'OCEAN', 'groundState' )
+                if not os.path.isdir(rundir):
+                    print("Couldn't find ", rundir )
+                    exit()
+                collectPW( rundir, savedir )
+            elif( p == 'X' or p == 'x' ):
+                rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'XS', 'groundState' )
+                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, 'XS', 'groundState' )
+                if not os.path.isdir(rundir):
+                    print("Couldn't find ", rundir )
+                    exit()
+                collectPW( rundir, savedir )
+            elif( p == 'E' or p == 'e' ):
+                print("Exciting not implemented!")
+                exit()
+            else:
+                print( "Didn't recognize program selected: ", p )
 
 
 if __name__ == '__main__':
