@@ -102,9 +102,11 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     qeJSON['QE']['control']['calculation'] = 'nscf'
     qeJSON['QE']['control']['tstress'] = False
     qeJSON['QE']['control']['tprnfor'] = False
-    qeJSON['QE']['electrons']['diago_full_acc'] = False
+    qeJSON['QE']['electrons']['diago_full_acc'] = True
 #   # This is new option as of 6.6, but should failsafe to default in earlier
     qeJSON['QE']['control']['disk_io'] = 'nowf'
+#    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols ) * 100000000
+#    qeJSON['QE']['electrons']['conv_thr'] = 0.01
 
     try:
         write(str(folder / "nscf.in"), unitC, format='espresso-in',
@@ -219,12 +221,23 @@ def main():
     # MP api handler
     mp = MPRester( str(mpkey) )
 
-    st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
+    try:
+        st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
+    except Exception as e:
+        print(e)
+        print( "Failed to 'get_structure_by_material_id'\nStopping\n" )
+        exit()
     #TODO gracefully report errors with connection, fetching structure
 
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
-    st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
+    try:
+        st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
+    except Exception as e:
+        print(e)
+        print( "Failed to 'get_doc'\nStopping\n")
+        exit()
+
     json_dir = "data"
     for spec_type in ["XS", "OCEAN", "EXCITING"]:
         json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
@@ -240,9 +253,18 @@ def main():
     
     # Grab and parse k-point information
     # TODO error checking
-    taskid = mp.query( criteria = {'task_id': mpid}, properties =
-            ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
-    data = mp.get_task_data( taskid, prop="kpoints" )
+    try:
+        taskid = mp.query( criteria = {'task_id': mpid}, properties =
+                ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
+    except Exception as e:
+        print(e)
+        print( "Failed to get task id\nStopping\n")
+        exit()
+    try:
+        data = mp.get_task_data( taskid, prop="kpoints" )
+    except Exception as e:
+        print(e)
+        print( "Failed to get kpoints data\nStopping\n" )
 
     # If MP data set is incomplete, fail gracefully
     if 'kpoints' not in data[0]:
