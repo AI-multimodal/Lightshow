@@ -92,6 +92,7 @@ def main():
 
     mpid = input("Input the mp number(s): ")
     program = input("[O]cean, [X]spectra, or [E]xciting? ")
+    prefix = input("Optional prefix: ")
     method = 'g'
     print ("Method hardwired for ground state!")
 
@@ -111,14 +112,14 @@ def main():
         for p in program:
             if( p == 'O' or p == 'o' ):
                 rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'OCEAN', 'groundState' )
-                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, 'OCEAN', 'groundState' )
+                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, prefix+'OCEAN', 'groundState' )
                 if not os.path.isdir(rundir):
                     print("Couldn't find ", rundir )
                     exit()
                 collectPW( rundir, savedir )
             elif( p == 'X' or p == 'x' ):
                 rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'XS', 'groundState' )
-                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, 'XS', 'groundState' )
+                savedir = pathlib.Path(env['PWD'], "save", "mp_structures",mp, prefix+'XS', 'groundState' )
                 if not os.path.isdir(rundir):
                     print("Couldn't find ", rundir )
                     exit()
