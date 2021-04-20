@@ -263,7 +263,10 @@ def parseQE( filename: str ):
 
     # And grab total number of bands
     nband = int(root.find('output').find('band_structure').find('nbnd').text)
-    print( "N_electron: ", nelectron, "Occupied: ", occBands, "Total bands: ", nband )
+
+    # Timing 
+    time = float(root.find('timing_info').find('total').find('wall').text) 
+    print( "N_electron: ", nelectron, "Occupied: ", occBands, "Total bands: ", nband, '{:10.3f} secs'.format(time))
 
     # rounding fudge to avoid -0
     delta = np.float64( 0.0000000000001 )
@@ -432,7 +435,7 @@ def main():
                 fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
                                     'groundState', "nscf", "pwscf.xml" )
                 kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
-                AllData.append( dict( { "Name" : "OCEAN", "nElectron" : nelectron,
+                AllData.append( dict( { "Name" : customDirName, "nElectron" : nelectron,
                                         "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips,
                                         "kmesh" : kmesh, "kshift" : kshift, "kmap" : kmap } ) )
             elif ( path.exists( os.path.join( env['PWD'], "save", "mp_structures", mpid, customDirName,
