@@ -32,6 +32,10 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
 
     if params['diemac'] is not None:
         oceanJSON['diemac'] = params['diemac']
+
+    if params['conductionBands'] is not None:
+        oceanJSON['nbands'] = -1 * params['conductionBands']
+
     
     us = {}
     ph = []
