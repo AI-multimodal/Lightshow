@@ -61,7 +61,7 @@ def main():
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
     print( data[0] )
 
-    cBands = getCondBands( unitC.get_volume(), 3.5 )
+    cBands = getCondBands( unitC.get_volume(), 2.25 )
     params = dict(defaultConvPerAtom=1E-10, photonOrder=6, conductionBands=cBands)
 
     ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
