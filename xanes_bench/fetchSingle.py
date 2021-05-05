@@ -17,6 +17,13 @@ from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 import xanes_bench
 
+# Return a guess at the number of conduction bands that a given unit-cell volume needs to 
+# cover a given energy range (in Ryd)
+#JTV
+#TODO needs to be unified with groundState.py, both call the same function 
+#     and the prefactor should always be the same
+def getCondBands( volume, eRange):
+    return round( 0.256 * volume * ( eRange**(3/2) ) )
 
 def main():
 
@@ -54,7 +61,8 @@ def main():
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
     print( data[0] )
 
-    params = dict(defaultConvPerAtom=1E-10, photonOrder=6)
+    cBands = getCondBands( unitC.get_volume(), 3.5 )
+    params = dict(defaultConvPerAtom=1E-10, photonOrder=6, conductionBands=cBands)
 
     ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
     if  data[0]['diel'] is not None:
