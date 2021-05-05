@@ -61,7 +61,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
 
 
     # generate filepath
-    folder = pathlib.Path(env['PWD']) / mpid / "EXCITING"
+    folder = pathlib.Path(env['PWD']) / "data" / "mp_structures" / mpid / "EXCITING"
     folder.mkdir(parents=True, exist_ok=True)
     
     # write input file for XAS calculation

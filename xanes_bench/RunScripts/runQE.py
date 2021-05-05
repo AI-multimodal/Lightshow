@@ -257,7 +257,7 @@ def runPW( rundir: str, clusterJSON: dict ):
 
 def main():
 
-    mpid = "mp-" + input("Input the mp number: ")
+    mpid =input("Input the mp number(s): ")
     program = input("[O]cean, [X]spectra, and/or [E]xciting? ")
     method = 'g'
     print ("Method hardwired for ground state!")
@@ -266,40 +266,47 @@ def main():
     with open ('cluster.json', 'r') as fd:
         clusterJSON = json.load(fd)
 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid )
-    if not os.path.isdir(subdir):
-        print("Couldn't find ", subdir )
-        exit()
+    for mp in mpid.split():
+        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", "mp-" + mp )
+        print( subdir )
+        if not os.path.isdir(subdir):
+            print("Couldn't find ", subdir )
+            exit()
 
-    # Maybe make this more robust to keep someone from running 'ooooooooooo', but for now ...
-    #  ie, could use a hash/dictionary
-    for p in program:
-        if( p == 'O' or p == 'o' ):
-            print( "Running OCEAN" )
-            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'OCEAN', 'groundState' )
-            if not os.path.isdir(rundir):
-                print("Couldn't find ", rundir )
-                exit()
-            runPW( rundir, clusterJSON )
-            print( "OCEAN complete" )
-            print( "######################" )
-        elif( p == 'X' or p == 'x' ):
-            print( "Running Xspectra" )
-            rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, 'XS', 'groundState' )
-            if not os.path.isdir(rundir):
-                print("Couldn't find ", rundir )
-                exit()
-            runPW( rundir, clusterJSON )
-            print( "Xspectra complete" )
-            print( "######################" )
-        elif( p == 'E' or p == 'e' ):
-            print("Exciting not implemented!")
-#            exit()
-            print( "EXCITING complete" )
-            print( "######################" )
-        else:
-            print( "Didn't recognize program selected: ", p )
 
+    for m in mpid.split():
+        mp = "mp-" + m
+        print( "Running {:s}".format( mp ) )
+        # Maybe make this more robust to keep someone from running 'ooooooooooo', but for now ...
+        #  ie, could use a hash/dictionary
+        for p in program:
+            if( p == 'O' or p == 'o' ):
+                print( "Running OCEAN" )
+                rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'OCEAN', 'groundState' )
+                if not os.path.isdir(rundir):
+                    print("Couldn't find ", rundir )
+                    exit()
+                runPW( rundir, clusterJSON )
+                print( "OCEAN complete" )
+                print( "######################" )
+            elif( p == 'X' or p == 'x' ):
+                print( "Running Xspectra" )
+                rundir = pathlib.Path(env['PWD'], "data", "mp_structures",mp, 'XS', 'groundState' )
+                if not os.path.isdir(rundir):
+                    print("Couldn't find ", rundir )
+                    exit()
+                runPW( rundir, clusterJSON )
+                print( "Xspectra complete" )
+                print( "######################" )
+            elif( p == 'E' or p == 'e' ):
+                print("Exciting not implemented!")
+    #            exit()
+                print( "EXCITING complete" )
+                print( "######################" )
+            else:
+                print( "Didn't recognize program selected: ", p )
+
+        print( "Done with {:s}".format( mp ) )
 
 if __name__ == '__main__':
     main()
