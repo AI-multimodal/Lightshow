@@ -1,1 +1,7 @@
-{"groundstate": {"xctype": "GGA_PBE", "nempty": "30", "rgkmax": "9.0"}, "properties": {"dos": {"nsmdos": "1", "lmirep": "true", "winddos": "-0.5 1.0"}}}
+{"groundstate": {"xctype": "GGA_PBE", 
+                 "nempty": "30", 
+                 "rgkmax": "9.0"}, 
+ "properties": {"dos": 
+                 {"nsmdos": "1", 
+                  "lmirep": "true", 
+                  "winddos": "-0.5 1.0"}}}

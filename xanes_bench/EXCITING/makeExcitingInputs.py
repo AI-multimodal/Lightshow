@@ -87,7 +87,7 @@ def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
     excitingJSON['groundstate']['ngridk']=" ".join([str(entry) for entry in kpoints])
     excitingJSON['groundstate']['nempty']=str(nempty)
     excitingJSON['structure']={}
-    excitingJSON['structure']['autormt']="True"
+    excitingJSON['structure']['autormt']="true"
     # generate pymatgen structure from ASE atoms
     struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
     
