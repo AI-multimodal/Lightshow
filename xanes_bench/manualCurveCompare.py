@@ -342,7 +342,7 @@ def RMSDcurvesOld( alpha, omega, plot1, plot2 ):
 
 # using scaling alpha and shift omega, determine the rmsd between two curves
 #TODO: normalize by the total length and sampling rate
-def RMSDcurves( alpha, omega, plot1, plot2 ):
+def RMSDcurves( alpha, omega, plot1, plot2, Plot=False ):
     interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
                                     bounds_error=True )
     interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
@@ -355,6 +355,7 @@ def RMSDcurves( alpha, omega, plot1, plot2 ):
         if plot1[stop,0]-omega < plot2[-1,0]:
             break
 
+    clipPlotRange1 = plot1[start:stop,0]
     clipPlot1 = plot1[start:stop,1]
     plot2at1 = interp2( plot1[start:stop,0]-omega )
 
@@ -365,6 +366,7 @@ def RMSDcurves( alpha, omega, plot1, plot2 ):
         if plot2[stop,0]+omega < plot1[-1,0]:
             break
 
+    clipPlotRange2 = plot2[start:stop,0]
     clipPlot2 = plot2[start:stop,1]
     plot1at2 = interp1( plot2[start:stop,0]+omega )
 
@@ -374,6 +376,10 @@ def RMSDcurves( alpha, omega, plot1, plot2 ):
     rmsd2 = 0.0
     for i in range(len( clipPlot2 ) ):
         rmsd2 += ( alpha*clipPlot2[i]-plot1at2[i] ) ** 2
+
+    if Plot:
+        for i in range(len(clipPlot1)):
+            print( clipPlotRange1[i], clipPlot1[i], plot2at1[i]*alpha )
 
     return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
 
@@ -459,6 +465,8 @@ def RMSDsinglePointCurves( alpha, omega, plot1, plot2 ):
 
     return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
 
+    
+
 
 # Takes a list of two files, assumes both files are formated with two columns 
 # compares the two datasets using cosineSimilarity
@@ -502,8 +510,17 @@ def comparePlots( saveFiles, shiftAvg=True,  ):
     else:
         print( "Optmizing energy shift failed" )
         exit()
-    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
+
+    omega = res.x[0]
+    coss = 1-res.fun
+
+    pearson = PearsonCoeff( omega, plot1, plot2 )
+    spearman = SpearmanCoeff( omega, plot1, plot2 )
+
+#    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
+    print( "Pearson = {:f}".format( pearson ) )
+#    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
+    print( "Spearman = {:f}".format( spearman ) )
 
 #    windowAverage( plot1, 20, 0.2 )
 
@@ -517,7 +534,13 @@ def comparePlots( saveFiles, shiftAvg=True,  ):
         print( "RMSD  = {:e}".format(res2.fun ) )
 
     alpha = res2.x[0]
-    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
+    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 )
+#    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
+    print( "Rel. area between = {:f} %".format( relArea ) )
+
+    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
+
+    RMSDcurves( res2.x[0], res.x[0], plot1, plot2, True )
 
 def main():
 
