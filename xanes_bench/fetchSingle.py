@@ -3,7 +3,7 @@
 import json
 import sys
 import time
-from math import exp
+from math import exp, atan, pi
 import os
 
 #from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
@@ -24,6 +24,11 @@ import xanes_bench
 #     and the prefactor should always be the same
 def getCondBands( volume, eRange):
     return round( 0.256 * volume * ( eRange**(3/2) ) )
+
+def dielectricGuess( gap ):
+    if gap < 0.00001:
+        return 1000000
+    return 1.0/(2*atan(.164475*gap)/pi)
 
 def main():
 
