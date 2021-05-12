@@ -36,6 +36,8 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     if params['conductionBands'] is not None:
         oceanJSON['nbands'] = -1 * params['conductionBands']
 
+    if params['scf.kpoints'] is not None:
+        oceanJSON['ngkpt'] = "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
     
     us = {}
     ph = []
