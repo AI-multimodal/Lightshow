@@ -50,6 +50,19 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
    
     # set absorbing  edge
     excitingxasJSON['xs']['BSE']['xasedge'] = params['edge']
+
+    # set BSE bands
+    if params['conductionBands'] is not None:
+        excitingxasJSON['xs']['BSE']['nstlxas'] = "0 {:d}".format( params['conductionBands'] )
+
+    # At the moment setting all k-point grids to be the same
+    if params['scf.kpoints'] is not None:
+        excitingxasJSON['groundstate']['ngridk'] = \
+            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+        excitingxasJSON['xs']['BSE']['ngrid'] = \
+            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+        excitingxasJSON['xs']['BSE']['ngridq'] = \
+            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
     
     # determine xasspecies parameter
     i=0
@@ -61,7 +74,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
 
 
     # generate filepath
-    folder = pathlib.Path(env['PWD']) / "data" / "mp_structures" / mpid / "EXCITING"
+    folder = pathlib.Path(env['PWD']) / "data" / "mp_structures" / mpid / "EXCITING" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
     
     # write input file for XAS calculation
