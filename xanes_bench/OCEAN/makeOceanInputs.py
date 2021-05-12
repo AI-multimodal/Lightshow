@@ -16,7 +16,7 @@ import json
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
 import xanes_bench.OCEAN
 import os
-
+from xanes_bench.General.kden import printKgrid
 
 module_path = os.path.dirname(xanes_bench.OCEAN.__file__)
 
@@ -60,6 +60,7 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     
     folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
+    printKgrid( atoms, folder )
 
     try:
         write_ocean_in(str(folder / "ocean.in"), atoms, input_data=oceanJSON )
