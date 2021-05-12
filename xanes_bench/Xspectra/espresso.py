@@ -20,11 +20,14 @@ from os import path
 import numpy as np
 
 from ase.atoms import Atoms
-from ase.calculators.singlepoint import SinglePointCalculator
+from ase.calculators.singlepoint import (SinglePointDFTCalculator,
+                                         SinglePointKPoint)
+from ase.calculators.calculator import kpts2ndarray, kpts2sizeandoffsets
+from ase.dft.kpoints import kpoint_convert
 from ase.constraints import FixAtoms, FixCartesian
 from ase.data import chemical_symbols, atomic_numbers
 from ase.units import create_units
-from ase.utils import basestring
+from ase.utils import iofunction
 
 
 # Quantum ESPRESSO uses CODATA 2006 internally
@@ -39,6 +42,12 @@ _PW_MAGMOM = 'Magnetic moment per site'
 _PW_FORCE = 'Forces acting on atoms'
 _PW_TOTEN = '!    total energy'
 _PW_STRESS = 'total   stress'
+_PW_FERMI = 'the Fermi energy is'
+_PW_HIGHEST_OCCUPIED = 'highest occupied level'
+_PW_HIGHEST_OCCUPIED_LOWEST_FREE = 'highest occupied, lowest unoccupied level'
+_PW_KPTS = 'number of k points='
+_PW_BANDS = _PW_END
+_PW_BANDSTRUCTURE = 'End of band structure calculation'
 
 
 class Namelist(OrderedDict):
@@ -59,6 +68,7 @@ class Namelist(OrderedDict):
         return super(Namelist, self).get(key.lower(), default)
 
 
+@iofunction('rU')
 def read_espresso_out(fileobj, index=-1, results_required=True):
     """Reads Quantum ESPRESSO output files.
 
@@ -89,9 +99,6 @@ def read_espresso_out(fileobj, index=-1, results_required=True):
 
 
     """
-    if isinstance(fileobj, basestring):
-        fileobj = open(fileobj, 'rU')
-
     # work with a copy in memory for faster random access
     pwo_lines = fileobj.readlines()
 
@@ -105,7 +112,13 @@ def read_espresso_out(fileobj, index=-1, results_required=True):
         _PW_MAGMOM: [],
         _PW_FORCE: [],
         _PW_TOTEN: [],
-        _PW_STRESS: []
+        _PW_STRESS: [],
+        _PW_FERMI: [],
+        _PW_HIGHEST_OCCUPIED: [],
+        _PW_HIGHEST_OCCUPIED_LOWEST_FREE: [],
+        _PW_KPTS: [],
+        _PW_BANDS: [],
+        _PW_BANDSTRUCTURE: [],
     }
 
     for idx, line in enumerate(pwo_lines):
@@ -128,7 +141,9 @@ def read_espresso_out(fileobj, index=-1, results_required=True):
     #   only 'vc-relax' recalculates.
     if results_required:
         results_indexes = sorted(indexes[_PW_TOTEN] + indexes[_PW_FORCE] +
-                                 indexes[_PW_STRESS] + indexes[_PW_MAGMOM])
+                                 indexes[_PW_STRESS] + indexes[_PW_MAGMOM] +
+                                 indexes[_PW_BANDS] +
+                                 indexes[_PW_BANDSTRUCTURE])
 
         # Prune to only configurations with results data before the next
         # configuration
@@ -201,7 +216,6 @@ def read_espresso_out(fileobj, index=-1, results_required=True):
             symbols = [label_to_symbol(position[0]) for position in
                        positions_card]
             positions = [position[1] for position in positions_card]
-
             structure = Atoms(symbols=symbols, positions=positions, cell=cell,
                               pbc=True)
 
@@ -250,10 +264,111 @@ def read_espresso_out(fileobj, index=-1, results_required=True):
                     in pwo_lines[magmoms_index + 1:
                                  magmoms_index + 1 + len(structure)]]
 
+        # Fermi level / highest occupied level
+        efermi = None
+        for fermi_index in indexes[_PW_FERMI]:
+            if image_index < fermi_index < next_index:
+                efermi = float(pwo_lines[fermi_index].split()[-2])
+
+        if efermi is None:
+            for ho_index in indexes[_PW_HIGHEST_OCCUPIED]:
+                if image_index < ho_index < next_index:
+                    efermi = float(pwo_lines[ho_index].split()[-1])
+
+        if efermi is None:
+            for holf_index in indexes[_PW_HIGHEST_OCCUPIED_LOWEST_FREE]:
+                if image_index < holf_index < next_index:
+                    efermi = float(pwo_lines[holf_index].split()[-2])
+
+        # K-points
+        ibzkpts = None
+        weights = None
+        kpoints_warning = "Number of k-points >= 100: " + \
+                          "set verbosity='high' to print them."
+
+        for kpts_index in indexes[_PW_KPTS]:
+            nkpts = int(pwo_lines[kpts_index].split()[4])
+            kpts_index += 2
+
+            if pwo_lines[kpts_index].strip() == kpoints_warning:
+                continue
+
+            # QE prints the k-points in units of 2*pi/alat
+            # with alat defined as the length of the first
+            # cell vector
+            cell = structure.get_cell()
+            alat = np.linalg.norm(cell[0])
+            ibzkpts = []
+            weights = []
+            for i in range(nkpts):
+                L = pwo_lines[kpts_index + i].split()
+                weights.append(float(L[-1]))
+                coord = np.array([L[-6], L[-5], L[-4].strip('),')],
+                                 dtype=float)
+                coord *= 2 * np.pi / alat
+                coord = kpoint_convert(cell, ckpts_kv=coord)
+                ibzkpts.append(coord)
+            ibzkpts = np.array(ibzkpts)
+            weights = np.array(weights)
+
+        # Bands
+        kpts = None
+        kpoints_warning = "Number of k-points >= 100: " + \
+                          "set verbosity='high' to print the bands."
+
+        for bands_index in indexes[_PW_BANDS] + indexes[_PW_BANDSTRUCTURE]:
+            if image_index < bands_index < next_index:
+                bands_index += 2
+
+                if pwo_lines[bands_index].strip() == kpoints_warning:
+                    continue
+
+                assert ibzkpts is not None
+                spin, bands, eigenvalues = 0, [], [[], []]
+
+                while True:
+                    L = pwo_lines[bands_index].replace('-', ' -').split()
+                    if len(L) == 0:
+                        if len(bands) > 0:
+                            eigenvalues[spin].append(bands)
+                            bands = []
+                    elif L == ['occupation', 'numbers']:
+                        # Skip the lines with the occupation numbers
+                        bands_index += len(eigenvalues[spin][0]) // 8 + 1
+                    elif L[0] == 'k' and L[1].startswith('='):
+                        pass
+                    elif 'SPIN' in L:
+                        if 'DOWN' in L:
+                            spin += 1
+                    else:
+                        try:
+                            bands.extend(map(float, L))
+                        except ValueError:
+                            break
+                    bands_index += 1
+
+                if spin == 1:
+                    assert len(eigenvalues[0]) == len(eigenvalues[1])
+                assert len(eigenvalues[0]) == len(ibzkpts), \
+                    (np.shape(eigenvalues), len(ibzkpts))
+
+                kpts = []
+                for s in range(spin + 1):
+                    for w, k, e in zip(weights, ibzkpts, eigenvalues[s]):
+                        kpt = SinglePointKPoint(w, s, k, eps_n=e)
+                        kpts.append(kpt)
+
         # Put everything together
-        calc = SinglePointCalculator(structure, energy=energy, forces=forces,
-                                     stress=stress, magmoms=magmoms)
-        structure.set_calculator(calc)
+        #
+        # I have added free_energy.  Can and should we distinguish
+        # energy and free_energy?  --askhl
+        calc = SinglePointDFTCalculator(structure, energy=energy,
+                                        free_energy=energy,
+                                        forces=forces, stress=stress,
+                                        magmoms=magmoms, efermi=efermi,
+                                        ibzkpts=ibzkpts)
+        calc.kpts = kpts
+        structure.calc = calc
 
         yield structure
 
@@ -328,6 +443,7 @@ def parse_pwo_start(lines, index=0):
     return info
 
 
+@iofunction('rU')
 def read_espresso_in(fileobj):
     """Parse a Quantum ESPRESSO input files, '.in', '.pwi'.
 
@@ -351,10 +467,6 @@ def read_espresso_in(fileobj):
     KeyError
         Raised for missing keys that are required to process the file
     """
-    # TODO: use ase opening mechanisms
-    if isinstance(fileobj, basestring):
-        fileobj = open(fileobj, 'rU')
-
     # parse namelist section and extract remaining lines
     data, card_lines = read_fortran_namelist(fileobj)
 
@@ -376,16 +488,30 @@ def read_espresso_in(fileobj):
     else:
         alat, cell = ibrav_to_cell(data['system'])
 
+    # species_info holds some info for each element
+    species_card = get_atomic_species(card_lines, n_species=data['system']['ntyp'])
+    species_info = {}
+    for ispec, (label, weight, pseudo) in enumerate(species_card):
+        symbol = label_to_symbol(label)
+        valence = get_valence_electrons(symbol, data, pseudo)
+
+        # starting_magnetization is in fractions of valence electrons
+        magnet_key = "starting_magnetization({0})".format(ispec + 1)
+        magmom = valence * data["system"].get(magnet_key, 0.0)
+        species_info[symbol] = {"weight": weight, "pseudo": pseudo,
+                                "valence": valence, "magmom": magmom}
+
     positions_card = get_atomic_positions(
         card_lines, n_atoms=data['system']['nat'], cell=cell, alat=alat)
 
-    tags = [0 if len(position[0]) < 3 else position[0][2:] for position in positions_card]
     symbols = [label_to_symbol(position[0]) for position in positions_card]
     positions = [position[1] for position in positions_card]
+    magmoms = [species_info[symbol]["magmom"] for symbol in symbols]
 
     # TODO: put more info into the atoms object
-    # e.g magmom, force constraints
-    atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=True, tags=tags)
+    # e.g magmom, forces.
+    atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=True,
+                  magmoms=magmoms)
 
     return atoms
 
@@ -457,14 +583,14 @@ def ibrav_to_cell(system):
                          [1.0, 1.0, -1.0]]) * (alat / 2)
     elif system['ibrav'] == 4:
         cell = np.array([[1.0, 0.0, 0.0],
-                         [-0.5, 0.5*3**0.5, 0.0],
+                         [-0.5, 0.5 * 3**0.5, 0.0],
                          [0.0, 0.0, c_over_a]]) * alat
     elif system['ibrav'] == 5:
         tx = ((1.0 - cosab) / 2.0)**0.5
         ty = ((1.0 - cosab) / 6.0)**0.5
         tz = ((1 + 2 * cosab) / 3.0)**0.5
         cell = np.array([[tx, -ty, tz],
-                         [0, 2*ty, tz],
+                         [0, 2 * ty, tz],
                          [-tx, -ty, tz]]) * alat
     elif system['ibrav'] == -5:
         ty = ((1.0 - cosab) / 6.0)**0.5
@@ -496,7 +622,7 @@ def ibrav_to_cell(system):
                          [1.0 / 2.0, b_over_a / 2.0, 0.0],
                          [0.0, 0.0, c_over_a]]) * alat
     elif system['ibrav'] == 10:
-        cell = np.array([[1.0 / 2.0, 0.0, c_over_a/2.0],
+        cell = np.array([[1.0 / 2.0, 0.0, c_over_a / 2.0],
                          [1.0 / 2.0, b_over_a / 2.0, 0.0],
                          [0.0, b_over_a / 2.0, c_over_a / 2.0]]) * alat
     elif system['ibrav'] == 11:
@@ -532,6 +658,55 @@ def ibrav_to_cell(system):
                                   ''.format(system['ibrav']))
 
     return alat, cell
+
+
+def get_pseudo_dirs(data):
+    """Guess a list of possible locations for pseudopotential files.
+
+    Parameters
+    ----------
+    data : Namelist
+        Namelist representing the quantum espresso input parameters
+
+    Returns
+    -------
+    pseudo_dirs : list[str]
+        A list of directories where pseudopotential files could be located.
+    """
+    pseudo_dirs = []
+    if 'pseudo_dir' in data['control']:
+        pseudo_dirs.append(data['control']['pseudo_dir'])
+    if 'ESPRESSO_PSEUDO' in os.environ:
+        pseudo_dirs.append(os.environ['ESPRESSO_PSEUDO'])
+    pseudo_dirs.append(path.expanduser('~/espresso/pseudo/'))
+    return pseudo_dirs
+
+
+def get_valence_electrons(symbol, data, pseudo=None):
+    """The number of valence electrons for a atomic symbol.
+
+    Parameters
+    ----------
+    symbol : str
+        Chemical symbol
+
+    data : Namelist
+        Namelist representing the quantum espresso input parameters
+
+    pseudo : str, optional
+        File defining the pseudopotential to be used. If missing a fallback
+        to the number of valence electrons recommended at
+        http://materialscloud.org/sssp/ is employed.
+    """
+    if pseudo is None:
+        pseudo = '{}_dummy.UPF'.format(symbol)
+    for pseudo_dir in get_pseudo_dirs(data):
+        if path.exists(path.join(pseudo_dir, pseudo)):
+            valence = grep_valence(path.join(pseudo_dir, pseudo))
+            break
+    else:  # not found in a file
+        valence = SSSP_VALENCE[atomic_numbers[symbol]]
+    return valence
 
 
 def get_atomic_positions(lines, n_atoms, cell=None, alat=None):
@@ -609,6 +784,46 @@ def get_atomic_positions(lines, n_atoms, cell=None, alat=None):
     return positions
 
 
+def get_atomic_species(lines, n_species):
+    """Parse atomic species from ATOMIC_SPECIES card.
+
+    Parameters
+    ----------
+    lines : list[str]
+        A list of lines containing the ATOMIC_POSITIONS card.
+    n_species : int
+        Expected number of atom types. Only this many lines will be parsed.
+
+    Returns
+    -------
+    species : list[(str, float, str)]
+
+    Raises
+    ------
+    ValueError
+        Any problems parsing the data result in ValueError
+    """
+
+    species = None
+    # no blanks or comment lines, can the consume n_atoms lines for positions
+    trimmed_lines = (line.strip() for line in lines
+                     if line.strip() and not line.startswith('#'))
+
+    for line in trimmed_lines:
+        if line.startswith('ATOMIC_SPECIES'):
+            if species is not None:
+                raise ValueError('Multiple ATOMIC_SPECIES specified')
+
+            species = []
+            for _dummy in range(n_species):
+                label_weight_pseudo = next(trimmed_lines).split()
+                species.append((label_weight_pseudo[0],
+                                float(label_weight_pseudo[1]),
+                                label_weight_pseudo[2]))
+
+    return species
+
+
 def get_cell_parameters(lines, alat=None):
     """Parse unit cell from CELL_PARAMETERS card.
 
@@ -663,9 +878,9 @@ def get_cell_parameters(lines, alat=None):
                                      'angstrom')
                 cell_units = 1.0
             elif 'alat' in line.lower():
-                # Output file has (alat = value)
+                # Output file has (alat = value) (in Bohrs)
                 if '=' in line:
-                    alat = float(line.strip(') \n').split()[-1])
+                    alat = float(line.strip(') \n').split()[-1]) * units['Bohr']
                     cell_alat = alat
                 elif alat is None:
                     raise ValueError('Lattice parameters must be set in '
@@ -947,6 +1162,7 @@ def infix_float(text):
 # Input file writing
 ###
 
+
 # Ordered and case insensitive
 KEYS = Namelist((
     ('CONTROL', [
@@ -997,7 +1213,7 @@ KEYS = Namelist((
 
 # Number of valence electrons in the pseudopotentials recommended by
 # http://materialscloud.org/sssp/. These are just used as a fallback for
-# calculating inital magetization values which are given as a fraction
+# calculating initial magetization values which are given as a fraction
 # of valence electrons.
 SSSP_VALENCE = [
     0, 1.0, 2.0, 3.0, 4.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 3.0, 4.0,
@@ -1080,10 +1296,12 @@ def construct_namelist(parameters=None, warn=False, **kwargs):
             for arg_key in parameters.get(section, {}):
                 if arg_key.split('(')[0].strip().lower() == key.lower():
                     sec_list[arg_key] = parameters[section].pop(arg_key)
-            for arg_key in parameters:
+            cp_parameters = parameters.copy()
+            for arg_key in cp_parameters:
                 if arg_key.split('(')[0].strip().lower() == key.lower():
                     sec_list[arg_key] = parameters.pop(arg_key)
-            for arg_key in kwargs:
+            cp_kwargs = kwargs.copy()
+            for arg_key in cp_kwargs:
                 if arg_key.split('(')[0].strip().lower() == key.lower():
                     sec_list[arg_key] = kwargs.pop(arg_key)
 
@@ -1127,7 +1345,10 @@ def grep_valence(pseudopotential):
     """
 
     # Example lines
-    # Sr.pbe-spn-rrkjus_psl.1.0.0.UPF:             z_valence="1.000000000000000E+001"
+    # Sr.pbe-spn-rrkjus_psl.1.0.0.UPF:        z_valence="1.000000000000000E+001"
+    # C.pbe-n-kjpaw_psl.1.0.0.UPF (new ld1.x):
+    #                            ...PBC" z_valence="4.000000000000e0" total_p...
+    # C_ONCV_PBE-1.0.upf:                     z_valence="    4.00"
     # Ta_pbe_v1.uspp.F.UPF:   13.00000000000      Z valence
 
     with open(pseudopotential) as psfile:
@@ -1135,6 +1356,9 @@ def grep_valence(pseudopotential):
             if 'z valence' in line.lower():
                 return float(line.split()[0])
             elif 'z_valence' in line.lower():
+                if line.split()[0] == '<PP_HEADER':
+                    line = list(filter(lambda x: 'z_valence' in x,
+                                       line.split(' ')))[0]
                 return float(line.split('=')[-1].strip().strip('"'))
         else:
             raise ValueError('Valence missing in {}'.format(pseudopotential))
@@ -1264,23 +1488,23 @@ def kspacing_to_grid(atoms, spacing, calculated_spacing=None):
     """
     # No factor of 2pi in ase, everything in A^-1
     # reciprocal dimensions
-    r_x, r_y, r_z = np.linalg.norm(atoms.get_reciprocal_cell(), axis=1)
+    r_x, r_y, r_z = np.linalg.norm(atoms.cell.reciprocal(), axis=1)
 
-    kpoint_grid = [int(r_x/spacing) + 1,
-                   int(r_y/spacing) + 1,
-                   int(r_z/spacing) + 1]
+    kpoint_grid = [int(r_x / spacing) + 1,
+                   int(r_y / spacing) + 1,
+                   int(r_z / spacing) + 1]
 
     if calculated_spacing is not None:
-        calculated_spacing[:] = [r_x/kpoint_grid[0],
-                                 r_y/kpoint_grid[1],
-                                 r_z/kpoint_grid[2]]
+        calculated_spacing[:] = [r_x / kpoint_grid[0],
+                                 r_y / kpoint_grid[1],
+                                 r_z / kpoint_grid[2]]
 
     return kpoint_grid
 
 
 def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
                       kspacing=None, kpts=None, koffset=(0, 0, 0),
-                      **kwargs):
+                      crystal_coordinates=False, **kwargs):
     """
     Create an input file for pw.x.
 
@@ -1332,11 +1556,25 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
         Generate a grid of k-points with this as the minimum distance,
         in A^-1 between them in reciprocal space. If set to None, kpts
         will be used instead.
-    kpts:
-        Number of kpoints in each dimension for automatic kpoint generation.
+    kpts: (int, int, int) or dict
+        If kpts is a tuple (or list) of 3 integers, it is interpreted
+        as the dimensions of a Monkhorst-Pack grid.
+        If ``kpts`` is set to ``None``, only the Γ-point will be included
+        and QE will use routines optimized for Γ-point-only calculations.
+        Compared to Γ-point-only calculations without this optimization
+        (i.e. with ``kpts=(1, 1, 1)``), the memory and CPU requirements
+        are typically reduced by half.
+        If kpts is a dict, it will either be interpreted as a path
+        in the Brillouin zone (*) if it contains the 'path' keyword,
+        otherwise it is converted to a Monkhorst-Pack grid (**).
+        (*) see ase.dft.kpoints.bandpath
+        (**) see ase.calculators.calculator.kpts2sizeandoffsets
     koffset: (int, int, int)
         Offset of kpoints in each direction. Must be 0 (no offset) or
         1 (half grid offset). Setting to True is equivalent to (1, 1, 1).
+    crystal_coordinates: bool
+        Whether the atomic positions should be written to the QE input file in
+        absolute (False, default) or relative (crystal) coordinates (True).
 
     """
 
@@ -1357,36 +1595,33 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
         else:
             warnings.warn('Ignored unknown constraint {}'.format(constraint))
 
-    # Deal with pseudopotentials
-    # Look in all possible locations for the pseudos and try to figure
-    # out the number of valence electrons
-    pseudo_dirs = []
-    if 'pseudo_dir' in input_parameters['control']:
-        pseudo_dirs.append(input_parameters['control']['pseudo_dir'])
-    if 'ESPRESSO_PSEUDO' in os.environ:
-        pseudo_dirs.append(os.environ['ESPRESSO_PSEUDO'])
-    pseudo_dirs.append(path.expanduser('~/espresso/pseudo/'))
 
+    ## modified
+    pseudo_dirs = get_pseudo_dirs(input_parameters)
     # Species info holds the information on the pseudopotential and
     # associated for each element
     if pseudopotentials is None:
         pseudopotentials = {}
     species_info = {}
+    ## modified
     tagged_species = set("".join(x) for x in zip(atoms.get_chemical_symbols(),
                                                 [str(j) if j>0 else "" for j in atoms.get_tags()]))
     # for species in set(atoms.get_chemical_symbols()):
     for species in tagged_species:
+        # Look in all possible locations for the pseudos and try to figure
+        # out the number of valence electrons
+        #pseudo = pseudopotentials.get(species, None)
         pseudo = pseudopotentials.get(species, '{}_dummy.UPF'.format(species))
         for pseudo_dir in pseudo_dirs:
             if path.exists(path.join(pseudo_dir, pseudo)):
                 valence = grep_valence(path.join(pseudo_dir, pseudo))
                 break
+        
         else:  # not found in a file
             valence = SSSP_VALENCE[atomic_numbers[''.join(i for i in species if not i.isdigit())]]
 
         species_info[species] = {'pseudo': pseudo,
                                  'valence': valence}
-
     # Convert atoms into species.
     # Each different magnetic moment needs to be a separate type even with
     # the same pseudopotential (e.g. an up and a down for AFM).
@@ -1456,16 +1691,21 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
             else:
                 mask = ''
 
+            if crystal_coordinates:
+                coords = [atom.a, atom.b, atom.c]
+            else:
+                coords = atom.position
+            ## modified
             if atom.tag > 0:
                 atomic_positions_str.append(
                     '{atom.symbol}{atom.tag} '
                     '{atom.x:.10f} {atom.y:.10f} {atom.z:.10f} '
-                    '{mask}\n'.format(atom=atom, mask=mask))
+                    '{mask}\n'.format(atom=atom, coords=coords, mask=mask))
             else:
                 atomic_positions_str.append(
                     '{atom.symbol} '
-                    '{atom.x:.10f} {atom.y:.10f} {atom.z:.10f} '
-                    '{mask}\n'.format(atom=atom, mask=mask))
+                    '{coords[0]:.10f} {coords[1]:.10f} {coords[2]:.10f} '
+                    '{mask}\n'.format(atom=atom, coords=coords, mask=mask))
 
     # Add computed parameters
     # different magnetisms means different types
@@ -1513,16 +1753,31 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
     if kspacing is not None:
         kgrid = kspacing_to_grid(atoms, kspacing)
     elif kpts is not None:
-        kgrid = kpts
+        if isinstance(kpts, dict) and 'path' not in kpts:
+            kgrid, shift = kpts2sizeandoffsets(atoms=atoms, **kpts)
+            koffset = []
+            for i, x in enumerate(shift):
+                assert x == 0 or abs(x * kgrid[i] - 0.5) < 1e-14
+                koffset.append(0 if x == 0 else 1)
+        else:
+            kgrid = kpts
     else:
-        kgrid = (1, 1, 1)
+        kgrid = "gamma"
 
     # True and False work here and will get converted by ':d' format
     if isinstance(koffset, int):
         koffset = (koffset, ) * 3
 
-    # QE defaults to gamma point, make it explicit
-    if kpts is None and all([x == 1 for x in kgrid]) and not any(koffset):
+    # BandPath object or bandpath-as-dictionary:
+    if isinstance(kgrid, dict) or hasattr(kgrid, 'kpts'):
+        pwi.append('K_POINTS crystal_b\n')
+        assert hasattr(kgrid, 'path') or 'path' in kgrid
+        kgrid = kpts2ndarray(kgrid, atoms=atoms)
+        pwi.append('%s\n' % len(kgrid))
+        for k in kgrid:
+            pwi.append('{k[0]:.14f} {k[1]:.14f} {k[2]:.14f} 0\n'.format(k=k))
+        pwi.append('\n')
+    elif isinstance(kgrid, str) and (kgrid == "gamma"):
         pwi.append('K_POINTS gamma\n')
         pwi.append('\n')
     else:
@@ -1541,7 +1796,10 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
         pwi.append('\n')
 
     # Positions - already constructed, but must appear after namelist
-    pwi.append('ATOMIC_POSITIONS angstrom\n')
+    if crystal_coordinates:
+        pwi.append('ATOMIC_POSITIONS crystal\n')
+    else:
+        pwi.append('ATOMIC_POSITIONS angstrom\n')
     pwi.extend(atomic_positions_str)
     pwi.append('\n')
 
