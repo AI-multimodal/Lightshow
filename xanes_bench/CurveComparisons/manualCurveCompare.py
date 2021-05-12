@@ -256,11 +256,11 @@ def CosSimilarOld( omega, plot1, plot2, inverse=False ):
 # LIMITATIONS: 
 # 1. Assumes that the plots are on uniform energy grids, otherwise the cossimilarity should include a dx(?)
 #
-def CosSimilar( omega, plot1, plot2, inverse=False ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def CosSimilar( omega, plot1, plot2, interp1, interp2, inverse=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
 
     width1 = plot1[-1,0]-plot1[0,0]
     width2 = plot2[-1,0]-plot2[0,0]
@@ -550,6 +550,36 @@ def RMSDsinglePointCurves( alpha, omega, plot1, plot2 ):
     return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
 
 
+
+def makeInterpolateWithWindow( plot, doWindow ):
+
+    heightScale = 0.1
+    windowWidth = 10
+    windowDelta = 0.1
+
+    if not doWindow:
+      return plot, interpolate.interp1d( plot[:,0], plot[:,1], assume_sorted=True, kind='cubic',
+                                    bounds_error=False )
+
+    height = heightScale*windowAverage( plot, windowWidth, windowDelta )
+
+
+    for windowStart in range( len( plot[:,0]) ):
+        if plot[windowStart,1] > height:
+            break
+    if plot[-1,1] > height:
+        windowStop = len(plot[:,0])-1
+    else:
+        for windowStop in reversed( range( len( plot[:,0] ) ) ):
+            if plot[windowStop,1] > height:
+                break
+        windowStop = int( 0.8 * (windowStop-windowStart ) ) + windowStart
+
+    return plot[0:windowStop,:], interpolate.interp1d( plot[0:windowStop,0], plot[0:windowStop,1], 
+                                                       assume_sorted=True, kind='cubic', bounds_error=False )
+
+    
+
 # Takes a list of two files, assumes both files are formated with two columns 
 # compares the two datasets using cosineSimilarity
 #
@@ -561,39 +591,42 @@ def RMSDsinglePointCurves( alpha, omega, plot1, plot2 ):
 #  2. Different comparison methods
 #  3. Default shift for the search
 #
-def comparePlots( saveFiles, shiftAvg=True,  ):
+def comparePlots( p1, p2, window=False ):
 
-    plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
-    plot2 = np.loadtxt( saveFiles[1],  dtype=np.float64, usecols=(0,1))
-
-    if shiftAvg:
-        plot1Avg = np.mean( plot1[:,1] )
-        plot1[:,1] = plot1[:,1] - plot1Avg
-        plot2Avg = np.mean( plot2[:,1] )
-        plot2[:,1] = plot2[:,1] - plot2Avg
+    plot1, interp1 = makeInterpolateWithWindow( p1, window )
+    plot2, interp2 = makeInterpolateWithWindow( p2, window )
 
     maxp1 = plot1[np.argmax( plot1[:,1] ), 0 ]
     maxp2 = plot2[np.argmax( plot2[:,1] ), 0 ]
     
     omega = maxp1-maxp2
-    cosSimilarity = CosSimilar( omega, plot1, plot2 )
+    cosSimilarity = CosSimilar( omega, plot1, plot2, interp1, interp2 )
     print( "Cosine similarity = {:f} ".format(cosSimilarity) )
 
 #    res = minimize_scalar( CosSimilar, args = ( plot1, plot2, True ), options={'xtol': 1e-8})
     bounds = [ [ plot1[0,0] -plot2[-1,0], plot1[-1,0]-plot2[0,0] ] ]
 #    print( bounds )
 #    res = minimize( CosSimilar, omega, args = ( plot1, plot2, True ), method='Nelder-Mead', options={'fatol': 1e-8})
-    res = minimize( CosSimilar, omega, args = ( plot1, plot2, True ), method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
+    res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
     if not res.success:
-        res = minimize( CosSimilar, omega, args = ( plot1, plot2, True ), method='Powell', bounds=bounds )
+        res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='Powell', bounds=bounds )
     if res.success:
         print( "Shift = {:f} eV".format(res.x[0]) )
         print( "Cos S = {:f}".format(1-res.fun) )
     else:
         print( "Optmizing energy shift failed" )
         exit()
-    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
+
+    omega = res.x[0]
+    coss = 1-res.fun
+
+    pearson = PearsonCoeff( omega, plot1, plot2 )
+    spearman = SpearmanCoeff( omega, plot1, plot2 )
+
+#    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
+    print( "Pearson = {:f}".format( pearson ) )
+#    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
+    print( "Spearman = {:f}".format( spearman ) )
 
 #    windowAverage( plot1, 20, 0.2 )
 
@@ -607,7 +640,9 @@ def comparePlots( saveFiles, shiftAvg=True,  ):
         print( "RMSD  = {:e}".format(res2.fun ) )
 
     alpha = res2.x[0]
-    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
+    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 )
+#    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
+    print( "Rel. area between = {:f} %".format( relArea ) )
 
 #    alpha = 1.0
     res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2 ), method='Nelder-Mead', options={'fatol': 1e-8})
@@ -619,6 +654,8 @@ def comparePlots( saveFiles, shiftAvg=True,  ):
     print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
 
 #    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
+
+    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
 
     RMSDcurvesWindow( res2.x[0], res.x[0], plot1, plot2, True )
 
@@ -634,9 +671,10 @@ def main():
     saveFile = 'xspectra.0.1'
     saveFiles.append( saveFile )
 
-
+    plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
+    plot2 = np.loadtxt( saveFiles[1],  dtype=np.float64, usecols=(0,1))
 #    print( str(saveFiles[0]), str(saveFiles[1]) )
-    comparePlots( saveFiles, False )
+    comparePlots( plot1, plot2, True )
 
 
 
