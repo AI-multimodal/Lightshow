@@ -6,6 +6,7 @@ from scipy.optimize import minimize_scalar, minimize
 import pathlib
 import os
 from os import environ as env
+from os import path
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 
@@ -468,11 +469,11 @@ def RMSDcurvesWindow( alpha, omega, plot1, plot2, interp1, interp2, Plot=False )
     return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
 
 
-def relAreaBetweenCurves( alpha, omega, plot1, plot2 ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def relAreaBetweenCurves( alpha, omega, plot1, plot2, interp1, interp2 ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
 
     for start in range( len( plot1[:,0]) ):
         if plot1[start,0]-omega > plot2[0,0]:
@@ -591,7 +592,7 @@ def makeInterpolateWithWindow( plot, doWindow ):
 #  2. Different comparison methods
 #  3. Default shift for the search
 #
-def comparePlots( p1, p2, window=False ):
+def comparePlots( p1, p2, window=False, radius=0 ):
 
     plot1, interp1 = makeInterpolateWithWindow( p1, window )
     plot2, interp2 = makeInterpolateWithWindow( p2, window )
@@ -600,17 +601,14 @@ def comparePlots( p1, p2, window=False ):
     maxp2 = plot2[np.argmax( plot2[:,1] ), 0 ]
     
     omega = maxp1-maxp2
-    cosSimilarity = CosSimilar( omega, plot1, plot2, interp1, interp2 )
-    print( "Cosine similarity = {:f} ".format(cosSimilarity) )
 
     bounds = [ [ plot1[0,0] -plot2[-1,0], plot1[-1,0]-plot2[0,0] ] ]
-    res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
+    res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), 
+                    method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
     if not res.success:
-        res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='Powell', bounds=bounds )
-    if res.success:
-        print( "Shift = {:f} eV".format(res.x[0]) )
-        print( "Cos S = {:f}".format(1-res.fun) )
-    else:
+        res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), 
+                        method='Powell', bounds=bounds )
+    if not res.success:
         print( "Optmizing energy shift failed" )
         exit()
 
@@ -620,61 +618,82 @@ def comparePlots( p1, p2, window=False ):
     pearson = PearsonCoeff( omega, plot1, plot2, interp1, interp2 )
     spearman = SpearmanCoeff( omega, plot1, plot2, interp1, interp2 )
 
-#    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Pearson = {:f}".format( pearson ) )
-#    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Spearman = {:f}".format( spearman ) )
-
-#    windowAverage( plot1, 20, 0.2 )
-
-#    print( RMSDcurves( 1.0, res.x[0], plot1, plot2 ) )
-
-#    gaussAvgAndDiff( 2.0, res.x[0], plot1, plot2 )
     alpha = 1.0
     res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
                      method='Nelder-Mead', options={'fatol': 1e-8})
-    if res.success:
-        print( "Alpha = {:e}".format(res2.x[0]) )
-        print( "RMSD  = {:e}".format(res2.fun ) )
+    if not res2.success:
+        print( "Optimizing RMSD scaling failed")
+        exit()
 
     alpha = res2.x[0]
-    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 )
-#    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
-    print( "Rel. area between = {:f} %".format( relArea ) )
+    rmsd = res2.fun
+    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2, interp1, interp2 )
 
-#    alpha = 1.0
-    res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
-                     method='Nelder-Mead', options={'fatol': 1e-8})
-    if res.success:
-        print( "Alpha = {:e}".format(res2.x[0]) )
-        print( "RMSD  = {:e}".format(res2.fun ) )
+    print( "{:12f}  {:12f}  {:10f}  {:12.8f}  {:12.8f}  {:12.8f}  {:10f}".format( radius, omega, alpha, coss, pearson, spearman, relArea, ))
 
-    alpha = res2.x[0]
-    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
 
-#    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
 
-    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
+def parseOCEANFile( site, polar, kpoint ):
+    plot = None
+    k = [ int(kpoint[0]), int(kpoint[1]), int(kpoint[2]) ]
+    for s in site:
+        for p in polar:
+            f = "CNBSE-{:d}.{:d}.{:d}/absspct_Ti.{:04d}_1s_{:02d}".format( k[0], k[1], k[2], s, p )
+            if os.path.isfile( f ):
+                if plot is None:
+                    plot = np.loadtxt( f, skiprows=2, usecols=(0,2) )
+                else:
+                    plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2) )
+            else:
+                return None
 
-    RMSDcurvesWindow( res2.x[0], res.x[0], plot1, plot2, interp1, interp2, True )
+    return plot
+        
+
+def parseFile( program, site, polarization, kpoint ):
+    if program == 'O':
+        return parseOCEANFile( site, polarization, kpoint )
+    else:
+        return None
+
+def loadPlotsKpoints( program, site, polarization ):
+
+    plots = []
+    foundKpoints = []
+
+    kpointArray = np.loadtxt( 'k.txt', skiprows=1, usecols=(0,1,2,5) )
+
+    for k in kpointArray:
+        p = parseFile( program, site, polarization, k[0:3] )
+        if p is not None:
+            plots.append( p )
+            foundKpoints.append( k )
+
+    return plots, foundKpoints
 
 def main():
 
+    program = 'O'
+    method = 'K'
+    site = [1,2,3,4,5,6,7,8]
+    polarization = [1,2,3]
 
-    saveFiles = []
-    
-#    saveFile = input("First file: ")
-    saveFile = 'ocean.1.1'
-    saveFiles.append( saveFile )
-#    saveFile = input("Second file: ")
-    saveFile = 'xspectra.0.1'
-    saveFiles.append( saveFile )
+    plots, kpoints = loadPlotsKpoints( program, site, polarization )
 
-    plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
-    plot2 = np.loadtxt( saveFiles[1],  dtype=np.float64, usecols=(0,1))
-#    print( str(saveFiles[0]), str(saveFiles[1]) )
-    comparePlots( plot1, plot2, True )
+#    for k in kpoints:
+#        print( k )
+    print( "#", kpoints[-1] )
 
+    if len(plots) < 2:
+        print( "Didn't find enough plots" )
+        exit()
+
+    print( "#   Radius       Shift        Scale       CosSimilar  Pearson     Spearman   Rel Area" )
+    print( "#   (Bohr)       (eV)                                                          (%)" )
+    for i in range(len(plots)-1):
+        comparePlots( plots[-1], plots[i], True, kpoints[i][3] )
+
+    exit()
 
 
 if __name__ == '__main__':
