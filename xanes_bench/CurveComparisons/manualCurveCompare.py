@@ -128,11 +128,11 @@ def PearsonCoeffOld( omega, plot1, plot2, inverse=False ):
 # LIMITATIONS: 
 # 1. Assumes that the plots are on uniform energy grids, otherwise the cossimilarity should include a dx(?)
 #
-def PearsonCoeff( omega, plot1, plot2, inverse=False ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def PearsonCoeff( omega, plot1, plot2, interp1, interp2, inverse=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
 
     for start in range( len( plot1[:,0]) ):
         if plot1[start,0]-omega > plot2[0,0]:
@@ -164,11 +164,11 @@ def PearsonCoeff( omega, plot1, plot2, inverse=False ):
     return p
 
 
-def SpearmanCoeff( omega, plot1, plot2, inverse=False ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def SpearmanCoeff( omega, plot1, plot2, interp1, interp2, inverse=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
         
     for start in range( len( plot1[:,0]) ):
         if plot1[start,0]-omega > plot2[0,0]:
@@ -345,11 +345,11 @@ def RMSDcurvesOld( alpha, omega, plot1, plot2 ):
 
 # using scaling alpha and shift omega, determine the rmsd between two curves
 #TODO: normalize by the total length and sampling rate
-def RMSDcurves( alpha, omega, plot1, plot2, Plot=False ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def RMSDcurves( alpha, omega, plot1, plot2, interp1, interp2, Plot=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
 
     for start in range( len( plot1[:,0]) ):
         if plot1[start,0]-omega > plot2[0,0]:
@@ -389,11 +389,11 @@ def RMSDcurves( alpha, omega, plot1, plot2, Plot=False ):
 
 # using scaling alpha and shift omega, determine the rmsd between two curves
 #TODO: normalize by the total length and sampling rate
-def RMSDcurvesWindow( alpha, omega, plot1, plot2, Plot=False ):
-    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
-    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
-                                    bounds_error=True )
+def RMSDcurvesWindow( alpha, omega, plot1, plot2, interp1, interp2, Plot=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
 
     height1 = 0.1*windowAverage( plot1, 10, 0.1 )
     height2 = 0.1*windowAverage( plot2, 10, 0.1 )
@@ -620,8 +620,8 @@ def comparePlots( p1, p2, window=False ):
     omega = res.x[0]
     coss = 1-res.fun
 
-    pearson = PearsonCoeff( omega, plot1, plot2 )
-    spearman = SpearmanCoeff( omega, plot1, plot2 )
+    pearson = PearsonCoeff( omega, plot1, plot2, interp1, interp2 )
+    spearman = SpearmanCoeff( omega, plot1, plot2, interp1, interp2 )
 
 #    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
     print( "Pearson = {:f}".format( pearson ) )
@@ -634,7 +634,8 @@ def comparePlots( p1, p2, window=False ):
 
 #    gaussAvgAndDiff( 2.0, res.x[0], plot1, plot2 )
     alpha = 1.0
-    res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2 ), method='Nelder-Mead', options={'fatol': 1e-8})
+    res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
+                     method='Nelder-Mead', options={'fatol': 1e-8})
     if res.success:
         print( "Alpha = {:e}".format(res2.x[0]) )
         print( "RMSD  = {:e}".format(res2.fun ) )
@@ -645,7 +646,8 @@ def comparePlots( p1, p2, window=False ):
     print( "Rel. area between = {:f} %".format( relArea ) )
 
 #    alpha = 1.0
-    res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2 ), method='Nelder-Mead', options={'fatol': 1e-8})
+    res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
+                     method='Nelder-Mead', options={'fatol': 1e-8})
     if res.success:
         print( "Alpha = {:e}".format(res2.x[0]) )
         print( "RMSD  = {:e}".format(res2.fun ) )
@@ -657,7 +659,7 @@ def comparePlots( p1, p2, window=False ):
 
     print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
 
-    RMSDcurvesWindow( res2.x[0], res.x[0], plot1, plot2, True )
+    RMSDcurvesWindow( res2.x[0], res.x[0], plot1, plot2, interp1, interp2, True )
 
 def main():
 
