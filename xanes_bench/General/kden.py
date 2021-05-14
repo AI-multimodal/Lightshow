@@ -59,3 +59,33 @@ def readKgrid( folder: str ):
             else:
                 klist[(int(kx),int(ky),int(kz))]=float(line.split()[-1])
     return klist
+
+def returnKDen( unitC: Atoms, kpoint ):
+
+    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+
+    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+
+    klen = kpoint[0] / recip[0]
+    for i in range(3):
+        t = kpoint[i] / recip[i]
+        if t < klen:
+            klen = t
+
+    return klen
+
+
+def returnKpoint( unitC: Atoms, klen ):
+    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+
+    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+
+    kpoint = []
+    for i in range(3):
+        kpoint.append( int( klen * recip[i] ) + 1 )
+
+    return kpoint
