@@ -705,7 +705,7 @@ def get_valence_electrons(symbol, data, pseudo=None):
             valence = grep_valence(path.join(pseudo_dir, pseudo))
             break
     else:  # not found in a file
-        valence = SSSP_VALENCE[atomic_numbers[symbol]]
+        valence = SSSP_VALENCE[atomic_numbers[''.join(i for i in symbol if not i.isdigit())]]
     return valence
 
 
@@ -1610,16 +1610,8 @@ def write_espresso_in(fd, atoms, input_data=None, pseudopotentials=None,
     for species in tagged_species:
         # Look in all possible locations for the pseudos and try to figure
         # out the number of valence electrons
-        #pseudo = pseudopotentials.get(species, None)
-        pseudo = pseudopotentials.get(species, '{}_dummy.UPF'.format(species))
-        for pseudo_dir in pseudo_dirs:
-            if path.exists(path.join(pseudo_dir, pseudo)):
-                valence = grep_valence(path.join(pseudo_dir, pseudo))
-                break
-        
-        else:  # not found in a file
-            valence = SSSP_VALENCE[atomic_numbers[''.join(i for i in species if not i.isdigit())]]
-
+        pseudo = pseudopotentials.get(species, None)
+        valence = get_valence_electrons(species, input_parameters, pseudo)
         species_info[species] = {'pseudo': pseudo,
                                  'valence': valence}
     # Convert atoms into species.
