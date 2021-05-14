@@ -14,6 +14,7 @@ from xanes_bench.photonSym import photonSymm
 import json
 import xanes_bench.Xspectra
 import os, shutil
+from xanes_bench.General.kden import printKgrid
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
 def smaller(atoms: Atoms, Rmin=9.0):
@@ -158,6 +159,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "XS" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
+    printKgrid( atoms, folder )
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                 str(folder / ".." / "Ti.wfc"))
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
