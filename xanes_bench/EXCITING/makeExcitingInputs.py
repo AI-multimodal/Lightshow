@@ -59,9 +59,9 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
     if params['scf.kpoints'] is not None:
         excitingxasJSON['groundstate']['ngridk'] = \
             "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
-        excitingxasJSON['xs']['BSE']['ngrid'] = \
+        excitingxasJSON['xs']['ngridk'] = \
             "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
-        excitingxasJSON['xs']['BSE']['ngridq'] = \
+        excitingxasJSON['xs']['ngridq'] = \
             "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
     
     # determine xasspecies parameter
