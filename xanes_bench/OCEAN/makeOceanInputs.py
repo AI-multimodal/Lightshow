@@ -94,25 +94,27 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     # New total weight for the quadrupole terms
     totalweight = 0
     for photon in ph:
-        for quad in photon["quad"]:
-            totalweight += quad[3]
+        if 'quad' in photon:
+            for quad in photon["quad"]:
+                totalweight += quad[3]
 
     for photon in ph:
-        for quad in photon["quad"]:
-            photonCount += 1 
-            dir1 = photon["dipole"][0:3]
-            dir2 = quad[0:3]
-            weight = quad[3] / totalweight
-            mode = "quad"
+        if 'quad' in photon:
+            for quad in photon["quad"]:
+                photonCount += 1 
+                dir1 = photon["dipole"][0:3]
+                dir2 = quad[0:3]
+                weight = quad[3] / totalweight
+                mode = "quad"
 
-            with open( folder / ("photon%d" % (photonCount )), "w" ) as f:
-                f.write( mode +"\n" )
-                f.write( "cartesian %f %f %f \n" % (dir1[0], dir1[1], dir1[2] ) )
-                f.write( "end\n" )
-                f.write( "cartesian %f %f %f \n" % (dir2[0], dir2[1], dir2[2] ) )
-                f.write( "end\n" )
-                f.write( "4966\n" )  ### NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
-                f.write( str(weight ) + "\n" )
-                f.close
+                with open( folder / ("photon%d" % (photonCount )), "w" ) as f:
+                    f.write( mode +"\n" )
+                    f.write( "cartesian %f %f %f \n" % (dir1[0], dir1[1], dir1[2] ) )
+                    f.write( "end\n" )
+                    f.write( "cartesian %f %f %f \n" % (dir2[0], dir2[1], dir2[2] ) )
+                    f.write( "end\n" )
+                    f.write( "4966\n" )  ### NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
+                    f.write( str(weight ) + "\n" )
+                    f.close
 
       

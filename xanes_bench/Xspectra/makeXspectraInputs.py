@@ -112,7 +112,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                              symprec=0.1, angle_tolerance=15)
     equiv = symm['equivalent_atoms']
 
-    use_photonSymm = False
+    use_photonSymm = True
     ph = []
     if use_photonSymm:
         photonSymm(atoms, us, ph, params['photonOrder'])
@@ -233,27 +233,29 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           # New total weight for the quadrupole terms
           totalweight = 0
           for photon in ph:
-              for quad in photon["quad"]:
-                  totalweight += quad[3]
+              if 'quad' in photon:
+                  for quad in photon["quad"]:
+                      totalweight += quad[3]
 
           for photon in ph:
-              for quad in photon["quad"]:
-                  photonCount += 1
-                  dir1 = photon["dipole"][0:3]
-                  dir2 = quad[0:3]
-                  weight = quad[3] * us[i] / totalweight
-                  mode = "quadrupole"
-                  xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
-                  xanesfolder.mkdir(parents=True, exist_ok=True)
-                  # fo
-                  with open(xanesfolder / "xanes.in", "w") as f:
+              if 'quad' in photon:
+                  for quad in photon["quad"]:
+                      photonCount += 1
+                      dir1 = photon["dipole"][0:3]
+                      dir2 = quad[0:3]
+                      weight = quad[3] * us[i] / totalweight
+                      mode = "quadrupole"
+                      xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                      xanesfolder.mkdir(parents=True, exist_ok=True)
+                      # fo
+                      with open(xanesfolder / "xanes.in", "w") as f:
+                              f.write(xinput(mode, iabs[i], dir1,
+                                                   dir2, xsJSON['XS']))
+
+                      with open(xanesfolder / "xanes_.in", "w") as f:
                           f.write(xinput(mode, iabs[i], dir1,
-                                               dir2, xsJSON['XS']))
+                                         dir2,  xsJSON['XS'], plot=True))
 
-                  with open(xanesfolder / "xanes_.in", "w") as f:
-                      f.write(xinput(mode, iabs[i], dir1,
-                                     dir2,  xsJSON['XS'], plot=True))
-
-                  with open(xanesfolder / "weight.txt", "w") as f:
-                      f.write( str(weight) + "\n" )
+                      with open(xanesfolder / "weight.txt", "w") as f:
+                          f.write( str(weight) + "\n" )
 
