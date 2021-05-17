@@ -57,11 +57,13 @@
         }
     },
     "XS_controls": {
-        "Rmin": "9.0",
+        "element": "Ti",
+        "edge": "K",
+        "kden": "-1",
         "psp": {
             "Ti1": "Ti.fch.upf"
         },
-        "element": "Ti",
-        "edge": "K"
+        "Rmin": "9.0",
+        "scf_kden": "-1"
     }
 }
