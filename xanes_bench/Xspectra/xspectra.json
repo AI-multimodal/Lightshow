@@ -55,5 +55,13 @@
             "gamma_mode": "constant",
             "xgamma": 0.05
         }
+    },
+    "XS_controls": {
+        "Rmin": "9.0",
+        "psp": {
+            "Ti1": "Ti.fch.upf"
+        },
+        "element": "Ti",
+        "edge": "K"
     }
 }

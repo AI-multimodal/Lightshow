@@ -96,17 +96,18 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
 def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     #######
-    psp = dict(Ti1='Ti.fch.upf')
-    symTarg = 'Ti'
+#    psp = dict(Ti1='Ti.fch.upf')
+#    symTarg = 'Ti'
     ####
 
     xs_fn = os.path.join(module_path, 'xspectra.json')
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
 
+    psp = xsJSON['XS_controls']['psp']
+    symTarg = xsJSON['XS_controls']['element']
 
-
-    atoms = smaller( unitCell )
+    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
 
     if params['scf.kpoints'] is None:
         params['scf.kpoints'] = [ 1, 1, 1 ]
