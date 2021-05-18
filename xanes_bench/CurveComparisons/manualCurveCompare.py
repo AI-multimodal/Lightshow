@@ -1,5 +1,6 @@
 # This is a simple tool to compare to plots
 
+import sys
 import numpy as np
 from scipy import interpolate
 from scipy.optimize import minimize_scalar, minimize
@@ -663,12 +664,16 @@ def main():
 
     saveFiles = []
     
-#    saveFile = input("First file: ")
-    saveFile = 'ocean.1.1'
-    saveFiles.append( saveFile )
-#    saveFile = input("Second file: ")
-    saveFile = 'xspectra.0.1'
-    saveFiles.append( saveFile )
+    if len(sys.argv) == 3:
+        saveFiles.append(sys.argv[1])
+        saveFiles.append(sys.argv[2])
+    else:
+        saveFile = input("First file: ")
+#    saveFile = 'ocean.1.1'
+        saveFiles.append( saveFile )
+        saveFile = input("Second file: ")
+#    saveFile = 'xspectra.0.1'
+        saveFiles.append( saveFile )
 
     plot1 = np.loadtxt( saveFiles[0],  dtype=np.float64, usecols=(0,1))
     plot2 = np.loadtxt( saveFiles[1],  dtype=np.float64, usecols=(0,1))
