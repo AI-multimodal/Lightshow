@@ -9,6 +9,7 @@ from os import environ as env
 from os import path
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
+import re
 
 from scipy.ndimage import gaussian_filter1d
 
@@ -632,6 +633,20 @@ def comparePlots( p1, p2, window=False, radius=0 ):
     print( "{:12f}  {:12f}  {:10f}  {:12.8f}  {:12.8f}  {:12.8f}  {:10f}".format( radius, omega, alpha, coss, pearson, spearman, relArea, ))
 
 
+def parseEXCITINGFile( string, polar ):
+    plot = None
+    for p in polar:
+        f = "EPSILON-{:s}/EPSILON_NAR_BSE-singlet-TDA-BAR_SCR-full_OC{:d}{:d}.OUT".format( string, p, p )
+        if os.path.isfile( f ):
+            if plot is None:
+                plot = np.loadtxt( f, skiprows=2, usecols=(0,2) )
+            else:
+                plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2) )
+        else:
+            return None
+
+    return plot
+
 
 def parseOCEANFile( site, polar, kpoint ):
     plot = None
@@ -650,7 +665,7 @@ def parseOCEANFile( site, polar, kpoint ):
     return plot
         
 
-def parseFile( program, site, polarization, kpoint ):
+def parseFileK( program, site, polarization, kpoint ):
     if program == 'O':
         return parseOCEANFile( site, polarization, kpoint )
     else:
@@ -664,21 +679,48 @@ def loadPlotsKpoints( program, site, polarization ):
     kpointArray = np.loadtxt( 'k.txt', skiprows=1, usecols=(0,1,2,5) )
 
     for k in kpointArray:
-        p = parseFile( program, site, polarization, k[0:3] )
+        p = parseFileK( program, site, polarization, k[0:3] )
         if p is not None:
             plots.append( p )
             foundKpoints.append( k )
 
     return plots, foundKpoints
 
+
+# Given a string, find all the 
+def loadPlotsS( program, site, polarization, string ):
+    plots = []
+    foundParam = []
+    attemptParam = []
+
+    if program == 'E':
+        for d in os.listdir():
+            t = re.search( "EPSILON-" + string + "(\d+\.?\.*)", d )
+            if t:
+                attemptParam.append( t.group(1) )
+
+        for i in sorted( attemptParam ):
+            p = parseEXCITINGFile( string+i, polarization )
+            if p is not None:
+                plots.append( p )
+                # This hack is because the k-points have the length param as the 4th object in a list
+                foundParam.append( [0,0,0,float(i)])
+
+    return plots, foundParam
+
+
 def main():
 
-    program = 'O'
-    method = 'K'
+    program = 'E'
+    method = 'S'
+    string = 'gk'
     site = [1,2,3,4,5,6,7,8]
     polarization = [1,2,3]
 
-    plots, kpoints = loadPlotsKpoints( program, site, polarization )
+    if method == 'K':
+        plots, kpoints = loadPlotsKpoints( program, site, polarization )
+    elif method == 'S':
+        plots, kpoints = loadPlotsS( program, site, polarization, string )
 
 #    for k in kpoints:
 #        print( k )
@@ -688,6 +730,7 @@ def main():
         print( "Didn't find enough plots" )
         exit()
 
+    # Radius is replaced with the param for non-kpoint runs
     print( "#   Radius       Shift        Scale       CosSimilar  Pearson     Spearman   Rel Area" )
     print( "#   (Bohr)       (eV)                                                          (%)" )
     for i in range(len(plots)-1):
