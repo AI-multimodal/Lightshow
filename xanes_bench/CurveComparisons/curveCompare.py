@@ -639,9 +639,9 @@ def parseEXCITINGFile( string, polar ):
         f = "EPSILON-{:s}/EPSILON_NAR_BSE-singlet-TDA-BAR_SCR-full_OC{:d}{:d}.OUT".format( string, p, p )
         if os.path.isfile( f ):
             if plot is None:
-                plot = np.loadtxt( f, skiprows=2, usecols=(0,2) )
+                plot = np.loadtxt( f, skiprows=18, usecols=(0,2) )
             else:
-                plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2) )
+                plot[:,1] += np.loadtxt( f, skiprows=18, usecols=(2) )
         else:
             return None
 
