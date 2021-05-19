@@ -16,7 +16,7 @@ import json
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
 import xanes_bench.OCEAN
 import os
-
+from xanes_bench.General.kden import printKgrid
 
 module_path = os.path.dirname(xanes_bench.OCEAN.__file__)
 
@@ -32,6 +32,12 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
 
     if params['diemac'] is not None:
         oceanJSON['diemac'] = params['diemac']
+
+    if params['conductionBands'] is not None:
+        oceanJSON['nbands'] = -1 * params['conductionBands']
+
+    if params['scf.kpoints'] is not None:
+        oceanJSON['ngkpt'] = "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
     
     us = {}
     ph = []
@@ -56,6 +62,7 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     
     folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
+    printKgrid( atoms, folder )
 
     try:
         write_ocean_in(str(folder / "ocean.in"), atoms, input_data=oceanJSON )
@@ -87,25 +94,27 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     # New total weight for the quadrupole terms
     totalweight = 0
     for photon in ph:
-        for quad in photon["quad"]:
-            totalweight += quad[3]
+        if 'quad' in photon:
+            for quad in photon["quad"]:
+                totalweight += quad[3]
 
     for photon in ph:
-        for quad in photon["quad"]:
-            photonCount += 1 
-            dir1 = photon["dipole"][0:3]
-            dir2 = quad[0:3]
-            weight = quad[3] / totalweight
-            mode = "quad"
+        if 'quad' in photon:
+            for quad in photon["quad"]:
+                photonCount += 1 
+                dir1 = photon["dipole"][0:3]
+                dir2 = quad[0:3]
+                weight = quad[3] / totalweight
+                mode = "quad"
 
-            with open( folder / ("photon%d" % (photonCount )), "w" ) as f:
-                f.write( mode +"\n" )
-                f.write( "cartesian %f %f %f \n" % (dir1[0], dir1[1], dir1[2] ) )
-                f.write( "end\n" )
-                f.write( "cartesian %f %f %f \n" % (dir2[0], dir2[1], dir2[2] ) )
-                f.write( "end\n" )
-                f.write( "4966\n" )  ### NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
-                f.write( str(weight ) + "\n" )
-                f.close
+                with open( folder / ("photon%d" % (photonCount )), "w" ) as f:
+                    f.write( mode +"\n" )
+                    f.write( "cartesian %f %f %f \n" % (dir1[0], dir1[1], dir1[2] ) )
+                    f.write( "end\n" )
+                    f.write( "cartesian %f %f %f \n" % (dir2[0], dir2[1], dir2[2] ) )
+                    f.write( "end\n" )
+                    f.write( "4966\n" )  ### NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
+                    f.write( str(weight ) + "\n" )
+                    f.close
 
       
