@@ -387,6 +387,48 @@ def RMSDcurves( alpha, omega, plot1, plot2, interp1, interp2, Plot=False ):
     return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
 
 
+def RMSDcurves2( params, plot1, plot2, interp1, interp2, Plot=False ):
+#    interp1 = interpolate.interp1d( plot1[:,0], plot1[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+#    interp2 = interpolate.interp1d( plot2[:,0], plot2[:,1], assume_sorted=True, kind='cubic',
+#                                    bounds_error=True )
+
+    alpha = params[0]
+    omega = params[1]
+    for start in range( len( plot1[:,0]) ):
+        if plot1[start,0]-omega > plot2[0,0]:
+            break
+    for stop in reversed( range( len( plot1[:,0] ) ) ):
+        if plot1[stop,0]-omega < plot2[-1,0]:
+            break
+
+    clipPlotRange1 = plot1[start:stop,0]
+    clipPlot1 = plot1[start:stop,1]
+    plot2at1 = interp2( plot1[start:stop,0]-omega )
+
+    for start in range( len( plot2[:,0]) ):
+        if plot2[start,0]+omega > plot1[0,0]:
+            break
+    for stop in reversed( range( len( plot2[:,0] ) ) ):
+        if plot2[stop,0]+omega < plot1[-1,0]:
+            break
+
+    clipPlot2 = plot2[start:stop,1]
+    plot1at2 = interp1( plot2[start:stop,0]+omega )
+
+    rmsd1 = 0.0
+    for i in range(len( clipPlot1 )):
+        rmsd1 += ( clipPlot1[i]-alpha*plot2at1[i] ) ** 2
+    rmsd2 = 0.0
+    for i in range(len( clipPlot2 ) ):
+        rmsd2 += ( alpha*clipPlot2[i]-plot1at2[i] ) ** 2
+
+    if Plot:
+        for i in range(len(clipPlot1)):
+            print( clipPlotRange1[i], clipPlot1[i], plot2at1[i]*alpha )
+
+    return ( 0.5 * ( np.sqrt( rmsd1 ) + np.sqrt( rmsd2 ) ) )
+
 
 # using scaling alpha and shift omega, determine the rmsd between two curves
 #TODO: normalize by the total length and sampling rate
@@ -576,6 +618,8 @@ def makeInterpolateWithWindow( plot, doWindow ):
                 break
         windowStop = int( 0.8 * (windowStop-windowStart ) ) + windowStart
 
+    print( '#', height, plot[windowStart,0], plot[windowStop,0] )
+
     return plot[0:windowStop,:], interpolate.interp1d( plot[0:windowStop,0], plot[0:windowStop,1], 
                                                        assume_sorted=True, kind='cubic', bounds_error=False )
 
@@ -602,15 +646,15 @@ def comparePlots( p1, p2, window=False ):
     
     omega = maxp1-maxp2
     cosSimilarity = CosSimilar( omega, plot1, plot2, interp1, interp2 )
-    print( "Cosine similarity = {:f} ".format(cosSimilarity) )
+    print( "# Cosine similarity = {:f} ".format(cosSimilarity) )
 
     bounds = [ [ plot1[0,0] -plot2[-1,0], plot1[-1,0]-plot2[0,0] ] ]
     res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
     if not res.success:
         res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), method='Powell', bounds=bounds )
     if res.success:
-        print( "Shift = {:f} eV".format(res.x[0]) )
-        print( "Cos S = {:f}".format(1-res.fun) )
+        print( "# Shift = {:f} eV".format(res.x[0]) )
+        print( "# Cos S = {:f}".format(1-res.fun) )
     else:
         print( "Optmizing energy shift failed" )
         exit()
@@ -622,9 +666,9 @@ def comparePlots( p1, p2, window=False ):
     spearman = SpearmanCoeff( omega, plot1, plot2, interp1, interp2 )
 
 #    print( "Pearson = {:f}".format( PearsonCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Pearson = {:f}".format( pearson ) )
+    print( "# Pearson = {:f}".format( pearson ) )
 #    print( "Spearman = {:f}".format(SpearmanCoeff( res.x[0], plot1, plot2 ) ) )
-    print( "Spearman = {:f}".format( spearman ) )
+    print( "# Spearman = {:f}".format( spearman ) )
 
 #    windowAverage( plot1, 20, 0.2 )
 
@@ -635,29 +679,46 @@ def comparePlots( p1, p2, window=False ):
     res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
                      method='Nelder-Mead', options={'fatol': 1e-8})
     if res.success:
-        print( "Alpha = {:e}".format(res2.x[0]) )
-        print( "RMSD  = {:e}".format(res2.fun ) )
+        print( "# Alpha = {:e}".format(res2.x[0]) )
+        print( "# RMSD  = {:e}".format(res2.fun ) )
 
     alpha = res2.x[0]
     relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 )
 #    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
-    print( "Rel. area between = {:f} %".format( relArea ) )
+    print( "# Rel. area between = {:f} %".format( relArea ) )
 
 #    alpha = 1.0
-    res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
-                     method='Nelder-Mead', options={'fatol': 1e-8})
-    if res.success:
-        print( "Alpha = {:e}".format(res2.x[0]) )
-        print( "RMSD  = {:e}".format(res2.fun ) )
+    if False:
+        res2 = minimize( RMSDcurvesWindow, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
+                         method='Nelder-Mead', options={'fatol': 1e-8})
+        if res.success:
+            print( "# Alpha = {:e}".format(res2.x[0]) )
+            print( "# RMSD  = {:e}".format(res2.fun ) )
 
-    alpha = res2.x[0]
-    print( "Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
+        alpha = res2.x[0]
+        print( "# Rel. area between = {:f} %".format( 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 ) ) )
 
 #    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
 
-    print( "{:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
+    print( "# {:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
 
-    RMSDcurvesWindow( res2.x[0], res.x[0], plot1, plot2, interp1, interp2, True )
+    omega = res.x[0]
+    alpha = res2.x[0]
+#    omega = maxp1-maxp2
+#    res3 = minimize( RMSDcurves2, ( alpha, omega ), args = ( plot1, plot2, interp1, interp2 ),
+#                         method='Nelder-Mead', options={'fatol': 1e-8})
+    bounds = [ [alpha*.8, alpha*1.2], [ omega-5, omega+5 ] ]
+    res3 = minimize( RMSDcurves2, ( alpha, omega ), args = ( plot1, plot2, interp1, interp2 ), 
+                     method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
+
+    alpha = res3.x[0]
+    omega = res3.x[1]
+    print( '#', alpha, omega )
+    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2 )
+    print( "# {:f}  {:f}  {:f}  {:f}  {:f}  {:f}".format( omega, alpha, coss, pearson, spearman, relArea ))
+    RMSDcurves( res3.x[0], res3.x[1], plot1, plot2, interp1, interp2, True )
+
+
 
 def main():
 

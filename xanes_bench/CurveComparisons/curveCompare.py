@@ -663,11 +663,32 @@ def parseOCEANFile( site, polar, kpoint ):
                 return None
 
     return plot
+
+def parseXSpectraFile( site, polar, kpoint ):
+    plot = None
+    k = [ int(kpoint[0]), int(kpoint[1]), int(kpoint[2]) ]
+    #TODO site support!!
+    # Need to build out support for *correctly* averaging over symmetry unique sites
+    # For now, 
+    for s in site:
+        for p in polar:
+            f = "Spectra-{:d}{:d}{:d}/{:d}/dipole{:d}/xanes.dat".format( k[0], k[1], k[2], s, p )
+            if os.path.isfile( f ):
+                if plot is None:
+                    plot = np.loadtxt( f, skiprows=4, usecols=(0,1) )
+                else:
+                    plot[:,1] += np.loadtxt( f, skiprows=4, usecols=(1) )
+            else:
+                return None
+
+    return plot
         
 
 def parseFileK( program, site, polarization, kpoint ):
     if program == 'O':
         return parseOCEANFile( site, polarization, kpoint )
+    elif program == 'X':
+        return parseXSpectraFile( site, polarization, kpoint )
     else:
         return None
 
@@ -711,10 +732,11 @@ def loadPlotsS( program, site, polarization, string ):
 
 def main():
 
-    program = 'E'
-    method = 'S'
+    program = 'X'
+    method = 'K'
     string = 'gk'
-    site = [1,2,3,4,5,6,7,8]
+#    site = [1,2,3,4,5,6,7,8]
+    site = [0]
     polarization = [1,2,3]
 
     if method == 'K':
@@ -724,7 +746,7 @@ def main():
 
 #    for k in kpoints:
 #        print( k )
-    print( "#", kpoints[-1] )
+    print( "#i Largest k-point grid: ", kpoints[-1] )
 
     if len(plots) < 2:
         print( "Didn't find enough plots" )
