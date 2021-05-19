@@ -80,6 +80,10 @@ def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
 
 
     print( uniqueSites )
+    photons.append( { "dipole": [1,0,0,1] } )
+    photons.append( { "dipole": [0,1,0,1] } )
+    photons.append( { "dipole": [0,0,1,1] } )
+    return
 
 
     ohList = []
