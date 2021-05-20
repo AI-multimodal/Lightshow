@@ -47,3 +47,15 @@ def printKgrid( unitC: Atoms, folder: str ):
 
 
     fd.close()
+
+
+def readKgrid( folder: str ):
+    klist={}
+    with open (str(folder / 'k.txt'), 'r') as fd:
+        for line in fd.readlines():
+            kx,ky,kz= line.split()[0:3]
+            if not kx.isnumeric():
+                continue
+            else:
+                klist[(int(kx),int(ky),int(kz))]=float(line.split()[-1])
+    return klist

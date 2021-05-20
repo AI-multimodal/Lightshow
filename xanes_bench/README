@@ -5,7 +5,8 @@
 2. Overwrite the defaults ase/io/espresso.py file with the one in Xspectra
   - Either: copy it into the installed location of ase (site-packages/ase/io/epresso.py )
   - Or: copy all of ase locally, and write over ./ase/io/espresso.py
-3. Run "python fetchSingle.py 390" (will run anatase)
+3. Run "python fetchSingle.py 390 single" (will generate input files for single run on anatase)
+or un "python fetchSingle.py 390 convergence" (will generate input files for convergence run on anatase)
 
 
 ## Limitations/To-do list: (not exhaustive)
