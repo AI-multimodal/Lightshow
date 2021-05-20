@@ -9,7 +9,7 @@ import os
 #from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
 # TODO: add implementation of photonSym to avoid import error
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
-from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
+from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
@@ -34,11 +34,18 @@ def main():
 
     # The script takes a single, positive integer to grab a system from materials project
     if len(sys.argv) < 2 :
-        print( "Requires MP number" )
+        print( "Requires MP number at least" )
         exit()
     else :
         print( str(sys.argv) )
         mpid = 'mp-' + sys.argv[1]
+        if len(sys.argv) >=2: # Only use the second input paramater "single" or "convergence"
+            if sys.argv[2] == "convergence" or sys.argv[2] == "single":
+                typecalc = sys.argv[2]
+                print("Type of Run: {}".format(typecalc))
+            else:
+                print("Input for run type not supported. \nSuppurted type of run: single or convergence")
+                exit()
 
     # Your hashe materials project key needs to be in a file called mp.key
     mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
@@ -132,12 +139,15 @@ def main():
     params['edge']='K'
 
 
+    if typecalc == "single":
 
-    makeXspectra( mpid, unitC, params )
+        makeXspectra( mpid, unitC, params )
 
-    makeOcean( mpid, unitC, params )
+        makeOcean( mpid, unitC, params )
 
-    makeExcitingXAS( mpid, unitC, params )
+        makeExcitingXAS( mpid, unitC, params )
+    else:
+        makeXspectraConv(mpid,unitC,params) # how to transfer kpoints?
 
 
 if __name__ == '__main__':
