@@ -672,7 +672,7 @@ def parseXSpectraFile( site, polar, kpoint ):
     # For now, 
     for s in site:
         for p in polar:
-            f = "Spectra-{:d}{:d}{:d}/{:d}/dipole{:d}/xanes.dat".format( k[0], k[1], k[2], s, p )
+            f = "Spectra-{:d}-{:d}-{:d}/{:d}/dipole{:d}/xanes.dat".format( k[0], k[1], k[2], s, p )
             if os.path.isfile( f ):
                 if plot is None:
                     plot = np.loadtxt( f, skiprows=4, usecols=(0,1) )
@@ -697,7 +697,7 @@ def loadPlotsKpoints( program, site, polarization ):
     plots = []
     foundKpoints = []
 
-    kpointArray = np.loadtxt( 'k.txt', skiprows=1, usecols=(0,1,2,5) )
+    kpointArray = np.loadtxt( '../k.txt', skiprows=1, usecols=(0,1,2,5) )
 
     for k in kpointArray:
         p = parseFileK( program, site, polarization, k[0:3] )
@@ -747,7 +747,6 @@ def main():
 #    for k in kpoints:
 #        print( k )
     print( "#i Largest k-point grid: ", kpoints[-1] )
-
     if len(plots) < 2:
         print( "Didn't find enough plots" )
         exit()
