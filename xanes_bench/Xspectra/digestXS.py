@@ -23,7 +23,10 @@ def parseES( sites ):
     inputList = []
     for s in sites:
         newInput = {}
-        fd = open( s /  "es.in", 'r' )
+        try:
+            fd = open( s /  "es.in", 'r' )
+        except IOError:
+            return None
         while True:
             line = fd.readline()
 
@@ -138,8 +141,8 @@ def unifiedInput( sites, photons ):
     FullInput['ES'] = parseES( sites )
     if FullInput['ES'] is None:
         return None
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint( FullInput['ES'] )
+#    pp = pprint.PrettyPrinter(indent=4)
+#    pp.pprint( FullInput['ES'] )
 
     FullInput['XS'] = parseDipoles( sites, photons )
     if FullInput['XS'] is None:
@@ -240,32 +243,36 @@ def saveRun( localdir, targdir, photonDirs ):
 #    photonDirs = ['dipole1', 'dipole2', 'dipole3' ]
     
     sites = findSites( localdir )
+    if sites is None:
+        return None
 
     ui = unifiedInput( sites, photonDirs )
     if ui is None:
-        exit()
+        return None
 
     if not esExited( sites ):
         print( "es didn't all finish correctly")
-        exit()
+        return None
 
     if not XSexited( sites, photonDirs ):
         print( "XS didn't finish all" )
-        exit()
+        return None
 
     pseudoHashes = esPseudoHashes( sites )
     if pseudoHashes is None:
         print( "Failed to find pseudo hashes in es.out or they didn't match")
     ui['XS']['psp'] = pseudoHashes
 
-    print(json.dumps( ui, indent=2, sort_keys=True))
-    print( hashlib.sha1( json.dumps( ui, indent=2, sort_keys=True).encode() ).hexdigest() )
+#    print(json.dumps( ui, indent=2, sort_keys=True))
+#    print( hashlib.sha1( json.dumps( ui, indent=2, sort_keys=True).encode() ).hexdigest() )
+    outHash = hashlib.sha1( json.dumps( ui, indent=2, sort_keys=True).encode() ).hexdigest() 
 
-    folder =  pathlib.Path(targdir) / hashlib.sha1( json.dumps( ui, indent=2, sort_keys=True).encode() ).hexdigest() 
+#    folder =  pathlib.Path(targdir) / hashlib.sha1( json.dumps( ui, indent=2, sort_keys=True).encode() ).hexdigest() 
+    folder =  pathlib.Path(targdir) / outHash
     folder.mkdir(parents=True, exist_ok=True)
 
     of = pathlib.Path( folder / "unifiedInputs.json" )
-    print( of )
+#    print( of )
     with open( of, 'w' ) as fd:
         fd.write( json.dumps( ui, indent=2, sort_keys=True) )
         fd.close()
@@ -274,12 +281,23 @@ def saveRun( localdir, targdir, photonDirs ):
         print( "Copying failed, will skip!" )
         shutil.rmtree( folder )
 
+
+    return outHash
+
 def main():
     targdir = '/Users/jtv1/Scratch/xanes_bench/Trash/mp-390/XS/NON/'
     photonDirs = ['dipole1', 'dipole2', 'dipole3' ]
     f = pathlib.Path(os.environ["PWD"])
 
-    saveRun( f, targdir, photonDirs )
+    oh = saveRun( f, targdir, photonDirs )
+    if oh is not None:
+        print( "Captured: " + oh )
+    else:
+        for s in os.listdir(f):
+            if os.path.isdir( f / s ):
+                oh = saveRun( f / s, targdir, photonDirs )
+                if oh is not None:
+                    print( "Captured: " + oh )
 
 if __name__ == '__main__':
     main()
