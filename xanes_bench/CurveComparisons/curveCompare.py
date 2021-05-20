@@ -697,7 +697,7 @@ def loadPlotsKpoints( program, site, polarization ):
     plots = []
     foundKpoints = []
 
-    kpointArray = np.loadtxt( 'k.txt', skiprows=1, usecols=(0,1,2,5) )
+    kpointArray = np.loadtxt( '../k.txt', skiprows=1, usecols=(0,1,2,5) )
 
     for k in kpointArray:
         p = parseFileK( program, site, polarization, k[0:3] )
