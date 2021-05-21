@@ -15,6 +15,7 @@ import json
 import xanes_bench.Xspectra
 import os, shutil
 from xanes_bench.General.kden import printKgrid, readKgrid
+import bz2, base64, hashlib
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
 def smaller(atoms: Atoms, Rmin=9.0):
@@ -142,7 +143,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    sssp_fn = os.path.join(module_path, 'SSSP_precision.json')
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     minSymbols = set( symbols )
@@ -164,6 +165,19 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                 str(folder / ".." / "Ti.wfc"))
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
                 str(folder / ".." / "Ti.fch.upf"))
+
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
+    with open (sssp_fn, 'r' ) as p:
+        pspJSON = json.load( p )
+    for symbol in minSymbols:
+        fileName = psp[symbol]
+        pspString = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+        with open( folder / ".." / fileName, 'w' ) as f:
+            f.write( pspString.decode("utf-8") )
+
+
     xsJSON['QE']['control']['pseudo_dir'] = "../"
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',
@@ -309,7 +323,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    sssp_fn = os.path.join(module_path, 'SSSP_precision.json')
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     minSymbols = set( symbols )
@@ -321,6 +335,16 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
             xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
         if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
             xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+    pspData = {}
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
+    with open (sssp_fn, 'r' ) as p:
+        pspJSON = json.load( p )
+    for symbol in minSymbols:
+        fileName = psp[symbol]
+        pspData[symbol] = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
 
 
     folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS"
@@ -347,6 +371,11 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
                                 str(folder_spectra / ".." / "Ti.wfc"))
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
                                 str(folder_spectra / ".." / "Ti.fch.upf"))
+                    for symbol in minSymbols:
+                        fileName = psp[symbol]
+                        with open( folder_spectra / ".." / fileName, 'w' ) as f:
+                            f.write( pspData[symbol].decode("utf-8") )
+
                     xsJSON['QE']['control']['pseudo_dir'] = "../"
                     try:
                         write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
