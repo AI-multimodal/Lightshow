@@ -65,13 +65,23 @@ def main():
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
     st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
-    json_dir = "data"
-    for spec_type in ["XS", "OCEAN", "EXCITING"]:
-        json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json"
-        if not os.path.exists(os.path.dirname(json_fn)):
-            os.makedirs(os.path.dirname(json_fn))
-        with open(json_fn, 'w') as f:
-            json.dump(st_dict, f, indent=4, sort_keys=True)
+    if typecalc == "single":
+        json_dir = "data"
+        for spec_type in ["XS", "OCEAN", "EXCITING"]:
+            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json"
+            if not os.path.exists(os.path.dirname(json_fn)):
+                os.makedirs(os.path.dirname(json_fn))
+            with open(json_fn, 'w') as f:
+                json.dump(st_dict, f, indent=4, sort_keys=True)
+    else:
+        json_dir = "data_converge"
+        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
+        for spec_type in ["XS"]: 
+            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
+            if not os.path.exists(os.path.dirname(json_fn)):
+                os.makedirs(os.path.dirname(json_fn))
+            with open(json_fn, 'w') as f:
+                json.dump(st_dict, f, indent=4, sort_keys=True)
     unitC = ase.get_atoms(st)
 
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
