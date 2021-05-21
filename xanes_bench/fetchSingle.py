@@ -33,13 +33,17 @@ def dielectricGuess( gap ):
 def main():
 
     # The script takes a single, positive integer to grab a system from materials project
-    if len(sys.argv) < 2 :
-        print( "Requires MP number at least" )
+    print(len(sys.argv))
+    if len(sys.argv) < 2:
+        print( "Requires MP number" )
         exit()
     else :
         print( str(sys.argv) )
         mpid = 'mp-' + sys.argv[1]
-        if len(sys.argv) >=2: # Only use the second input paramater "single" or "convergence"
+        if len(sys.argv) == 2:
+            typecalc = "single"
+            print("Type of Run: {}".format(typecalc))
+        elif len(sys.argv) == 3: # Only use the second input paramater "single" or "convergence"
             if sys.argv[2] == "convergence" or sys.argv[2] == "single":
                 typecalc = sys.argv[2]
                 print("Type of Run: {}".format(typecalc))
