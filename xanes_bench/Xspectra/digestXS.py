@@ -15,14 +15,21 @@ def findSites( f, uc=None ):
         for s in os.listdir(f):
             if os.path.isdir( f / s ):
                 sites.append( f / s)
+        if len(sites) == 0:
+            return None
         return sites
     else:
         return None
 
 def parseES( sites ):
+    if len(sites) == 0:
+        print( "Empty sites!!")
+        return None
     inputList = []
     for s in sites:
         newInput = {}
+#        if not os.path.isfile( s /  "es.in" ):
+#            return None
         try:
             fd = open( s /  "es.in", 'r' )
         except IOError:
@@ -245,6 +252,7 @@ def saveRun( localdir, targdir, photonDirs ):
     sites = findSites( localdir )
     if sites is None:
         return None
+#    print(sites)
 
     ui = unifiedInput( sites, photonDirs )
     if ui is None:
@@ -284,20 +292,36 @@ def saveRun( localdir, targdir, photonDirs ):
 
     return outHash
 
+
+def recursiveLoad( f,  targdir, photonDirs, i, m=2 ):
+    if i > m:
+        return
+    else:
+        i += 1
+        oh = saveRun( f, targdir, photonDirs )
+        if oh is not None:
+            print( "Captured: " + oh )
+        else:
+            for s in os.listdir(f):
+                if os.path.isdir( f / s ):
+                    recursiveLoad( f / s, targdir, photonDirs, i, m )
+
 def main():
     targdir = '/Users/jtv1/Scratch/xanes_bench/Trash/mp-390/XS/NON/'
     photonDirs = ['dipole1', 'dipole2', 'dipole3' ]
     f = pathlib.Path(os.environ["PWD"])
 
-    oh = saveRun( f, targdir, photonDirs )
-    if oh is not None:
-        print( "Captured: " + oh )
-    else:
-        for s in os.listdir(f):
-            if os.path.isdir( f / s ):
-                oh = saveRun( f / s, targdir, photonDirs )
-                if oh is not None:
-                    print( "Captured: " + oh )
+    i = 0
+    recursiveLoad( f, targdir, photonDirs, i, 2 )
+#    oh = saveRun( f, targdir, photonDirs )
+#    if oh is not None:
+#        print( "Captured: " + oh )
+#    else:
+#        for s in os.listdir(f):
+#            if os.path.isdir( f / s ):
+#                oh = saveRun( f / s, targdir, photonDirs )
+#                if oh is not None:
+#                    print( "Captured: " + oh )
 
 if __name__ == '__main__':
     main()
