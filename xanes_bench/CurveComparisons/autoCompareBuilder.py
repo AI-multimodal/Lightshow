@@ -40,6 +40,15 @@ def grabFromDict( d1, dmap ):
             result.append( d1[i] )
     return result
 
+def headersFromDict( dmap ):
+    result = []
+    for i in dmap:
+        if isinstance( dmap[i], dict ):
+            for j in headersFromDict( dmap[i] ):
+                result.append( i + '@' + j )
+        else:
+            result.append( i )
+    return result
 
 def addKden( js ):
     a1 = np.fromstring( js['ES']['a1'], count=3, sep=" ",dtype=np.float64 ) 
@@ -82,7 +91,7 @@ def main():
     for d in os.listdir( f ):
         if os.path.isdir( f / d ):
             if re.search( '[0-9,a-f]{40}', d ):
-                print( d )
+#                print( d )
                 j = loadUnifiedInput( f / d )
                 if j is not None:
                     runs.append( j )
@@ -99,11 +108,40 @@ def main():
         for j in range(i):
             out.update( dictCompare( runs[j], runs[i], exclude ) )
     out = OrderedDict( out )
-    print( out )
+#    print( out )
     
 
+    outOptions = headersFromDict( out )
+    colsKeep = [ 0 ]
+    colSort = 0
+    if len( outOptions ) == 0:
+        print( "Found no differences!!!!" )
+        exit()
+    elif len( outOptions ) == 1:
+        print( "Found 1 option" )
+        print( headersFromDict( out ) )
+        colsKeep = [0]
+        colSort = 0
+    else:
+        print( "Found {:d} options".format( len( outOptions ) ) )
+        print( headersFromDict( out ) )
+
+    combinedHashAndCols = []
     for i in range(len(runs)):
-        print( runNames[i], grabFromDict( runs[i], out) )
+        t = []
+        s = grabFromDict( runs[i], out)
+        for j in colsKeep:
+            t.append( s[j] )
+        t.append( runNames[i] )
+        combinedHashAndCols.append( t )
+
+#    for i in range(len(combinedHashAndCols)):
+#      print( combinedHashAndCols[i])
+
+    sorted_multi_list = sorted(combinedHashAndCols, key=lambda x: x[colSort])
+    for i in range(len(sorted_multi_list)):
+        print( i, sorted_multi_list[i] )
+
 
 if __name__ == '__main__':
     main()
