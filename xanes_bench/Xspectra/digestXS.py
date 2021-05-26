@@ -173,6 +173,7 @@ def esExited( sites ):
         while True:
             line = fd.readline()
             if not line:
+                print( s / 'es.out' )
                 return False
             m = re.search( 'JOB DONE', line )
             if m:
@@ -259,7 +260,7 @@ def saveRun( localdir, targdir, photonDirs ):
         return None
 
     if not esExited( sites ):
-        print( "es didn't all finish correctly")
+        print( "es didn't all finish correctly" )
         return None
 
     if not XSexited( sites, photonDirs ):
