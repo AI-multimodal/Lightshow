@@ -14,7 +14,7 @@ from xanes_bench.photonSym import photonSymm
 import json
 import xanes_bench.Xspectra
 import os, shutil
-from xanes_bench.General.kden import printKgrid, readKgrid
+from xanes_bench.General.kden import printKgrid, readKgrid, returnKDen, returnKpoint
 import bz2, base64, hashlib
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
@@ -96,15 +96,34 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
 def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     #######
-    psp = dict(Ti1='Ti.fch.upf')
-    symTarg = 'Ti'
+#    psp = dict(Ti1='Ti.fch.upf')
+#    symTarg = 'Ti'
     ####
 
     xs_fn = os.path.join(module_path, 'xspectra.json')
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
 
-    atoms = smaller( unitCell )
+    psp = xsJSON['XS_controls']['psp']
+    symTarg = xsJSON['XS_controls']['element']
+
+    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+
+
+    klen = float(xsJSON['XS_controls']['scf_kden'])
+    if klen < 0:
+        if params['scf.kpoints'] is None:
+            klen = returnKDen( unitCell, [1,1,1] )
+        else:
+            klen = returnKDen( unitCell, params['scf.kpoints'] )
+
+    unitCellKpoints = returnKpoint( unitCell, klen )
+    kpoints = returnKpoint( atoms, klen )
+    if float(xsJSON['XS_controls']['kden']) < 0:
+        xs_kpoints = kpoints
+    else:
+        xs_kpoints = returnKpoint( atoms, float( xsJSON['XS_controls']['kden']) )
+    xsJSON['XS']['kpts']['kpts'] = "{:d} {:d} {:d}".format( xs_kpoints[0], xs_kpoints[1], xs_kpoints[2] )
 
     us = {}
     symm = spglib.get_symmetry((atoms.get_cell(),
@@ -181,7 +200,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     xsJSON['QE']['control']['pseudo_dir'] = "../"
     try:
         write(str(folder / "gs.in"), atoms, format='espresso-in',
-            input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[1, 1, 1])
+            input_data=xsJSON['QE'], pseudopotentials=psp, kpts=unitCellKpoints )
     except:
         print(xsJSON['QE'], atoms, psp)
         raise Exception("FAILED while trying to write qe.in")
@@ -213,7 +232,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
           xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
           write(str(subfolder / "es.in"), atoms, format='espresso-in',
-              input_data=xsJSON['QE'], pseudopotentials=psp)
+              input_data=xsJSON['QE'], pseudopotentials=psp, kpts=kpoints)
 
           # OCEAN photon labeling is continuous, so we will do that here too
           #  not sure that we will actually want dipole-only spectra(?)
