@@ -68,6 +68,8 @@ def addKden( js ):
 
     js['ES']['klen'] = klen / Bohr
 
+    if not 'kpoints' in js['XS']:
+        return False
     kpoints = np.fromstring( js['XS']['kpoints'], count=3, sep=" ",dtype=int )
     klen = kpoints[0]/recip[0]
     for i in [1,2]:
@@ -75,12 +77,14 @@ def addKden( js ):
             klen = kpoints[i]/recip[i]
 
     js['XS']['klen'] = klen / Bohr
-    return
+    return True
 
 def loadUnifiedInput( d ):
     with open( d / 'unifiedInputs.json', 'r' ) as fd:
         js =  json.load( fd )
-        addKden( js )
+        if not addKden( js ):
+            print( d, " failed")
+            return None
         return js
     return None
 
@@ -113,7 +117,7 @@ def main():
 
     outOptions = headersFromDict( out )
     colsKeep = [ 0 ]
-    colSort = 0
+    colSort = [ 0 ]
     if len( outOptions ) == 0:
         print( "Found no differences!!!!" )
         exit()
@@ -121,10 +125,12 @@ def main():
         print( "Found 1 option" )
         print( headersFromDict( out ) )
         colsKeep = [0]
-        colSort = 0
+        colSort = [0]
     else:
         print( "Found {:d} options".format( len( outOptions ) ) )
         print( headersFromDict( out ) )
+        colsKeep = [ 0, 1 ]
+        colSort = [ 0, 1 ]
 
     combinedHashAndCols = []
     for i in range(len(runs)):
@@ -138,9 +144,13 @@ def main():
 #    for i in range(len(combinedHashAndCols)):
 #      print( combinedHashAndCols[i])
 
-    sorted_multi_list = sorted(combinedHashAndCols, key=lambda x: x[colSort])
-    for i in range(len(sorted_multi_list)):
-        print( i, sorted_multi_list[i] )
+    for c in colSort:
+        print( c )
+        combinedHashAndCols = sorted(combinedHashAndCols, key=lambda x: x[c])
+    for i in range(len(combinedHashAndCols)):
+        print( i, combinedHashAndCols[i] )
+#    for i in range(len(sorted_multi_list)):
+#        print( i, sorted_multi_list[i] )
 
 
 if __name__ == '__main__':
