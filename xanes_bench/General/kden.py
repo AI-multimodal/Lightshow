@@ -49,6 +49,45 @@ def printKgrid( unitC: Atoms, folder: str ):
     fd.close()
 
 
+def returnKgridList( unitC: Atoms, folder: str, maxLen=53.0 ):
+    klist = []
+
+    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+
+    klen = 1.0 / recip[0]
+    for i in range(3):
+        t = 1.0 / recip[i]
+        if t < klen:
+            klen = t
+
+    kpt = [1,1,1,klen]
+    kglist.append( kpt )
+
+    while klen < maxLen:
+        klen *= 10
+        t = kpt[0]/recip[0] * 1.01
+        if( t > kpt[1]/recip[1] * 1.01 ):
+            t = kpt[1]/recip[1] * 1.01
+        if( t > kpt[2]/recip[2] * 1.01 ):
+            t = kpt[2]/recip[2] * 1.01
+
+        for i in range(3):
+            kpt[i] = int( t * recip[i] ) + 1
+            if klen > kpt[i]/recip[i] :
+                klen = kpt[i]/recip[i]
+        for i in range(3):
+            kpt[i] = int( t * recip[i] ) + 1
+            if klen > kpt[i]/recip[i] :
+                klen = kpt[i]/recip[i]
+
+        kpt[3] = klen
+        kglist.append( kpt )
+
+    return kglist
+
 def readKgrid( folder: str ):
     klist={}
     with open (str(folder / 'k.txt'), 'r') as fd:
@@ -59,3 +98,33 @@ def readKgrid( folder: str ):
             else:
                 klist[(int(kx),int(ky),int(kz))]=float(line.split()[-1])
     return klist
+
+def returnKDen( unitC: Atoms, kpoint ):
+
+    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+
+    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+
+    klen = kpoint[0] / recip[0]
+    for i in range(3):
+        t = kpoint[i] / recip[i]
+        if t < klen:
+            klen = t
+
+    return klen
+
+
+def returnKpoint( unitC: Atoms, klen ):
+    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+
+    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+
+    kpoint = []
+    for i in range(3):
+        kpoint.append( int( klen * recip[i] ) + 1 )
+
+    return kpoint
