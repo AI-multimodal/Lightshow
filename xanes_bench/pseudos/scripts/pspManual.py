@@ -29,17 +29,22 @@ def pspAdd( js, pspjs ):
     filename = input("What is the pseduo file name?")
     pspCollection = input("What is the reference for the pseudo?")
     saveWFC = input( "Save the wavefunction files too? (y/n) " )
-    wfcShell = []
-    wfcFile = []
     if saveWFC[0] == 'y' or saveWFC[0] == 'Y':
-        while True:
-            ws = input( "Which core hole? (1s, 2p) (any other entry to exit)" )
-            if ws == '1s' or ws == '2p':
-                wfcShell.append( ws )
-                wfcFile.append( input("What is the wfc file name?") )
-
-            else:
-                break
+        wfcFile = input("What is the wfc file name?")
+        ws = True
+    else:
+        ws = False
+#    wfcShell = []
+#    wfcFile = []
+#    if saveWFC[0] == 'y' or saveWFC[0] == 'Y':
+#        while True:
+#            ws = input( "Which core hole? (1s, 2p) (any other entry to exit)" )
+#            if ws == '1s' or ws == '2p':
+#                wfcShell.append( ws )
+#                wfcFile.append( input("What is the wfc file name?") )
+#
+#            else:
+#                break
 
 
     with open( filename, 'r' ) as f:
@@ -63,18 +68,30 @@ def pspAdd( js, pspjs ):
     js[element]['pseudopotential'] = pspCollection
     js[element]['rho_cutoff'] = rho
   
-    if len( wfcShell ) == 0:
-        return True
-    if 'wfc' not in js[element]:
-        js[element]['wfc'] = {}
-    for i in range(len( wfcShell)):
-        with open( wfcFile[i], 'r' ) as f:
-            wfcString = f.read()
+    if not ws:
+        return
 
-        wfcFile[i] = os.path.basename( wfcFile[i] )
-        pspjs[ filename + '_' + wfcShell[i] ] = base64.b64encode(bz2.compress(wfcString.encode("utf-8"),9)).decode("utf-8")
-        wfchash = hashlib.md5( wfcString.encode("utf-8") ).hexdigest()
-        js[element]['wfc'][wfcShell[i]] = { 'md5': wfchash, 'file': filename + '_' + wfcShell[i] }
+    with open( wfcFile, 'r' ) as f:
+        wfcString = f.read()
+
+    wfcFile = os.path.basename( wfcFile )
+    pspjs[ filename + '_' + 'wfc' ] = base64.b64encode(bz2.compress(wfcString.encode("utf-8"),9)).decode("utf-8")
+    wfchash = hashlib.md5( wfcString.encode("utf-8") ).hexdigest()
+    js[element]['wfc'] = filename + '_' + 'wfc'
+    js[element]['wfc_md5'] = wfchash
+    
+#    if len( wfcShell ) == 0:
+#        return True
+#    if 'wfc' not in js[element]:
+#        js[element]['wfc'] = {}
+#    for i in range(len( wfcShell)):
+#        with open( wfcFile[i], 'r' ) as f:
+#            wfcString = f.read()
+
+#        wfcFile[i] = os.path.basename( wfcFile[i] )
+#        pspjs[ filename + '_' + wfcShell[i] ] = base64.b64encode(bz2.compress(wfcString.encode("utf-8"),9)).decode("utf-8")
+#        wfchash = hashlib.md5( wfcString.encode("utf-8") ).hexdigest()
+#        js[element]['wfc'][wfcShell[i]] = { 'md5': wfchash, 'file': filename + '_' + wfcShell[i] }
     return True
 
 
