@@ -60,13 +60,13 @@ def pspAdd( js, pspjs ):
 
     if element not in js:
         js[element] = {}
-    js[element]['Z_val'] = Z
-    js[element]['cutoff'] = cutoff
-    js[element]['dual'] = dual
+    js[element]['Z_val'] = int(Z)
+    js[element]['cutoff'] = int(cutoff)
+    js[element]['dual'] = float(dual)
     js[element]['filename'] = filename
     js[element]['md5'] = md5hash
     js[element]['pseudopotential'] = pspCollection
-    js[element]['rho_cutoff'] = rho
+    js[element]['rho_cutoff'] = int(rho)
   
     if not ws:
         return
@@ -127,7 +127,7 @@ def main():
 
     if update:
         with open( dbRootName + '.json', 'w' ) as f:
-            f.write( json.dumps( js ) )
+            f.write( json.dumps( js, sort_keys=True, indent=3 ) )
         with open( dbRootName + '_pseudos.json', 'w' ) as f:
             f.write( json.dumps( pspjs  ))
 

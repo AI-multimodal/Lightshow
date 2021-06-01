@@ -64,6 +64,8 @@
             "Ti1": "Ti.fch.upf"
         },
         "Rmin": "9.0",
-        "scf_kden": "-1"
+        "scf_kden": "-1",
+        "core_psp_json": "FCH1",
+        "psp_json": "SSSP_precision"
     }
 }
