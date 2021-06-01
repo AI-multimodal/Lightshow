@@ -36,6 +36,47 @@ def ortho(lat, i, j):
     o = np.linalg.solve(lat.T, np.cross(lat[i], lat[j]))
     return tuple(o / np.linalg.norm(o))
 
+def unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, needWfn=False ):
+    pspDatabaseName = pspDatabaseRoot + '.json'
+    sssp_fn = os.path.join( DatabaseDir, pspDatabaseName)
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+    minSymbols = set( symbols )
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
+            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+    pspDatabaseName = pspDatabaseRoot + '_pseudos.json'
+#    sssp_fn = DatabaseDir / pspDatabaseName
+    sssp_fn = os.path.join( DatabaseDir, pspDatabaseName)
+    with open (sssp_fn, 'r' ) as p:
+        pspJSON = json.load( p )
+    for symbol in minSymbols:
+        fileName = psp[symbol]
+        pspString = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+        with open( folder / ".." / fileName, 'w' ) as f:
+            f.write( pspString.decode("utf-8") )
+
+    if needWfn:
+        for symbol in minSymbols:
+            if 'wfc' not in pspDatabase[ symbol ]:
+                print( "WFC not stored corectly in " + pspDatabaseRoot + " for element " + symbol )
+                return False
+            fileName = pspDatabase[ symbol ]['wfc']
+            pspString = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+            print( 'Expected hash:  ' + pspDatabase[symbol]['wfc_md5'] )
+            print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
+            with open( folder / ".." / fileName, 'w' ) as f:
+                f.write( pspString.decode("utf-8") )
+
+
 def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
     inp =  ["&input_xspectra",
@@ -104,7 +145,8 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
 
-    psp = xsJSON['XS_controls']['psp']
+#    psp = xsJSON['XS_controls']['psp']
+    psp = {}
     symTarg = xsJSON['XS_controls']['element']
 
     atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
@@ -162,7 +204,14 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
+    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "XS" / "Spectra"
+    folder.mkdir(parents=True, exist_ok=True)
+    printKgrid( atoms, folder )
+
+    # Make this into a subroutine ##
+    """
+    pspDatabaseName = xsJSON['XS_controls']['psp_json'] + '.json'
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data',  pspDatabaseName )
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     minSymbols = set( symbols )
@@ -177,15 +226,14 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 
-    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "XS" / "Spectra"
-    folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( atoms, folder )
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                 str(folder / ".." / "Ti.wfc"))
     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
                 str(folder / ".." / "Ti.fch.upf"))
 
-    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
+    pspDatabaseName = xsJSON['XS_controls']['psp_json'] + '_pseudos.json'
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', pspDatabaseName )
+#    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
     with open (sssp_fn, 'r' ) as p:
         pspJSON = json.load( p )
     for symbol in minSymbols:
@@ -195,7 +243,19 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
         print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
         with open( folder / ".." / fileName, 'w' ) as f:
             f.write( pspString.decode("utf-8") )
+    """
+    pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+    unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, needWfn=False )
 
+    pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
+#    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+    unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, [xsJSON['XS_controls']['element']], folder, needWfn=True )
+
+#    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
+#                str(folder / ".." / "Ti.wfc"))
+#    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
+#                str(folder / ".." / "Ti.fch.upf"))
 
     xsJSON['QE']['control']['pseudo_dir'] = "../"
     try:
