@@ -36,7 +36,8 @@ def ortho(lat, i, j):
     o = np.linalg.solve(lat.T, np.cross(lat[i], lat[j]))
     return tuple(o / np.linalg.norm(o))
 
-def unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, needWfn=False ):
+def unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder, needWfn=False ):
+    psp = {}
     pspDatabaseName = pspDatabaseRoot + '.json'
     sssp_fn = os.path.join( DatabaseDir, pspDatabaseName)
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
@@ -46,10 +47,14 @@ def unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, need
         print( symbol )
         print( pspDatabase[ symbol ]['filename'] )
         psp[symbol] = pspDatabase[ symbol ]['filename']
-        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
-            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
-        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
-            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+        if ecutwfc < pspDatabase[ symbol ]['cutoff']:
+            ecutwfc = pspDatabase[ symbol ]['cutoff']
+        if ecutrho < pspDatabase[ symbol ]['rho_cutoff']:
+            ecutrho = pspDatabase[ symbol ]['rho_cutoff']
+#        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+#            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+#        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
+#            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
 
     pspDatabaseName = pspDatabaseRoot + '_pseudos.json'
 #    sssp_fn = DatabaseDir / pspDatabaseName
@@ -73,8 +78,10 @@ def unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, need
             pspString = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
             print( 'Expected hash:  ' + pspDatabase[symbol]['wfc_md5'] )
             print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
-            with open( folder / ".." / fileName, 'w' ) as f:
+            with open( folder / ".." / 'Core.wfc', 'w' ) as f:
                 f.write( pspString.decode("utf-8") )
+
+    return psp, ecutwfc, ecutrho
 
 
 def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
@@ -125,7 +132,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "/"]
 
     inp += ["&pseudos",
-            "    filecore = '../../../Ti.wfc'",
+            "    filecore = '../../../Core.wfc'",
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str( XSparams['cut_occ']['cut_desmooth']),
@@ -246,11 +253,21 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     """
     pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
     DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
-    unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, symbols, folder, needWfn=False )
+
+    ecutwfc = xsJSON['QE']['system']['ecutwfc']
+    ecutrho = xsJSON['QE']['system']['ecutrho']
+    psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder )
 
     pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
 #    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
-    unpackPsps( psp, xsJSON, pspDatabaseRoot, DatabaseDir, [xsJSON['XS_controls']['element']], folder, needWfn=True )
+    psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, 
+                                        [xsJSON['XS_controls']['element']], folder, needWfn=True )
+
+    ##TODO for magnetic systems need a more sophisticated system to append numeral
+    for i in psp2:
+        psp[ i + '1' ] = psp2[i]
+    xsJSON['QE']['system']['ecutwfc'] = ecutwfc
+    xsJSON['QE']['system']['ecutrho'] = ecutrho
 
 #    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
 #                str(folder / ".." / "Ti.wfc"))
