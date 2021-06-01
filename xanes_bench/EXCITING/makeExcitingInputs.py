@@ -53,7 +53,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
 
     # set BSE bands
     if params['conductionBands'] is not None:
-        excitingxasJSON['xs']['BSE']['nstlxas'] = "0 {:d}".format( params['conductionBands'] )
+        excitingxasJSON['xs']['BSE']['nstlxas'] = "1 {:d}".format( params['conductionBands'] )
 
     # At the moment setting all k-point grids to be the same
     if params['scf.kpoints'] is not None:
