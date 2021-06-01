@@ -49,8 +49,8 @@ def printKgrid( unitC: Atoms, folder: str ):
     fd.close()
 
 
-def returnKgridList( unitC: Atoms, folder: str, maxLen=53.0 ):
-    klist = []
+def returnKgridList( unitC: Atoms, maxLen=53.0 ):
+    kglist = []
 
     vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
     recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
@@ -64,7 +64,7 @@ def returnKgridList( unitC: Atoms, folder: str, maxLen=53.0 ):
             klen = t
 
     kpt = [1,1,1,klen]
-    kglist.append( kpt )
+    kglist.append( kpt.copy() )
 
     while klen < maxLen:
         klen *= 10
@@ -84,7 +84,10 @@ def returnKgridList( unitC: Atoms, folder: str, maxLen=53.0 ):
                 klen = kpt[i]/recip[i]
 
         kpt[3] = klen
-        kglist.append( kpt )
+        kglist.append( kpt.copy() )
+
+    for i in kglist:
+        print(i)
 
     return kglist
 
