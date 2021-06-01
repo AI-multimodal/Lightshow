@@ -14,7 +14,7 @@ from xanes_bench.photonSym import photonSymm
 import json
 import xanes_bench.Xspectra
 import os, shutil
-from xanes_bench.General.kden import printKgrid, readKgrid, returnKDen, returnKpoint
+from xanes_bench.General.kden import printKgrid, readKgrid, returnKDen, returnKpoint, returnKgridList
 import bz2, base64, hashlib
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
@@ -370,17 +370,18 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
     printKgrid( atoms, folder )
-    klist=readKgrid(folder)
+    klist=returnKgridList( atoms, 51 )
     # loop for ground state
     for klist_gs in klist:
-        if 9 < klist[klist_gs] < 41: 
+        print( klist_gs[3])
+        if 9 < klist_gs[3] < 41: 
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
             for klist_es in klist:
-                if 24 < klist[klist_es] < 51:
+                if 24 < klist_es[3] < 51:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
