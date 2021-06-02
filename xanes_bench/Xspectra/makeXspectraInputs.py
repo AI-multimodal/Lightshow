@@ -75,13 +75,18 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "    gamma_mode = '" + XSparams['plotTrue']['gamma_mode'] + "'",
             "/"]
     else:
+#        inp += [
+#            "    gamma_mode = '" + XSparams['plotFalse']['gamma_mode'] + "'",
+#            "    gamma_energy(1) = " + str( XSparams['plotFalse']['gamma_energy(1)']),
+#            "    gamma_energy(2) = " + str( XSparams['plotFalse']['gamma_energy(2)']),
+#            "    gamma_value(1)  = " + str( XSparams['plotFalse']['gamma_value(1)']),
+#            "    gamma_value(2)  = " + str( XSparams['plotFalse']['gamma_value(2)']),
+#            "/"]
         inp += [
-            "    gamma_mode = '" + XSparams['plotFalse']['gamma_mode'] + "'",
-            "    gamma_energy(1) = " + str( XSparams['plotFalse']['gamma_energy(1)']),
-            "    gamma_energy(2) = " + str( XSparams['plotFalse']['gamma_energy(2)']),
-            "    gamma_value(1)  = " + str( XSparams['plotFalse']['gamma_value(1)']),
-            "    gamma_value(2)  = " + str( XSparams['plotFalse']['gamma_value(2)']),
+            "    gamma_mode = 'constant'",
+            "    xgamma = 0.89 ",
             "/"]
+            
 
     inp += ["&pseudos",
             "    filecore = '../../../Ti.wfc'",
