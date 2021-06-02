@@ -75,13 +75,18 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             "    gamma_mode = '" + XSparams['plotTrue']['gamma_mode'] + "'",
             "/"]
     else:
+#        inp += [
+#            "    gamma_mode = '" + XSparams['plotFalse']['gamma_mode'] + "'",
+#            "    gamma_energy(1) = " + str( XSparams['plotFalse']['gamma_energy(1)']),
+#            "    gamma_energy(2) = " + str( XSparams['plotFalse']['gamma_energy(2)']),
+#            "    gamma_value(1)  = " + str( XSparams['plotFalse']['gamma_value(1)']),
+#            "    gamma_value(2)  = " + str( XSparams['plotFalse']['gamma_value(2)']),
+#            "/"]
         inp += [
-            "    gamma_mode = '" + XSparams['plotFalse']['gamma_mode'] + "'",
-            "    gamma_energy(1) = " + str( XSparams['plotFalse']['gamma_energy(1)']),
-            "    gamma_energy(2) = " + str( XSparams['plotFalse']['gamma_energy(2)']),
-            "    gamma_value(1)  = " + str( XSparams['plotFalse']['gamma_value(1)']),
-            "    gamma_value(2)  = " + str( XSparams['plotFalse']['gamma_value(2)']),
+            "    gamma_mode = 'constant'",
+            "    xgamma = 0.89 ",
             "/"]
+            
 
     inp += ["&pseudos",
             "    filecore = '../../../Ti.wfc'",
@@ -295,16 +300,16 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     #######
-    psp = dict(Ti1='Ti.fch.upf')
+    psp = dict(Ti1='ti.nch.UPF')
     symTarg = 'Ti'
     ####
 
     xs_fn = os.path.join(module_path, 'xspectra.json')
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
-
-    atoms = smaller( unitCell )
-
+    #
+    #atoms = smaller( unitCell )
+    atoms = unitCell
     us = {}
     symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
@@ -389,8 +394,8 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                                 str(folder_spectra / ".." / "Ti.wfc"))
-                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
-                                str(folder_spectra / ".." / "Ti.fch.upf"))
+                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/ti.nch.UPF"),
+                                str(folder_spectra / ".." / "ti.nch.UPF"))
                     for symbol in minSymbols:
                         fileName = psp[symbol]
                         with open( folder_spectra / ".." / fileName, 'w' ) as f:
