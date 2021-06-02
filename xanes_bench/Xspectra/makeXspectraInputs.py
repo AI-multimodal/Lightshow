@@ -295,16 +295,16 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     #######
-    psp = dict(Ti1='Ti.fch.upf')
+    psp = dict(Ti1='ti.nch.UPF')
     symTarg = 'Ti'
     ####
 
     xs_fn = os.path.join(module_path, 'xspectra.json')
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
-
-    atoms = smaller( unitCell )
-
+    #
+    #atoms = smaller( unitCell )
+    atoms = unitCell
     us = {}
     symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
@@ -373,14 +373,14 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     klist=readKgrid(folder)
     # loop for ground state
     for klist_gs in klist:
-        if 9 < klist[klist_gs] < 41: 
+        if 5 < klist[klist_gs] < 20: 
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
             for klist_es in klist:
-                if 24 < klist[klist_es] < 51:
+                if 5 < klist[klist_es] < 28:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
@@ -388,8 +388,8 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                                 str(folder_spectra / ".." / "Ti.wfc"))
-                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
-                                str(folder_spectra / ".." / "Ti.fch.upf"))
+                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/ti.nch.UPF"),
+                                str(folder_spectra / ".." / "ti.nch.UPF"))
                     for symbol in minSymbols:
                         fileName = psp[symbol]
                         with open( folder_spectra / ".." / fileName, 'w' ) as f:
