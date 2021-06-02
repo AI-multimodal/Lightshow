@@ -426,7 +426,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
-
+    '''
     sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
@@ -449,7 +449,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
         pspData[symbol] = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
         print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
         print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
-
+    '''
 
     folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
@@ -466,12 +466,14 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
             for klist_es in klist:
+                for i in range(len(symbols)):
+                    atoms[i].tag = 0
                 if 5 < klist_es[3] < 27:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
                     folder_spectra.mkdir(parents=True, exist_ok=True)
-
+                    '''
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                                 str(folder_spectra / ".." / "Ti.wfc"))
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
@@ -480,6 +482,24 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
                         fileName = psp[symbol]
                         with open( folder_spectra / ".." / fileName, 'w' ) as f:
                             f.write( pspData[symbol].decode("utf-8") )
+                    '''
+                    pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+                    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+
+                    ecutwfc = xsJSON['QE']['system']['ecutwfc']
+                    ecutrho = xsJSON['QE']['system']['ecutrho']
+                    psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder_spectra )
+
+                    pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
+#    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+                    psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
+                                        [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
+
+    ##TODO for magnetic systems need a more sophisticated system to append numeral
+                    for i in psp2:
+                        psp[ i + '1' ] = psp2[i]
+                    xsJSON['QE']['system']['ecutwfc'] = ecutwfc
+                    xsJSON['QE']['system']['ecutrho'] = ecutrho
 
                     xsJSON['QE']['control']['pseudo_dir'] = "../"
                     try:
@@ -492,7 +512,6 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
                     iabs_ = 0
                     iabs = []
                     found = set()
-
                     for symbol in symbols:
                         if symbol == symTarg:
                             iabs.append(len(found) + 1)
