@@ -10,6 +10,7 @@ from os import path
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 import re
+import sys
 
 from scipy.ndimage import gaussian_filter1d
 
@@ -593,7 +594,7 @@ def makeInterpolateWithWindow( plot, doWindow ):
 #  2. Different comparison methods
 #  3. Default shift for the search
 #
-def comparePlots( p1, p2, window=False, coss=[], pearson=[], spearman=[], relArea=[]):
+def comparePlots( p1, p2, window=False, coss=[], pearson=[], spearman=[], relArea=[], inverse=False):
 
     plot1, interp1 = makeInterpolateWithWindow( p1, window )
     plot2, interp2 = makeInterpolateWithWindow( p2, window )
@@ -614,10 +615,14 @@ def comparePlots( p1, p2, window=False, coss=[], pearson=[], spearman=[], relAre
         exit()
 
     omega = res.x[0]
-    coss.append( 1-res.fun )
+    if inverse:
+        coss.append( res.fun )
+    else:
+        coss.append( 1-res.fun )
 
-    pearson.append( PearsonCoeff( omega, plot1, plot2, interp1, interp2 ) )
-    spearman.append( SpearmanCoeff( omega, plot1, plot2, interp1, interp2 ) )
+
+    pearson.append( PearsonCoeff( omega, plot1, plot2, interp1, interp2, inverse ) )
+    spearman.append( SpearmanCoeff( omega, plot1, plot2, interp1, interp2, inverse ) )
 
     alpha = 1.0
     res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
@@ -733,14 +738,36 @@ def loadPlotsS( program, site, polarization, string ):
 
     return plots, foundParam
 
+# Print the similarity metrics to files
+def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots, inverse=False):
+    if inverse:
+        coss = np.log10(coss)
+        pearson = np.log10(pearson)
+        spearman = np.log10(spearman)
+        relArea = np.log10(relArea)
+    lookup = {"COS.dat":coss, "Pearson.dat":pearson, "Spearman.dat":spearman, "relArea.dat":relArea}
+    for filename in lookup:
+        with open(filename,"w") as f:
+            print("    " + filename + "    ", file=f, end=",")
+            for i in range(len(kpoints2)):
+                print("{:12f}".format( kpoints2[i][3] ), file=f, end=",")	
+            for i in range(len(plots)):
+                if i % len(kpoints2) == 0 :
+                    print("\n {:12f}".format( kpoints1[i][3] ), file=f, end = ",")
+                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end="," )
+                else:
+                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end="," )
 
 def main():
-
+    if len(sys.argv) > 1:
+        inverse = True
+    else:
+        inverse = False
     program = 'X'
     method = 'K'
     string = 'gk'
 #    site = [1,2,3,4,5,6,7,8]
-    site = [0]
+    site = [4]
     polarization = [1,2,3]
 
     if method == 'K':
@@ -774,8 +801,8 @@ def main():
     spearman = []
     relArea= []
     for i in range(len(plots)):
-        comparePlots( plots[-1], plots[i], True, coss, pearson, spearman, relArea)
-    printdata(np.array(coss), np.array(pearson), np.array(spearman), np.array(relArea), kpoints1, kpoints2, plots)
+        comparePlots( plots[-1], plots[i], True, coss, pearson, spearman, relArea, inverse)
+    printdata(np.array(coss), np.array(pearson), np.array(spearman), np.array(relArea), kpoints1, kpoints2, plots, inverse)
     exit()
 
 #    if swtch:
@@ -786,19 +813,6 @@ def main():
 #
 
 
-def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots):
-    lookup = {"COS.dat":coss, "Pearson.dat":pearson, "Spearman.dat":spearman, "relArea.dat":relArea}
-    for filename in lookup:
-        with open(filename,"w") as f:
-            print("    " + filename + "    ", file=f, end=" ")
-            for i in range(len(kpoints2)):
-                print("{:12f}".format( kpoints2[i][3] ), file=f, end=" ")	
-            for i in range(len(plots)):
-                if i % len(kpoints2) == 0 :
-                    print("\n {:12f}".format( kpoints1[i][3] ), file=f, end = " ")
-                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end=" " )
-                else:
-                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end=" " )
 
 if __name__ == '__main__':
     main()
