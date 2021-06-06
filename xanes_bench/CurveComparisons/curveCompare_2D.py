@@ -739,14 +739,15 @@ def loadPlotsS( program, site, polarization, string ):
     return plots, foundParam
 
 # Print the similarity metrics to files
-def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots, inverse=False):
+def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots, inverse=False, site = 0):
     if inverse:
         coss = np.log10(coss)
         pearson = np.log10(pearson)
         spearman = np.log10(spearman)
         relArea = np.log10(relArea)
     lookup = {"COS.dat":coss, "Pearson.dat":pearson, "Spearman.dat":spearman, "relArea.dat":relArea}
-    for filename in lookup:
+    for file_name in lookup:
+        filename = file_name.split(".")[0]+str(site[0])+".dat"
         with open(filename,"w") as f:
             print("    " + filename + "    ", file=f, end=",")
             for i in range(len(kpoints2)):
@@ -754,9 +755,9 @@ def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots, inver
             for i in range(len(plots)):
                 if i % len(kpoints2) == 0 :
                     print("\n {:12f}".format( kpoints1[i][3] ), file=f, end = ",")
-                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end="," )
+                    print("{:12.8f}".format( lookup[file_name][i] ), file=f, end="," )
                 else:
-                    print("{:12.8f}".format( lookup[filename][i] ), file=f, end="," )
+                    print("{:12.8f}".format( lookup[file_name][i] ), file=f, end="," )
 
 def main():
     if len(sys.argv) > 1:
@@ -767,7 +768,7 @@ def main():
     method = 'K'
     string = 'gk'
 #    site = [1,2,3,4,5,6,7,8]
-    site = [4]
+    site = [0]
     polarization = [1,2,3]
 
     if method == 'K':
@@ -802,7 +803,7 @@ def main():
     relArea= []
     for i in range(len(plots)):
         comparePlots( plots[-1], plots[i], True, coss, pearson, spearman, relArea, inverse)
-    printdata(np.array(coss), np.array(pearson), np.array(spearman), np.array(relArea), kpoints1, kpoints2, plots, inverse)
+    printdata(np.array(coss), np.array(pearson), np.array(spearman), np.array(relArea), kpoints1, kpoints2, plots, inverse, site)
     exit()
 
 #    if swtch:
