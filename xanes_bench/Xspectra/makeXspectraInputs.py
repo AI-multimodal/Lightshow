@@ -459,7 +459,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     # loop for ground state
     for klist_gs in klist:
         print( klist_gs[3])
-        if 5.3 < klist_gs[3] < 21.2: 
+        if 5 < klist_gs[3] < 35: 
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs
@@ -468,7 +468,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
             for klist_es in klist:
                 for i in range(len(symbols)):
                     atoms[i].tag = 0
-                if 13.2 < klist_es[3] < 27:
+                if 5 < klist_es[3] < 35:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
