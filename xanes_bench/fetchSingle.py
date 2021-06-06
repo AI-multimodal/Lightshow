@@ -9,7 +9,7 @@ import os
 #from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
 # TODO: add implementation of photonSym to avoid import error
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
-from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv
+from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv, makeXspectraConv_ecut, makeXspectraConv_sc
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
@@ -43,13 +43,39 @@ def main():
         if len(sys.argv) == 2:
             typecalc = "single"
             print("Type of Run: {}".format(typecalc))
-        elif len(sys.argv) == 3: # Only use the second input paramater "single" or "convergence"
-            if sys.argv[2] == "convergence" or sys.argv[2] == "single":
+        #elif len(sys.argv) == 3: # Only use the second input paramater "single" or "convergence"
+        else:
+            if sys.argv[2] == "converge_k" or sys.argv[2] == "converge_e" or sys.argv[2] == "converge_sc" or sys.argv[2] == "single":
                 typecalc = sys.argv[2]
                 print("Type of Run: {}".format(typecalc))
             else:
-                print("Input for run type not supported. \nSuppurted type of run: single or convergence")
+                print("Input for run type not supported. \nSuppurted type of run: single, converge_k, converge_e, converge_sc")
                 exit()
+
+        if typecalc == "converge_e" and len(sys.argv) != 5 :
+            print("Requires input for k-mesh for initial and final state.")
+            exit()
+        elif typecalc == "converge_e" and len(sys.argv) == 5 :
+            if len(sys.argv[3]) != 5 or len(sys.argv[4]) != 5 :
+                print("k_meshes should be provided using string, e.g. 3-3-3")
+                exit()
+            else:
+                k_gs = tuple(sys.argv[3].split("-"))
+                k_es = tuple(sys.argv[4].split("-"))
+
+        if typecalc == "converge_sc" and len(sys.argv) != 5 :
+            print("Requires input for k-mesh for initial state and converged radius for unit cell in bohr.")
+            exit()
+        elif typecalc == "converge_sc" and len(sys.argv) == 5 :
+            if len(sys.argv[3]) != 5:
+                print(" initial state k_meshe should be provided using string, e.g. 3-3-3") 
+                exit()
+            elif not sys.argv[4].isnumeric() or float(sys.argv[4]) <= 0:
+                print("radius can only accept positive numbers")
+                exit()
+            else:
+                k_gs = tuple(sys.argv[3].split("-"))
+                radius = float(sys.argv[4])
 
     # Your hashe materials project key needs to be in a file called mp.key
     mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
@@ -73,8 +99,26 @@ def main():
                 os.makedirs(os.path.dirname(json_fn))
             with open(json_fn, 'w') as f:
                 json.dump(st_dict, f, indent=4, sort_keys=True)
-    else:
+    elif typecalc == "converge_k":
         json_dir = "data_converge"
+        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
+        for spec_type in ["XS"]: 
+            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
+            if not os.path.exists(os.path.dirname(json_fn)):
+                os.makedirs(os.path.dirname(json_fn))
+            with open(json_fn, 'w') as f:
+                json.dump(st_dict, f, indent=4, sort_keys=True)
+    elif typecalc == "converge_e": 
+        json_dir = "data_converge_ecut"
+        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
+        for spec_type in ["XS"]: 
+            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
+            if not os.path.exists(os.path.dirname(json_fn)):
+                os.makedirs(os.path.dirname(json_fn))
+            with open(json_fn, 'w') as f:
+                json.dump(st_dict, f, indent=4, sort_keys=True)
+    elif typecalc == "converge_sc": 
+        json_dir = "data_converge_sc"
         # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
         for spec_type in ["XS"]: 
             json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
@@ -160,9 +204,12 @@ def main():
         makeOcean( mpid, unitC, params )
 
         makeExcitingXAS( mpid, unitC, params )
-    else:
+    elif typecalc == "converge_k":
         makeXspectraConv(mpid,unitC,params) # how to transfer kpoints?
-
+    elif typecalc == "converge_e":
+        makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
+    elif typecalc == "converge_sc":
+        makeXspectraConv_sc( mpid, unitC, params, k_gs, radius )
 
 if __name__ == '__main__':
     main()
