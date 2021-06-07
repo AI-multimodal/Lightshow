@@ -884,6 +884,9 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
     '''
     
     folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS"
+    fecut = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / "ecut.txt"
+    if fecut.exists():
+        fecut.unlink()
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
     printKgrid( atoms, folder )
@@ -916,9 +919,12 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
     #psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder )
 
     ratio = ecutrho / ecutwfc
-    for eshift in [-10, -5, 0, 5, 10]:
+    for eshift in [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]:
         # ecutwfc_new = ecutwfc_default + i
         # ecutrho_new = ecutwfc_new * ratio 
+        with open(fecut, 'a') as f:
+            print(str(int(ecutwfc + eshift)), file=f, end=' ')
+
         ecut_path = "ecut" + str(int(ecutwfc + eshift))
         folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / ecut_path / "Spectra"
         folder.mkdir(parents=True, exist_ok=True)    
