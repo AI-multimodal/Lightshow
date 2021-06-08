@@ -919,7 +919,7 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
     #psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder )
 
     ratio = ecutrho / ecutwfc
-    for eshift in [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]:
+    for eshift in range(-20, 90, 5):
         # ecutwfc_new = ecutwfc_default + i
         # ecutrho_new = ecutwfc_new * ratio 
         with open(fecut, 'a') as f:
