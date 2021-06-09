@@ -377,14 +377,17 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     #######
-    psp = dict(Ti1='ti.nch.UPF')
-    symTarg = 'Ti'
+    #psp = dict(Ti1='ti.nch.UPF')
+    #symTarg = 'Ti'
     ####
 
     xs_fn = os.path.join(module_path, 'xspectra.json')
     with open (xs_fn, 'r') as fd:
         xsJSON = json.load(fd)
     #
+    psp = xsJSON['XS_controls']['psp']
+    symTarg = xsJSON['XS_controls']['element']
+
     #atoms = smaller( unitCell )
     atoms = unitCell
     us = {}
@@ -423,7 +426,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
-
+    '''
     sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
     with open (sssp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
@@ -446,7 +449,7 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
         pspData[symbol] = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
         print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
         print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
-
+    '''
 
     folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
@@ -456,27 +459,47 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     # loop for ground state
     for klist_gs in klist:
         print( klist_gs[3])
-        if 9 < klist_gs[3] < 41: 
+        if 5 < klist_gs[3] < 35: 
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
             for klist_es in klist:
-                if 24 < klist_es[3] < 51:
+                for i in range(len(symbols)):
+                    atoms[i].tag = 0
+                if 5 < klist_es[3] < 35:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
                     folder_spectra.mkdir(parents=True, exist_ok=True)
-
+                    '''
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
                                 str(folder_spectra / ".." / "Ti.wfc"))
-                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/ti.nch.UPF"),
-                                str(folder_spectra / ".." / "ti.nch.UPF"))
+                    shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/core_hole/Ti.fch.upf"),
+                                str(folder_spectra / ".." / "Ti.fch.upf"))
                     for symbol in minSymbols:
                         fileName = psp[symbol]
                         with open( folder_spectra / ".." / fileName, 'w' ) as f:
                             f.write( pspData[symbol].decode("utf-8") )
+                    '''
+                    pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+                    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+
+                    ecutwfc = xsJSON['QE']['system']['ecutwfc']
+                    ecutrho = xsJSON['QE']['system']['ecutrho']
+                    psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder_spectra )
+
+                    pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
+#    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+                    psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
+                                        [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
+
+    ##TODO for magnetic systems need a more sophisticated system to append numeral
+                    for i in psp2:
+                        psp[ i + '1' ] = psp2[i]
+                    xsJSON['QE']['system']['ecutwfc'] = ecutwfc
+                    xsJSON['QE']['system']['ecutrho'] = ecutrho
 
                     xsJSON['QE']['control']['pseudo_dir'] = "../"
                     try:
@@ -489,7 +512,6 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
                     iabs_ = 0
                     iabs = []
                     found = set()
-
                     for symbol in symbols:
                         if symbol == symTarg:
                             iabs.append(len(found) + 1)
@@ -573,3 +595,451 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
 
                                         with open(xanesfolder / "weight.txt", "w") as f:
                                             f.write( str(weight) + "\n" )
+
+def makeXspectraConv_sc( mpid, unitCell: Atoms, params: dict , k_gs, radius):
+    #######
+#    psp = dict(Ti1='Ti.fch.upf')
+#    symTarg = 'Ti'
+    ####
+
+    xs_fn = os.path.join(module_path, 'xspectra.json')
+    with open (xs_fn, 'r') as fd:
+        xsJSON = json.load(fd)
+
+#    psp = xsJSON['XS_controls']['psp']
+    psp = {}
+    symTarg = xsJSON['XS_controls']['element']
+
+    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+    us = {}
+    symm = spglib.get_symmetry((atoms.get_cell(),
+                             atoms.get_scaled_positions(),
+                             atoms.get_atomic_numbers()),
+                             symprec=0.1, angle_tolerance=15)
+    equiv = symm['equivalent_atoms']
+
+    use_photonSymm = True
+    ph = []
+    if use_photonSymm:
+        photonSymm(atoms, us, ph, params['photonOrder'])
+    else:
+        directions = {1, 2, 3}
+        for dir in range(3):
+            dirs = np.zeros(4)
+            dirs[-1] = 1.0
+            odirs = dirs.copy()
+            dirs[dir] = 1.0
+            odirs[(dir-1) % 3] = 1.0
+            ph.append({
+                        "dipole": dirs,
+                        "quad":  [odirs]
+                      })
+        for i in equiv:
+            if i in us:
+                us[i] = us[i] + 1
+            else:
+                us[i] = 1
+    print( ph )
+
+    symbols = atoms.get_chemical_symbols()
+
+    xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+    '''
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+    minSymbols = set( symbols )
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
+            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+    pspData = {}
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
+    with open (sssp_fn, 'r' ) as p:
+        pspJSON = json.load( p )
+    for symbol in minSymbols:
+        fileName = psp[symbol]
+        pspData[symbol] = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
+    '''
+
+    folder = pathlib.Path(env["PWD"]) / "data_converge_sc" / "mp_structures" / mpid / "XS"
+    folder.mkdir(parents=True, exist_ok=True)
+    # a little tedious, but should be OK
+    printKgrid( atoms, folder )
+
+    klist = returnKgridList( atoms, 51 )
+    kx_gs, ky_gs, kz_gs = k_gs
+
+    klist_es = []
+
+    for i in range(1, len(klist)):
+        if klist[i-1][3] <= radius * 0.529177249 < klist[i][3]:
+            klist_es.append(klist[i-1][0:3])
+            klist_es.append(klist[i][0:3])
+            klist_es.append(klist[i+1][0:3])
+    for k_es in klist_es:
+        kx_es,ky_es,kz_es = k_es
+        kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
+        folder_spectra = pathlib.Path(env["PWD"]) / "data_converge_sc" / "mp_structures" / mpid / "XS" / kpath_es
+        folder_spectra.mkdir(parents=True, exist_ok=True)
+
+        for i in range(len(symbols)):
+            atoms[i].tag = 0
+            
+        pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+        DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+
+        ecutwfc = xsJSON['QE']['system']['ecutwfc']
+        ecutrho = xsJSON['QE']['system']['ecutrho']
+        psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder_spectra )
+
+        pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
+#    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+        psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
+                                        [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
+
+    ##TODO for magnetic systems need a more sophisticated system to append numeral
+        for i in psp2:
+            psp[ i + '1' ] = psp2[i]
+        xsJSON['QE']['system']['ecutwfc'] = ecutwfc
+        xsJSON['QE']['system']['ecutrho'] = ecutrho
+
+        xsJSON['QE']['control']['pseudo_dir'] = "../"
+        try:
+            write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
+                input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+        except:
+            print(xsJSON['QE'], atoms, psp)
+            raise Exception("FAILED while trying to write qe.in")
+
+        iabs_ = 0
+        iabs = []
+        found = set()
+        for symbol in symbols:
+            if symbol == symTarg:
+                iabs.append(len(found) + 1)
+            else:
+                iabs.append(None)
+            found.add(symbol)
+
+        prev = None
+        for i, sym in enumerate(symbols):
+
+            if i == equiv[i] and sym == symTarg:
+
+                if prev is not None:
+                    atoms[prev].tag = 0
+
+                atoms[i].tag = 1
+                prev = i
+
+                subfolder = folder_spectra / str(i)
+                subfolder.mkdir(parents=True, exist_ok=True)
+                xsJSON['QE']['control']['pseudo_dir'] = "../../"
+
+                write(str(subfolder / "es.in"), atoms, format='espresso-in',
+                    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+
+                # OCEAN photon labeling is continuous, so we will do that here too
+                #  not sure that we will actually want dipole-only spectra(?)
+                totalweight = 0
+                for photon in ph:
+                    totalweight += photon["dipole"][3]
+                
+                photonCount = 0
+                for photon in ph:
+        #              print( dipole )
+                    photonCount += 1
+                    dir1 = photon["dipole"][0:3]
+                    dir2 = dir1
+                    weight = photon["dipole"][3] * us[i] / totalweight
+                    mode = "dipole"
+                    xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                    xanesfolder.mkdir(parents=True, exist_ok=True)
+                    # change the k-mesh for excited state here
+                    xsJSON['XS']['kpts']['kpts'] = str(kx_es) + " " + str(ky_es) + " " + str(kz_es)
+                    with open(xanesfolder / "xanes.in", "w") as f:
+                            f.write(xinput(mode, iabs[i], dir1,
+                                                dir2, xsJSON['XS']))
+
+                    with open(xanesfolder / "xanes_.in", "w") as f:
+                        f.write(xinput(mode, iabs[i], dir1,
+                                        dir2,  xsJSON['XS'], plot=True)) 
+
+                    with open(xanesfolder / "weight.txt", "w") as f:
+                        f.write( str(weight) + "\n" )
+
+
+                # New total weight for the quadrupole terms
+                totalweight = 0
+                for photon in ph:
+                    if 'quad' in photon:
+                        for quad in photon["quad"]:
+                            totalweight += quad[3]
+
+                for photon in ph:
+                    if 'quad' in photon:
+                        for quad in photon["quad"]:
+                            photonCount += 1
+                            dir1 = photon["dipole"][0:3]
+                            dir2 = quad[0:3]
+                            weight = quad[3] * us[i] / totalweight
+                            mode = "quadrupole"
+                            xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                            xanesfolder.mkdir(parents=True, exist_ok=True)
+                            # fo
+                            with open(xanesfolder / "xanes.in", "w") as f:
+                                    f.write(xinput(mode, iabs[i], dir1,
+                                                        dir2, xsJSON['XS']))
+
+                            with open(xanesfolder / "xanes_.in", "w") as f:
+                                f.write(xinput(mode, iabs[i], dir1,
+                                                dir2,  xsJSON['XS'], plot=True))
+
+                            with open(xanesfolder / "weight.txt", "w") as f:
+                                f.write( str(weight) + "\n" )
+
+    
+def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
+    #######
+    #psp = dict(Ti1='ti.nch.UPF')
+    #symTarg = 'Ti'
+    ####
+
+    xs_fn = os.path.join(module_path, 'xspectra.json')
+    with open (xs_fn, 'r') as fd:
+        xsJSON = json.load(fd)
+    #
+    psp = xsJSON['XS_controls']['psp']
+    symTarg = xsJSON['XS_controls']['element']
+
+    #atoms = smaller( unitCell )
+    atoms = unitCell
+    us = {}
+    symm = spglib.get_symmetry((atoms.get_cell(),
+                             atoms.get_scaled_positions(),
+                             atoms.get_atomic_numbers()),
+                             symprec=0.1, angle_tolerance=15)
+    equiv = symm['equivalent_atoms']
+
+    use_photonSymm = True
+    ph = []
+    if use_photonSymm:
+        photonSymm(atoms, us, ph, params['photonOrder'])
+    else:
+        directions = {1, 2, 3}
+        for dir in range(3):
+            dirs = np.zeros(4)
+            dirs[-1] = 1.0
+            odirs = dirs.copy()
+            dirs[dir] = 1.0
+            odirs[(dir-1) % 3] = 1.0
+            ph.append({
+                        "dipole": dirs,
+                        "quad":  [odirs]
+                      })
+        for i in equiv:
+            if i in us:
+                us[i] = us[i] + 1
+            else:
+                us[i] = 1
+    print( ph )
+
+
+
+    symbols = atoms.get_chemical_symbols()
+
+
+    xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
+    '''
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision.json')
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+    minSymbols = set( symbols )
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
+            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
+        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
+            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
+
+    pspData = {}
+    sssp_fn = os.path.join(module_path, '..', 'pseudos', 'data', 'SSSP_precision_pseudos.json')
+    with open (sssp_fn, 'r' ) as p:
+        pspJSON = json.load( p )
+    for symbol in minSymbols:
+        fileName = psp[symbol]
+        pspData[symbol] = bz2.decompress(base64.b64decode( pspJSON[fileName] ))
+        print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
+        print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
+    '''
+    
+    folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS"
+    fecut = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / "ecut.txt"
+    if fecut.exists():
+        fecut.unlink()
+    folder.mkdir(parents=True, exist_ok=True)
+    # a little tedious, but should be OK
+    printKgrid( atoms, folder )
+    # loop for ecut 
+    kx_gs,ky_gs,kz_gs = k_gs
+    kx_es,ky_es,kz_es = k_es   
+
+    ecutwfc = xsJSON['QE']['system']['ecutwfc']
+    ecutrho = xsJSON['QE']['system']['ecutrho']
+
+    pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+    pspDatabaseName = pspDatabaseRoot + '.json'
+    sssp_fn = os.path.join( DatabaseDir, pspDatabaseName)
+
+    with open (sssp_fn, 'r' ) as pspDatabaseFile:
+        pspDatabase = json.load( pspDatabaseFile )
+
+    minSymbols = set( symbols )
+
+    for symbol in minSymbols:
+        print( symbol )
+        print( pspDatabase[ symbol ]['filename'] )
+        psp[symbol] = pspDatabase[ symbol ]['filename']
+        if ecutwfc < pspDatabase[ symbol ]['cutoff']:
+            ecutwfc = pspDatabase[ symbol ]['cutoff']
+        if ecutrho < pspDatabase[ symbol ]['rho_cutoff']:
+            ecutrho = pspDatabase[ symbol ]['rho_cutoff']
+
+    #psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder )
+
+    ratio = ecutrho / ecutwfc
+    for eshift in range(-20, 90, 5):
+        # ecutwfc_new = ecutwfc_default + i
+        # ecutrho_new = ecutwfc_new * ratio 
+        with open(fecut, 'a') as f:
+            print(str(int(ecutwfc + eshift)), file=f, end=' ')
+
+        ecut_path = "ecut" + str(int(ecutwfc + eshift))
+        folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / ecut_path / "Spectra"
+        folder.mkdir(parents=True, exist_ok=True)    
+            
+        for i in range(len(symbols)):
+            atoms[i].tag = 0
+                    
+        pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
+        DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+
+
+        psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder )
+
+        pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
+#    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
+        psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
+                                [xsJSON['XS_controls']['element']], folder, needWfn=True )
+
+    ##TODO for magnetic systems need a more sophisticated system to append numeral
+        for i in psp2:
+            psp[ i + '1' ] = psp2[i]
+        xsJSON['QE']['system']['ecutwfc'] = ecutwfc + eshift
+        xsJSON['QE']['system']['ecutrho'] = (ecutwfc+ eshift) * ratio
+
+        xsJSON['QE']['control']['pseudo_dir'] = "../"
+        try:
+            write(str(folder / "gs.in"), atoms, format='espresso-in',
+                  input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+        except:
+            print(xsJSON['QE'], atoms, psp)
+            raise Exception("FAILED while trying to write qe.in")
+
+        iabs_ = 0
+        iabs = []
+        found = set()
+        for symbol in symbols:
+            if symbol == symTarg:
+                iabs.append(len(found) + 1)
+            else:
+                iabs.append(None)
+            found.add(symbol)
+
+        prev = None
+        for i, sym in enumerate(symbols):
+
+            if i == equiv[i] and sym == symTarg:
+
+                if prev is not None:
+                    atoms[prev].tag = 0
+
+                atoms[i].tag = 1
+                prev = i
+
+                subfolder = folder / str(i)
+                subfolder.mkdir(parents=True, exist_ok=True)
+                xsJSON['QE']['control']['pseudo_dir'] = "../../"
+
+                write(str(subfolder / "es.in"), atoms, format='espresso-in',
+                    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+
+                # OCEAN photon labeling is continuous, so we will do that here too
+                #  not sure that we will actually want dipole-only spectra(?)
+                totalweight = 0
+                for photon in ph:
+                    totalweight += photon["dipole"][3]
+                
+                photonCount = 0
+                for photon in ph:
+        #              print( dipole )
+                    photonCount += 1
+                    dir1 = photon["dipole"][0:3]
+                    dir2 = dir1
+                    weight = photon["dipole"][3] * us[i] / totalweight
+                    mode = "dipole"
+                    xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                    xanesfolder.mkdir(parents=True, exist_ok=True)
+                    # change the k-mesh for excited state here
+                    xsJSON['XS']['kpts']['kpts'] = str(kx_es) + " " + str(ky_es) + " " + str(kz_es)
+                    with open(xanesfolder / "xanes.in", "w") as f:
+                            f.write(xinput(mode, iabs[i], dir1,
+                                                dir2, xsJSON['XS']))
+
+                    with open(xanesfolder / "xanes_.in", "w") as f:
+                        f.write(xinput(mode, iabs[i], dir1,
+                                        dir2,  xsJSON['XS'], plot=True)) 
+
+                    with open(xanesfolder / "weight.txt", "w") as f:
+                        f.write( str(weight) + "\n" )
+
+
+                # New total weight for the quadrupole terms
+                totalweight = 0
+                for photon in ph:
+                    if 'quad' in photon:
+                        for quad in photon["quad"]:
+                            totalweight += quad[3]
+
+                for photon in ph:
+                    if 'quad' in photon:
+                        for quad in photon["quad"]:
+                            photonCount += 1
+                            dir1 = photon["dipole"][0:3]
+                            dir2 = quad[0:3]
+                            weight = quad[3] * us[i] / totalweight
+                            mode = "quadrupole"
+                            xanesfolder = subfolder / ("%s%d" % (mode, photonCount))
+                            xanesfolder.mkdir(parents=True, exist_ok=True)
+                            # fo
+                            with open(xanesfolder / "xanes.in", "w") as f:
+                                    f.write(xinput(mode, iabs[i], dir1,
+                                                        dir2, xsJSON['XS']))
+
+                            with open(xanesfolder / "xanes_.in", "w") as f:
+                                f.write(xinput(mode, iabs[i], dir1,
+                                                dir2,  xsJSON['XS'], plot=True))
+
+                            with open(xanesfolder / "weight.txt", "w") as f:
+                                f.write( str(weight) + "\n" )
