@@ -375,7 +375,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                           f.write( str(weight) + "\n" )
 
 
-def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
+def makeXspectraConv_k( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 36, sc_key = False ):
     #######
     #psp = dict(Ti1='ti.nch.UPF')
     #symTarg = 'Ti'
@@ -388,8 +388,10 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     psp = xsJSON['XS_controls']['psp']
     symTarg = xsJSON['XS_controls']['element']
 
-    #atoms = smaller( unitCell )
-    atoms = unitCell
+    if sc_key:
+        atoms = smaller( unitCell )
+    else:
+        atoms = unitCell
     us = {}
     symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
@@ -450,8 +452,11 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
         print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
         print( 'Resultant hash: ' + hashlib.md5( pspData[symbol] ).hexdigest() )
     '''
-
-    folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS"
+    if sc_key:
+        path_tmp = "data_converge_k" + "_sc"
+    else:
+        path_tmp = "data_converge_k" + "_uc"
+    folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
     printKgrid( atoms, folder )
@@ -459,19 +464,19 @@ def makeXspectraConv( mpid, unitCell: Atoms, params: dict ):
     # loop for ground state
     for klist_gs in klist:
         print( klist_gs[3])
-        if 5 < klist_gs[3] < 35: 
+        if 5 < klist_gs[3] < r_gs: 
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
-            folder = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs
+            folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
             for klist_es in klist:
                 for i in range(len(symbols)):
                     atoms[i].tag = 0
-                if 5 < klist_es[3] < 35:
+                if 5 < klist_es[3] < r_es:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
-                    folder_spectra = pathlib.Path(env["PWD"]) / "data_converge" / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
+                    folder_spectra = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
                     folder_spectra.mkdir(parents=True, exist_ok=True)
                     '''
                     shutil.copy(os.path.join(module_path,"..","..","data/pseudopotential/xspectral/orbital/Ti.wfc"),
