@@ -375,7 +375,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                           f.write( str(weight) + "\n" )
 
 
-def makeXspectraConv_k( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 36, sc_key = False ):
+def makeXspectraConv_k( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 36, sc_key = False, rmin=9 ):
     #######
     #psp = dict(Ti1='ti.nch.UPF')
     #symTarg = 'Ti'
@@ -389,7 +389,7 @@ def makeXspectraConv_k( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 3
     symTarg = xsJSON['XS_controls']['element']
 
     if sc_key:
-        atoms = smaller( unitCell )
+        atoms = smaller( unitCell, Rmin=rmin )
     else:
         atoms = unitCell
     us = {}

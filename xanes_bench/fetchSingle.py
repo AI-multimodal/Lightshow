@@ -52,15 +52,16 @@ def main():
                 print("Input for run type not supported. \nSuppurted type of run: single, converge_k, converge_e, converge_sc")
                 exit()
 
-        if typecalc == "converge_k" and len(sys.argv) != 6 :
+        if typecalc == "converge_k" and len(sys.argv) != 7 :
             print("Requires input for radius cutoff for initial and final state in Angstrom;  a sc_key to control sc or uc case.")
             exit()
-        elif typecalc == "converge_k" and len(sys.argv) == 6 :
+        elif typecalc == "converge_k" and len(sys.argv) == 7 :
             r_gs = float(sys.argv[3])
             r_es = float(sys.argv[4])
             sc_key = True
             if sys.argv[5].lower().startswith('f'):
                 sc_key = False
+            rmin = float(sys.argv[6])
 
         if typecalc == "converge_e" and len(sys.argv) != 5 :
             print("Requires input for k-mesh for initial and final state.")
@@ -217,7 +218,7 @@ def main():
 
         makeExcitingXAS( mpid, unitC, params )
     elif typecalc == "converge_k":
-        makeXspectraConv_k(mpid,unitC,params, r_gs, r_es, sc_key) # how to transfer kpoints?
+        makeXspectraConv_k(mpid,unitC,params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
     elif typecalc == "converge_e":
         makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
     elif typecalc == "converge_sc": 
