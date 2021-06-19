@@ -13,6 +13,7 @@ from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraCo
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
+from pymatgen.io.vasp.sets import MPStaticSet
 from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 import xanes_bench
@@ -166,35 +167,43 @@ def main():
     
 
     # Grab and parse k-point information
+    # FC added: this part can be done by using MPStaticSet 
+    #           in case there is no taskid for some materials
     # TODO error checking
-    try:
-        taskid = mp.query( criteria = {'task_id': mpid}, properties =
-                ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
-    except Exception as e:
-        print(e)
-        print( "Failed to get task id\nStopping\n")
-        exit()
-    try:
-        data = mp.get_task_data( taskid, prop="kpoints" )
-    except Exception as e:
-        print(e)
-        print( "Failed to get kpoints data\nStopping\n" )
+ #   try:
+ #       taskid = mp.query( criteria = {'task_id': mpid}, properties =
+ #               ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
+ #   except Exception as e:
+ #       print(e)
+ #       print( "Failed to get task id\nStopping\n")
+ #       exit()
+ #   try:
+ #       data = mp.get_task_data( taskid, prop="kpoints" )
+ #   except Exception as e:
+ #       print(e)
+ #       print( "Failed to get kpoints data\nStopping\n" )
+ #
+ #   # If MP data set is incomplete, fail gracefully
+ #   if 'kpoints' not in data[0]:
+ #       print( "Failed to get kpoints from task id :", taskid )
+ #       exit()
+ #
+ #   # Returns a vasp kpoint object, so we need to convert to a dict
+ #   kpointDict  = data[0]['kpoints'].as_dict()
+ #
+ #   # We'll need to figure out the other types of grids, I thought I also saw Gamma
+ #   #if kpointDict['generation_style'] != 'Monkhorst' :
+ #   #    print( "Requires Monkhorst scheme" )
+ #   #    exit()
+ #
+ #   kpoints = kpointDict['kpoints'][0]
+ #   koffset = kpointDict['usershift']
 
-    # If MP data set is incomplete, fail gracefully
-    if 'kpoints' not in data[0]:
-        print( "Failed to get kpoints from task id :", taskid )
-        exit()
-
-    # Returns a vasp kpoint object, so we need to convert to a dict
-    kpointDict  = data[0]['kpoints'].as_dict()
-
-    # We'll need to figure out the other types of grids, I thought I also saw Gamma
-    #if kpointDict['generation_style'] != 'Monkhorst' :
-    #    print( "Requires Monkhorst scheme" )
-    #    exit()
-
-    kpoints = kpointDict['kpoints'][0]
-    koffset = kpointDict['usershift']
+    # this is the default settings for the static calculation on MP
+    static_set = MPStaticSet(st)
+    kpoints = static_set.kpoints.kpts[0]
+    koffset = [0.0, 0.0, 0.0]
+    
 
 
     # Make sure k-point grid is reasonable
