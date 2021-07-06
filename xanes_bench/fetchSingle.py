@@ -9,10 +9,11 @@ import os
 #from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
 # TODO: add implementation of photonSym to avoid import error
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
-from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv, makeXspectraConv_ecut, makeXspectraConv_sc
+from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv_k, makeXspectraConv_ecut, makeXspectraConv_sc
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
+from pymatgen.io.vasp.sets import MPStaticSet
 from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 import xanes_bench
@@ -51,6 +52,17 @@ def main():
             else:
                 print("Input for run type not supported. \nSuppurted type of run: single, converge_k, converge_e, converge_sc")
                 exit()
+
+        if typecalc == "converge_k" and len(sys.argv) != 7 :
+            print("Requires input for radius cutoff for initial and final state in Angstrom;  a sc_key to control sc or uc case.")
+            exit()
+        elif typecalc == "converge_k" and len(sys.argv) == 7 :
+            r_gs = float(sys.argv[3])
+            r_es = float(sys.argv[4])
+            sc_key = True
+            if sys.argv[5].lower().startswith('f'):
+                sc_key = False
+            rmin = float(sys.argv[6])
 
         if typecalc == "converge_e" and len(sys.argv) != 5 :
             print("Requires input for k-mesh for initial and final state.")
@@ -100,7 +112,9 @@ def main():
             with open(json_fn, 'w') as f:
                 json.dump(st_dict, f, indent=4, sort_keys=True)
     elif typecalc == "converge_k":
-        json_dir = "data_converge"
+        json_dir = "data_converge_k_uc"
+        if sc_key:
+            json_dir = "data_converge_k_sc"
         # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
         for spec_type in ["XS"]: 
             json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
@@ -153,35 +167,43 @@ def main():
     
 
     # Grab and parse k-point information
+    # FC added: this part can be done by using MPStaticSet 
+    #           in case there is no taskid for some materials
     # TODO error checking
-    try:
-        taskid = mp.query( criteria = {'task_id': mpid}, properties =
-                ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
-    except Exception as e:
-        print(e)
-        print( "Failed to get task id\nStopping\n")
-        exit()
-    try:
-        data = mp.get_task_data( taskid, prop="kpoints" )
-    except Exception as e:
-        print(e)
-        print( "Failed to get kpoints data\nStopping\n" )
+ #   try:
+ #       taskid = mp.query( criteria = {'task_id': mpid}, properties =
+ #               ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
+ #   except Exception as e:
+ #       print(e)
+ #       print( "Failed to get task id\nStopping\n")
+ #       exit()
+ #   try:
+ #       data = mp.get_task_data( taskid, prop="kpoints" )
+ #   except Exception as e:
+ #       print(e)
+ #       print( "Failed to get kpoints data\nStopping\n" )
+ #
+ #   # If MP data set is incomplete, fail gracefully
+ #   if 'kpoints' not in data[0]:
+ #       print( "Failed to get kpoints from task id :", taskid )
+ #       exit()
+ #
+ #   # Returns a vasp kpoint object, so we need to convert to a dict
+ #   kpointDict  = data[0]['kpoints'].as_dict()
+ #
+ #   # We'll need to figure out the other types of grids, I thought I also saw Gamma
+ #   #if kpointDict['generation_style'] != 'Monkhorst' :
+ #   #    print( "Requires Monkhorst scheme" )
+ #   #    exit()
+ #
+ #   kpoints = kpointDict['kpoints'][0]
+ #   koffset = kpointDict['usershift']
 
-    # If MP data set is incomplete, fail gracefully
-    if 'kpoints' not in data[0]:
-        print( "Failed to get kpoints from task id :", taskid )
-        exit()
-
-    # Returns a vasp kpoint object, so we need to convert to a dict
-    kpointDict  = data[0]['kpoints'].as_dict()
-
-    # We'll need to figure out the other types of grids, I thought I also saw Gamma
-    #if kpointDict['generation_style'] != 'Monkhorst' :
-    #    print( "Requires Monkhorst scheme" )
-    #    exit()
-
-    kpoints = kpointDict['kpoints'][0]
-    koffset = kpointDict['usershift']
+    # this is the default settings for the static calculation on MP
+    static_set = MPStaticSet(st)
+    kpoints = static_set.kpoints.kpts[0]
+    koffset = [0.0, 0.0, 0.0]
+    
 
 
     # Make sure k-point grid is reasonable
@@ -205,10 +227,11 @@ def main():
 
         makeExcitingXAS( mpid, unitC, params )
     elif typecalc == "converge_k":
-        makeXspectraConv(mpid,unitC,params) # how to transfer kpoints?
+        makeXspectraConv_k(mpid,unitC,params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
     elif typecalc == "converge_e":
         makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
-    elif typecalc == "converge_sc":
+    elif typecalc == "converge_sc": 
+        ## need to think on how to do the convergence test for sc case since it is merged into the  makeXspectraConv_k
         makeXspectraConv_sc( mpid, unitC, params, k_gs, radius )
 
 if __name__ == '__main__':
