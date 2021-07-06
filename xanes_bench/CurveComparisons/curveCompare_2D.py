@@ -650,20 +650,34 @@ def parseEXCITINGFile( string, polar ):
     return plot
 
 
-def parseOCEANFile( site, polar, kpoint ):
+def parseOCEANFile( site, polar, kpoint1, kpoint2=None ):
     plot = None
-    k = [ int(kpoint[0]), int(kpoint[1]), int(kpoint[2]) ]
+    k1 = [ int(kpoint1[0]), int(kpoint1[1]), int(kpoint1[2]) ]
+    if kpoint2 is not None:
+        k2 = [ int(kpoint2[0]), int(kpoint2[1]), int(kpoint2[2]) ]
     for s in site:
         for p in polar:
-            f = "CNBSE-{:d}.{:d}.{:d}/absspct_Ti.{:04d}_1s_{:02d}".format( k[0], k[1], k[2], s, p )
+            if kpoint2 is not None:
+                f = "NGKPT-{:d}.{:d}.{:d}/CNBSE-{:d}.{:d}.{:d}/absspct_Ti.{:04d}_1s_{:02d}".format( 
+                    k1[0], k1[1], k1[2], k2[0], k2[1], k2[2], s, p )
+            else:
+                f = "CNBSE-{:d}.{:d}.{:d}/absspct_Ti.{:04d}_1s_{:02d}".format( k1[0], k1[1], k1[2], s, p )
             if os.path.isfile( f ):
                 if plot is None:
-                    plot = np.loadtxt( f, skiprows=2, usecols=(0,2) )
+                    plot = np.loadtxt( f, skiprows=2, usecols=(0,2),  dtype=np.double )
                 else:
-                    plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2) )
+                    plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2), dtype=np.double  )
             else:
                 return None
 
+    if kpoint2 is not None:
+        f = "NGKPT-{:d}.{:d}.{:d}/CNBSE-{:d}.{:d}.{:d}/avg.txt".format(
+                    k1[0], k1[1], k1[2], k2[0], k2[1], k2[2] )
+    else:
+        f = "CNBSE-{:d}.{:d}.{:d}/avg.txt".format( k1[0], k1[1], k1[2] )
+    with open(f,"w") as f:
+        for i in range(len(plot[:,1])):
+            f.write( "{:e} {:e}\n".format(plot[i,0], plot[i,1]) )
     return plot
 
 def parseXSpectraFile( site, polar, kpoint1, kpoint2 ):
@@ -758,6 +772,7 @@ def printdata(coss, pearson, spearman, relArea, kpoints1, kpoints2, plots, inver
                     print("{:12.8f}".format( lookup[file_name][i] ), file=f, end="," )
                 else:
                     print("{:12.8f}".format( lookup[file_name][i] ), file=f, end="," )
+            f.write("\n")
 
 def main():
     if len(sys.argv) > 1:
@@ -776,13 +791,12 @@ def main():
     elif method == 'S':
         plots, kpoints = loadPlotsS( program, site, polarization, string )
 
-#    for k in kpoints:
-#        print( k )
-    print( "#i Largest k-point grid in es.in:    ",  kpoints1[-1])
-    print( "#i Largest k-point grid in xanes.in: ",  kpoints2[-1])
     if len(plots) < 2:
         print( "Didn't find enough plots" )
         exit()
+
+    print( "#i Largest k-point grid in es.in:    ",  kpoints1[-1])
+    print( "#i Largest k-point grid in xanes.in: ",  kpoints2[-1])
 
     # Radius is replaced with the param for non-kpoint runs
     # print( "#   Radius       Shift        Scale       CosSimilar  Pearson     Spearman   Rel Area" )
