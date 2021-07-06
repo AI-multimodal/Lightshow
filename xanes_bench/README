@@ -6,8 +6,9 @@
   - Either: copy it into the installed location of ase (site-packages/ase/io/epresso.py )
   - Or: copy all of ase locally, and write over ./ase/io/espresso.py
 3. Run "python fetchSingle.py 390 single" (will generate input files for single run on anatase)
-or un "python fetchSingle.py 390 convergence" (will generate input files for convergence run on anatase)
-
+4. Various converge run are provided 
+  - python fetchSingle.py 390 converge_k r_gs r_es sc_key (will generate input files for k-mesh convergence run on anatase with the gs radius (r_gs -> float), es radius (es -> float). If sc_key -> string starts with either f or F, it will generate the files for unit cell case)
+  - python fetchSingle.py 390 converge_e 4-4-4 3-3-3 r_es (will generate input files for k-mesh convergence run on anatase with 4-4-4 as the gs kmesh and 3-3-3 as the es kmesh)
 
 ## Limitations/To-do list: (not exhaustive)
 1. Fix up symmetry dipole/quad options
