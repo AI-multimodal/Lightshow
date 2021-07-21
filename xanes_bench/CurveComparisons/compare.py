@@ -14,7 +14,7 @@ import sys
 
 from scipy.ndimage import gaussian_filter1d
 from curveCompareBase import comparePlots, loadPlotsKpoints, loadPlotsS, printdata
-from readSpectraBase import buildOCEANPath, buildXSpectraPath, parseOCEANFile, parseXSpectraFile
+from readSpectraBase import XSplot, OCEANplot, str2list #buildOCEANPath, buildXSpectraPath, parseOCEANFile, parseXSpectraFile
 
 
 def main():
@@ -23,25 +23,28 @@ def main():
         exit()
 
     paths = [ sys.argv[1], sys.argv[2] ]
-    site = int( sys.argv[3] )
+    site = str2list(sys.argv[3])
+    #TODO: make polar also a input
+    #right now: hard-coded for [1,2,3]
     polar = int( sys.argv[4] )
 
     plots = []
-    for i in range(2):
-        f = buildOCEANPath( paths[i], 'Ti', site, polar )
-        if( f.is_file() ):
-            print( f )
-            plots.append( parseOCEANFile( f ) )
-            continue
-        f = buildXSpectraPath( paths[i], site-1, polar )
-        if( f.is_file() ):
-            print( f )
-            plots.append( parseXSpectraFile( f ) )
-            continue
-
-        print("Failed!")
-
-
+#    for i in range(2):
+#        f = buildOCEANPath( paths[i], 'Ti', site, polar )
+#        if( f.is_file() ):
+#            print( f )
+#            plots.append( parseOCEANFile( f ) )
+#            continue
+#        f = buildXSpectraPath( paths[i], site-1, polar )
+#        if( f.is_file() ):
+#            print( f )
+#            plots.append( parseXSpectraFile( f ) )
+#            continue
+#
+#        print("Failed!")
+    OCEAN = OCEANplot(sys.argv[1], absorber = site, element = 'Ti') # Ti is hard coded for now
+    XS = XSplot(sys.argv[2], absorber = site)
+    
     coss = []
     pearson = []
     spearman = []
@@ -49,7 +52,7 @@ def main():
     alpha=[]
     omega=[]
 
-    comparePlots( plots[0], plots[1], True, coss, pearson, spearman, relArea, omega, alpha )
+    comparePlots( OCEAN.spectra, XS.spectra, True, coss, pearson, spearman, relArea, omega, alpha )
 
     print( omega[0], alpha[0] )
     print( coss[0] )
