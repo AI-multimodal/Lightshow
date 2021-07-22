@@ -9,6 +9,11 @@ from os import path
 import re
 import sys
 
+
+
+
+
+
 #TODO: add parsing for EXCITING
 
 # parsing the folder and spectra data from XSpectra
@@ -81,6 +86,7 @@ def str2list(a:str):
 
 
 # below will not be used for now
+
 #def buildEXCITINGPath( root, 
 
 def parseEXCITINGFile( string, polar ):

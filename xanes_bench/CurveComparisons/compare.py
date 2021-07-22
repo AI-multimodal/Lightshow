@@ -14,7 +14,9 @@ import sys
 
 from scipy.ndimage import gaussian_filter1d
 from curveCompareBase import comparePlots, loadPlotsKpoints, loadPlotsS, printdata
+
 from readSpectraBase import XSplot, OCEANplot, str2list #buildOCEANPath, buildXSpectraPath, parseOCEANFile, parseXSpectraFile
+
 
 
 def main():
@@ -23,6 +25,7 @@ def main():
         exit()
 
     paths = [ sys.argv[1], sys.argv[2] ]
+
     site = str2list(sys.argv[3])
     #TODO: make polar also a input
     #right now: hard-coded for [1,2,3]
@@ -52,7 +55,9 @@ def main():
     alpha=[]
     omega=[]
 
+
     comparePlots( OCEAN.spectra, XS.spectra, True, coss, pearson, spearman, relArea, omega, alpha )
+
 
     print( omega[0], alpha[0] )
     print( coss[0] )
