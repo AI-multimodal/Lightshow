@@ -20,16 +20,15 @@ from readSpectraBase import XSplot, OCEANplot, str2list #buildOCEANPath, buildXS
 
 
 def main():
-    if len(sys.argv) < 5 :
-        print( "Usage: Path-1 Path-2 Site Polarization")
+    if len(sys.argv) < 7 :
+        print( "Usage: Code-1 Path-1 Code-2 Path-2 Site Polarization")
         exit()
-
-    paths = [ sys.argv[1], sys.argv[2] ]
-
-    site = str2list(sys.argv[3])
+    code = [ sys.argv[1], sys.argv[3] ]
+    paths = [ sys.argv[2], sys.argv[4] ]
+    site = str2list(sys.argv[5])
     #TODO: make polar also a input
     #right now: hard-coded for [1,2,3]
-    polar = int( sys.argv[4] )
+    polar = int( sys.argv[6] )
 
     plots = []
 #    for i in range(2):
@@ -45,8 +44,15 @@ def main():
 #            continue
 #
 #        print("Failed!")
-    OCEAN = OCEANplot(sys.argv[1], absorber = site, element = 'Ti') # Ti is hard coded for now
-    XS = XSplot(sys.argv[2], absorber = site)
+    for i in [0, 1]:
+        if code[i].lower().startswith('o'):
+            plots.append(OCEANplot(paths[i], absorber = site, element = 'Ti')) # Ti is hard coded for now
+        elif code[i].lower().startswith('ex'):
+            plots.append(XSplot(paths[i], absorber = site))
+
+
+    #OCEAN = OCEANplot(sys.argv[1], absorber = site, element = 'Ti') # Ti is hard coded for now
+    #XS = XSplot(sys.argv[2], absorber = site)
     
     coss = []
     pearson = []
@@ -55,8 +61,7 @@ def main():
     alpha=[]
     omega=[]
 
-
-    comparePlots( OCEAN.spectra, XS.spectra, True, coss, pearson, spearman, relArea, omega, alpha )
+    comparePlots( plots[0].spectra, plots[1].spectra, True, coss, pearson, spearman, relArea, omega, alpha )
 
 
     print( omega[0], alpha[0] )
