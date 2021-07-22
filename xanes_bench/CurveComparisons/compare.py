@@ -47,7 +47,7 @@ def main():
     for i in [0, 1]:
         if code[i].lower().startswith('o'):
             plots.append(OCEANplot(paths[i], absorber = site, element = 'Ti')) # Ti is hard coded for now
-        elif code[i].lower().startswith('ex'):
+        elif code[i].lower().startswith('x'):
             plots.append(XSplot(paths[i], absorber = site))
 
 
