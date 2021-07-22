@@ -12,6 +12,81 @@ import sys
 
 
 
+
+
+#TODO: add parsing for EXCITING
+
+# parsing the folder and spectra data from XSpectra
+class XSplot():
+    def __init__(self, folder, absorber=['0'], multiplicity=1):
+        self.path = folder
+        self.absorber = absorber
+        self.multiplicity = multiplicity
+    @property
+    def spectra(self):
+        Spectra = None
+        for iab in self.absorber:
+            for polar in ['1', '2', '3']:
+                # need to add a test to see if this path is a file
+                path = self.path + "/" + iab + "/" + "dipole" + polar + "/xanes.dat"
+                if Spectra is None:
+                    Spectra = self.multiplicity * np.loadtxt( path, skiprows=4, usecols=(0,1)  )
+                else:
+                    Spectra[:,1] += self.multiplicity * np.loadtxt( path, skiprows=4, usecols=(1)  )
+        return Spectra
+
+# parsing the folder and spectra data from OCEAN
+class OCEANplot():
+    def __init__(self, folder, element, absorber=['0'], multiplicity=1):
+        self.path = folder
+        self.absorber = absorber
+        self.element = element
+        self.multiplicity = multiplicity
+
+    @property
+    def spectra(self):
+        Spectra = None
+        for iab in self.absorber:
+            print(iab)
+            for polar in ['1', '2', '3']:
+                p = int(polar)
+                site = int(iab) + 1
+                # need to test if this path is a file
+                path = self.path + "/" + "absspct_{:s}.{:04d}_1s_{:02d}".format( self.element, site, p)
+                if Spectra is None:
+                    Spectra = self.multiplicity * np.loadtxt( path, skiprows=2, usecols=(0,2)  )
+                else:
+                    Spectra[:,1] += self.multiplicity * np.loadtxt( path, skiprows=2, usecols=(2)  )
+        return Spectra
+
+
+def str2list(a:str):
+    '''
+    take a string with the shape e.g. "['0','1','2']"
+    convert it to a list -> ['0','1','2']
+    works only with maximum of two digits
+    '''
+
+    out = []
+    key = False
+    for i in range(len(a)):
+        if key:
+            key = False
+            continue
+        if a[i].isnumeric():
+            if i + 1 < len(a):
+                if a[i+1].isnumeric():
+                    out.append(a[i] + a[i+1])
+                    key = True
+                else:
+                    out.append(a[i])
+            else:
+                out.append(a[i])
+    return out
+
+
+# below will not be used for now
+
 #def buildEXCITINGPath( root, 
 
 def parseEXCITINGFile( string, polar ):
