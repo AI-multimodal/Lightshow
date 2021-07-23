@@ -60,7 +60,9 @@ def main():
     relArea= []
     alpha=[]
     omega=[]
-
+    # for comparePlots, maybe we do not need to return a list for the 4 metrics
+    # just a number should be ok
+    # will come back to this point later
     comparePlots( plots[0].spectra, plots[1].spectra, True, coss, pearson, spearman, relArea, omega, alpha )
 
 
