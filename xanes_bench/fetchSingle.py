@@ -94,7 +94,8 @@ def main():
     # MP api handler
     #print( str(mpkey) )
     mp = MPRester( str(mpkey) )
-
+    # test
+    #mpid = sys.argv[1]
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()

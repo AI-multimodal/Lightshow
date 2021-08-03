@@ -462,18 +462,26 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
     printKgrid( atoms, folder )
     klist=returnKgridList( atoms, 51 )
     # loop for ground state
+    count_gs = 0
     for klist_gs in klist:
-        print( klist_gs[3])
-        if 5 < klist_gs[3] < r_gs: 
+        #print( klist_gs[3])
+        if klist_gs[3] > 6.36:
+            count_gs += 1
+        if 5 < klist_gs[3] < r_gs and count_gs < 5: 
+            print(count_gs)
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
+	    # FC temp
+            count_es = 0
             for klist_es in klist:
+                if klist_es[3] > 23.82:
+                    count_es += 1
                 for i in range(len(symbols)):
                     atoms[i].tag = 0
-                if 5 < klist_es[3] < r_es:
+                if 5 < klist_es[3] < r_es and count_es < 5:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
