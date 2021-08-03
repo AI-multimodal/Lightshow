@@ -609,7 +609,7 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
                                         with open(xanesfolder / "weight.txt", "w") as f:
                                             f.write( str(weight) + "\n" )
 
-def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
+def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs, sc_key = False, rmin=9):
     #######
 #    psp = dict(Ti1='Ti.fch.upf')
 #    symTarg = 'Ti'
@@ -623,7 +623,11 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
     psp = {}
     symTarg = xsJSON['XS_controls']['element']
 
-    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+    if sc_key:
+        atoms = smaller( unitCell, Rmin=rmin )
+    else:
+        atoms = unitCell
+
     us = {}
     symm = spglib.get_symmetry((atoms.get_cell(),
                              atoms.get_scaled_positions(),
