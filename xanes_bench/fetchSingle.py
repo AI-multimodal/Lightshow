@@ -54,7 +54,9 @@ def main():
                 exit()
 
         if typecalc == "converge_kf" and len(sys.argv) != 7 :
-            print("Requires input for radius cutoff for initial and final state in Angstrom;  a sc_key to control sc or uc case; a Rmin to control the sc size.")
+            print(''' Requires input for radius cutoff for initial and final state in Angstrom;  
+                      a sc_key to control sc or uc case; 
+                      a Rmin to control the sc size. ''')
             exit()
         elif typecalc == "converge_kf" and len(sys.argv) == 7 :
             r_gs = float(sys.argv[3])
@@ -75,15 +77,21 @@ def main():
                 k_gs = tuple(sys.argv[3].split("-"))
                 k_es = tuple(sys.argv[4].split("-"))
 
-        if typecalc == "converge_ki" and len(sys.argv) != 4 :
-            print("Requires input for radius cutoff for ki (same for initial and final) in Angstrom.")
+        if typecalc == "converge_ki" and len(sys.argv) != 6 :
+            print(''' Requires input for radius cutoff for ki (same for initial and final) in Angstrom; 
+                      a sc_key to control sc or uc case; 
+                      a Rmin to control the sc size. ''')
             exit()
-        elif typecalc == "converge_ki" and len(sys.argv) == 4 :
+        elif typecalc == "converge_ki" and len(sys.argv) == 6 :
             if not sys.argv[3].isnumeric() or float(sys.argv[3]) <= 0:
                 print("radius can only accept positive numbers")
                 exit()
             else:
                 radius = float(sys.argv[3])
+                sc_key = True
+                if sys.argv[4].lower().startswith('f'):
+                    sc_key = False
+                rmin = float(sys.argv[5])
 
     # Your hashe materials project key needs to be in a file called mp.key
     mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
@@ -230,7 +238,7 @@ def main():
         makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
     elif typecalc == "converge_ki": 
         ## need to think on how to do the convergence test for sc case since it is merged into the  makeXspectraConv_k
-        makeXspectraConv_ki( mpid, unitC, params, radius )
+        makeXspectraConv_ki( mpid, unitC, params, radius, sc_key, rmin )
 
 if __name__ == '__main__':
     main()
