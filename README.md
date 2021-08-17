@@ -17,7 +17,7 @@
 # Installation Prerequisites
 * A modification of pymatgen is needed. 
 * The modified version has been merged into the master branch of pymatgen. [See here for more info](https://github.com/materialsproject/pymatgen/pull/2178). 
-* Need to use this master branch on Github at git@github.com:materialsproject/pymatgen.git since it has not been officially released. 
+* Need to use this master branch on [Github](https://github.com/materialsproject/pymatgen) since it has not been officially released. 
 
 # Install
 ```console
