@@ -4,10 +4,7 @@
 
 ## Quickstart
 1. Put your materials project API key in the file mp.key ( https://materialsproject.org/dashboard )
-2. Overwrite the defaults ase/io/espresso.py file with the one in Xspectra
-  - Either: copy it into the installed location of ase ( site-packages/ase/io/epresso.py )
-  - Or: copy all of ase locally, and write over ./ase/io/espresso.py
-3. Run "python fetchSingle.py 390" (will run anatase)
+2. Run "python fetchSingle.py 390" (will run anatase)
 
 
 ## Limitations/To-do list: (not exhaustive)
@@ -17,14 +14,20 @@
 4. Unify core-hole broadening (ocean uses the FEFF look-up table)
 
 
+# Installation Prerequisites
+* A modification of pymatgen is needed. 
+* The modified version has been merged into the master branch of pymatgen. [See here for more info](https://github.com/materialsproject/pymatgen/pull/2178). 
+* Need to use this master branch on Github at git@github.com:materialsproject/pymatgen.git since it has not been officially released. 
+
 # Install
 ```console
 conda create --name xas_ben python=3
 conda activate xas_ben
+git clone git@github.com:materialsproject/pymatgen.git
+pip install pymatgen/
 git clone git@github.com:xhqu1981/xanes_bench.git
 cd xanes_bench
 python setup.py develop
-python apply_patch.py --force
 ```
 # Test systems
 | MP ID | Name |
