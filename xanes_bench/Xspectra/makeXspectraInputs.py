@@ -510,10 +510,12 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
 	    # FC temp
             count_es = 0
             for klist_es in klist:
+                unitCell.remove_oxidation_states()
                 if klist_es[3] > 23.82:
                     count_es += 1
-                for i in range(len(symbols)):
-                    atoms[i].tag = 0
+                #for i in range(len(symbols)):
+                #    atoms[i].tag = 0
+                unitCell.remove_oxidation_states()
                 if 5 < klist_es[3] < r_es and count_es < 5:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
@@ -734,9 +736,9 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
             folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
 
-            for i in range(len(symbols)):
-               atoms[i].tag = 0
-
+            #for i in range(len(symbols)):
+            #   atoms[i].tag = 0
+            unitCell.remove_oxidation_states()
             kpath_es = "Spectra-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
 
             folder_spectra = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
@@ -942,9 +944,9 @@ def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es 
         folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / ecut_path / "Spectra"
         folder.mkdir(parents=True, exist_ok=True)    
             
-        for i in range(len(symbols)):
-            atoms[i].tag = 0
-                    
+        #for i in range(len(symbols)):
+        #    atoms[i].tag = 0
+        unitCell.remove_oxidation_states()            
         pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
         DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
 
