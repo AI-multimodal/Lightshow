@@ -4,8 +4,9 @@
 Make the exciting input file and the photon files
 """
 
-from ase.atoms import Atoms
-from ase.io import write
+#from ase.atoms import Atoms
+#from ase.io import write
+from pymatgen.core import Structure
 import spglib
 import pathlib
 import os
@@ -23,7 +24,7 @@ import xanes_bench
 
 
 
-def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
+def makeExcitingXAS( mpid, struct: Structure, params: dict ):
     
     # read default xas parameters from JSON file
     param_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "EXCITING",
@@ -32,7 +33,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
         excitingxasJSON= json.load(fd)
     
     # generate pymatgen structure from ASE atoms
-    struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
+    #struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
     
     # generate ExcitingInput object from pymatgen structure
     excitinginput = ExcitingInput(struct)
@@ -89,7 +90,7 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
         except:
             raise Exception("FAILED while trying to write input.xml")
 
-def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
+def makeExcitingGRST( mpid, struct: Structure, kpoints: list, nempty: int, filepath):
     
     # read default grst parameters from JSON file
     param_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "EXCITING",
@@ -102,7 +103,7 @@ def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
     excitingJSON['structure']={}
     excitingJSON['structure']['autormt']="true"
     # generate pymatgen structure from ASE atoms
-    struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
+    #struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
     
     # generate ExcitingInput object from pymatgen structure
     excitinginput = ExcitingInput(struct)
