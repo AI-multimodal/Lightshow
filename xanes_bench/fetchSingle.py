@@ -14,7 +14,7 @@ from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.sets import MPStaticSet
-from pymatgen.io.ase import AseAtomsAdaptor as ase
+#from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 import xanes_bench
 
@@ -34,6 +34,7 @@ def dielectricGuess( gap ):
 def main():
 
     # The script takes a single, positive integer to grab a system from materials project
+    # determine the type of calculation
     print(len(sys.argv))
     if len(sys.argv) < 2:
         print( "Requires MP number" )
@@ -41,10 +42,11 @@ def main():
     else :
         print( str(sys.argv) )
         mpid = 'mp-' + sys.argv[1]
+        # single is the default; can also be set explicitly
+        # TODO: use converged parameter? or MP default?
         if len(sys.argv) == 2:
             typecalc = "single"
             print("Type of Run: {}".format(typecalc))
-        #elif len(sys.argv) == 3: # Only use the second input paramater "single" or "convergence"
         else:
             if sys.argv[2] == "converge_kf" or sys.argv[2] == "converge_e" or sys.argv[2] == "converge_ki" or sys.argv[2] == "single":
                 typecalc = sys.argv[2]
@@ -146,12 +148,13 @@ def main():
             with open(json_fn, 'w') as f:
                 json.dump(st_dict, f, indent=4, sort_keys=True)
 
-    unitC = ase.get_atoms(st)
+    #unitC = ase.get_atoms(st)
 
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
     print( data[0] )
 
-    cBands = getCondBands( unitC.get_volume(), 2.25 )
+    #cBands = getCondBands( unitC.get_volume(), 2.25 )
+    cBands = getCondBands( st.lattice.volume, 2.25 )
     params = dict(defaultConvPerAtom=1E-10, photonOrder=6, conductionBands=cBands)
 
     ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
@@ -227,18 +230,18 @@ def main():
 
     if typecalc == "single":
 
-        makeXspectra( mpid, unitC, params )
+        makeXspectra( mpid, st, params )
 
-        makeOcean( mpid, unitC, params )
+        makeOcean( mpid, st, params )
 
-        makeExcitingXAS( mpid, unitC, params )
+        makeExcitingXAS( mpid, st, params )
     elif typecalc == "converge_kf":
-        makeXspectraConv_kf(mpid,unitC,params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
+        makeXspectraConv_kf(mpid, st, params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
     elif typecalc == "converge_e":
-        makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
+        makeXspectraConv_ecut( mpid, st, params, k_gs, k_es )
     elif typecalc == "converge_ki": 
         ## need to think on how to do the convergence test for sc case since it is merged into the  makeXspectraConv_k
-        makeXspectraConv_ki( mpid, unitC, params, radius, sc_key, rmin )
+        makeXspectraConv_ki( mpid, st, params, radius, sc_key, rmin )
 
 if __name__ == '__main__':
     main()
