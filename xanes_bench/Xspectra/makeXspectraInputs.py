@@ -159,7 +159,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
 
 
-def makeXspectra( mpid, structure: Atoms, params: dict ):
+def makeXspectra( mpid, structure: Structure, params: dict ):
     #######
 #    psp = dict(Ti1='Ti.fch.upf')
 #    symTarg = 'Ti'
