@@ -558,7 +558,7 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
                    #     raise Exception("FAILED while trying to write qe.in")
                     gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                             system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                            kpoints_grid=unitCellKpoints)
+                            kpoints_grid=[kx_gs, ky_gs, kz_gs])
                     gs_in.write_file(str(folder / "gs.in"))
 
                     iabs_ = 0
@@ -595,7 +595,7 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
                             #    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
                             es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                                   system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                                  kpoints_grid=kpoints)
+                                  kpoints_grid=[kx_gs, ky_gs, kz_gs])
                             es_in.write_file(str(subfolder / "es.in"))
 
                             # OCEAN photon labeling is continuous, so we will do that here too
@@ -779,7 +779,7 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
             #    raise Exception("FAILED while trying to write qe.in")
             gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                             system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                            kpoints_grid=unitCellKpoints)
+                            kpoints_grid=[kx_gs, ky_gs, kz_gs])
             gs_in.write_file(str(folder / "gs.in"))
 
             iabs_ = 0
@@ -817,7 +817,7 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
                    #     input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
                     es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                           system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                          kpoints_grid=kpoints)
+                          kpoints_grid=[kx_gs, ky_gs, kz_gs])
                     es_in.write_file(str(subfolder / "es.in"))
 
     
@@ -973,7 +973,7 @@ def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es 
         #    raise Exception("FAILED while trying to write qe.in")
         gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                         system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                        kpoints_grid=unitCellKpoints)
+                        kpoints_grid=[kx_gs, ky_gs, kz_gs])
         gs_in.write_file(str(folder / "gs.in"))
 
         iabs_ = 0
@@ -1010,7 +1010,7 @@ def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es 
                 #    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
                 es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                           system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
-                          kpoints_grid=kpoints)
+                          kpoints_grid=[kx_gs, ky_gs, kz_gs])
                 es_in.write_file(str(subfolder / "es.in"))
 
                 # OCEAN photon labeling is continuous, so we will do that here too
