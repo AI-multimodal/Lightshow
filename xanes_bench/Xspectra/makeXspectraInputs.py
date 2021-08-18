@@ -421,7 +421,7 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
     if sc_key:
         unitCell = smaller( structure, Rmin=rmin )
     else:
-        unitcell = structure
+        unitCell = structure
     us = {}
     symm = spglib.get_symmetry((unitCell.lattice.matrix,
                                 unitCell.frac_coords,
