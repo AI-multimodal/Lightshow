@@ -3,8 +3,8 @@
 """
 Make all the xspectra/qe inputs
 """
-from ase.atoms import Atoms
-from ase.io import write
+from pymatgen.core import Structure
+from pymatgen.io.pwscf import PWInput
 import spglib
 import pathlib
 from os import environ as env
@@ -18,19 +18,31 @@ from xanes_bench.General.kden import printKgrid, readKgrid, returnKDen, returnKp
 import bz2, base64, hashlib
 
 module_path = os.path.dirname(xanes_bench.Xspectra.__file__)
-def smaller(atoms: Atoms, Rmin=9.0):
+
+def smaller(structure: Structure, Rmin=9.0):
 #    # starting from the primitive cell, give a supercell
 #    # that has at least 9 Å in each direction; either using
 #    # primitive or conventinal cell as building blocks;
 #    # returns which ever is smaller
-    prim =  atoms * ((Rmin / np.linalg.norm(atoms.cell, axis=1)).astype(int) + 1)
-    lat, pos, Z = spglib.standardize_cell((atoms.get_cell(),
-                                           atoms.get_scaled_positions(),
-                                           atoms.get_atomic_numbers()))
-    conv = Atoms(Z, cell=lat, positions=pos@lat, pbc=True)
-    conv = conv * ((Rmin / np.linalg.norm(conv.cell, axis=1)).astype(int) + 1)
-    return conv if len(conv) <= len(prim) else prim
+    # using pymatgen : atoms -> structure
+    lat, pos, Z = spglib.standardize_cell((structure.lattice.matrix, 
+                                           structure.frac_coords, 
+                                           structure.atomic_numbers))
+    # need from pymatgen.core import Structure
+    conv = Structure(lat, species=Z, coords=pos) 
+    #conv = conv * ((Rmin / np.linalg.norm(conv.lattice.matrix, axis=1)).astype(int) + 1)
+    conv.make_supercell((9.0 / np.linalg.norm(conv.lattice.matrix, axis=1)).astype(int) + 1)
+    #structure.make_supercell((9.0 / np.linalg.norm(structure.lattice.matrix, axis=1)).astype(int) + 1)
+    prim = structure * ((Rmin / np.linalg.norm(structure.lattice.matrix, axis=1)).astype(int) +1)
+    
 
+    #prim =  atoms * ((Rmin / np.linalg.norm(atoms.cell, axis=1)).astype(int) + 1)
+    #lat, pos, Z = spglib.standardize_cell((atoms.get_cell(),
+    #                                       atoms.get_scaled_positions(),
+    #                                       atoms.get_atomic_numbers()))
+    #conv = Atoms(Z, cell=lat, positions=pos@lat, pbc=True)
+    #conv = conv * ((Rmin / np.linalg.norm(conv.cell, axis=1)).astype(int) + 1)
+    return conv if len(conv) <= len(prim) else prim
 
 def ortho(lat, i, j):
     o = np.linalg.solve(lat.T, np.cross(lat[i], lat[j]))
@@ -147,7 +159,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
 
 
-def makeXspectra( mpid, unitCell: Atoms, params: dict ):
+def makeXspectra( mpid, structure: Structure, params: dict ):
     #######
 #    psp = dict(Ti1='Ti.fch.upf')
 #    symTarg = 'Ti'
@@ -161,7 +173,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
     psp = {}
     symTarg = xsJSON['XS_controls']['element']
 
-    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+    unitCell = smaller( structure, Rmin=float(xsJSON['XS_controls']['Rmin']) )
 
 
     klen = float(xsJSON['XS_controls']['scf_kden'])
@@ -172,24 +184,28 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
             klen = returnKDen( unitCell, params['scf.kpoints'] )
 
     unitCellKpoints = returnKpoint( unitCell, klen )
-    kpoints = returnKpoint( atoms, klen )
+    kpoints = returnKpoint( unitCell, klen )
     if float(xsJSON['XS_controls']['kden']) < 0:
         xs_kpoints = kpoints
     else:
-        xs_kpoints = returnKpoint( atoms, float( xsJSON['XS_controls']['kden']) )
+        xs_kpoints = returnKpoint( unitCell, float( xsJSON['XS_controls']['kden']) )
     xsJSON['XS']['kpts']['kpts'] = "{:d} {:d} {:d}".format( xs_kpoints[0], xs_kpoints[1], xs_kpoints[2] )
 
     us = {}
-    symm = spglib.get_symmetry((atoms.get_cell(),
-                             atoms.get_scaled_positions(),
-                             atoms.get_atomic_numbers()),
-                             symprec=0.1, angle_tolerance=15)
+    symm = spglib.get_symmetry((unitCell.lattice.matrix,
+                                unitCell.frac_coords,
+                                np.array(unitCell.atomic_numbers)),
+                                symprec=0.1, angle_tolerance=15)
+#    symm = spglib.get_symmetry((atoms.get_cell(),
+#                             atoms.get_scaled_positions(),
+#                             atoms.get_atomic_numbers()),
+#                             symprec=0.1, angle_tolerance=15)
     equiv = symm['equivalent_atoms']
 
     use_photonSymm = True
     ph = []
     if use_photonSymm:
-        photonSymm(atoms, us, ph, params['photonOrder'])
+        photonSymm(unitCell, us, ph, params['photonOrder'])
     else:
         directions = {1, 2, 3}
         for dir in range(3):
@@ -211,14 +227,14 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
 
 
-    symbols = atoms.get_chemical_symbols()
-
+    # symbols = atoms.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in unitCell.species]
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
     folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "XS" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( atoms, folder )
+    printKgrid( unitCell, folder )
 
     # Make this into a subroutine ##
     """
@@ -269,8 +285,6 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                                         [xsJSON['XS_controls']['element']], folder, needWfn=True )
 
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-    for i in psp2:
-        psp[ i + '1' ] = psp2[i]
     xsJSON['QE']['system']['ecutwfc'] = ecutwfc
     xsJSON['QE']['system']['ecutrho'] = ecutrho
 
@@ -280,12 +294,19 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 #                str(folder / ".." / "Ti.fch.upf"))
 
     xsJSON['QE']['control']['pseudo_dir'] = "../"
-    try:
-        write(str(folder / "gs.in"), atoms, format='espresso-in',
-            input_data=xsJSON['QE'], pseudopotentials=psp, kpts=unitCellKpoints )
-    except:
-        print(xsJSON['QE'], atoms, psp)
-        raise Exception("FAILED while trying to write qe.in")
+    #try:
+    #    write(str(folder / "gs.in"), atoms, format='espresso-in',
+    #        input_data=xsJSON['QE'], pseudopotentials=psp, kpts=unitCellKpoints )
+    #except:
+    #    print(xsJSON['QE'], atoms, psp)
+    #    raise Exception("FAILED while trying to write qe.in")
+    gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'], 
+                    system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                    kpoints_grid=unitCellKpoints)
+    gs_in.write_file(str(folder / "gs.in"))
+
+    for i in psp2:
+        psp[ i + '+' ] = psp2[i]
 
     iabs_ = 0
     iabs = []
@@ -303,18 +324,27 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
 
       if i == equiv[i] and sym == symTarg:
 
-          if prev is not None:
-              atoms[prev].tag = 0
+      #    if prev is not None:
+      #        atoms[prev].tag = 0
 
-          atoms[i].tag = 1
+      #    atoms[i].tag = 1
+      #    prev = i
+          if prev is not None:
+              unitCell[prev] = 'Ti'
+
+          unitCell[i] = 'Ti1'
           prev = i
 
           subfolder = folder / str(i)
           subfolder.mkdir(parents=True, exist_ok=True)
           xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
-          write(str(subfolder / "es.in"), atoms, format='espresso-in',
-              input_data=xsJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+     #     write(str(subfolder / "es.in"), atoms, format='espresso-in',
+     #         input_data=xsJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+          es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                          system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                          kpoints_grid=kpoints)
+          es_in.write_file(str(subfolder / "es.in"))
 
           # OCEAN photon labeling is continuous, so we will do that here too
           #  not sure that we will actually want dipole-only spectra(?)
@@ -375,7 +405,7 @@ def makeXspectra( mpid, unitCell: Atoms, params: dict ):
                           f.write( str(weight) + "\n" )
 
 
-def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 36, sc_key = False, rmin=9 ):
+def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_es = 36, sc_key = False, rmin=9 ):
     #######
     #psp = dict(Ti1='ti.nch.UPF')
     #symTarg = 'Ti'
@@ -389,20 +419,25 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
     symTarg = xsJSON['XS_controls']['element']
 
     if sc_key:
-        atoms = smaller( unitCell, Rmin=rmin )
+        unitCell = smaller( structure, Rmin=rmin )
     else:
-        atoms = unitCell
+        unitcell = structure
     us = {}
-    symm = spglib.get_symmetry((atoms.get_cell(),
-                             atoms.get_scaled_positions(),
-                             atoms.get_atomic_numbers()),
-                             symprec=0.1, angle_tolerance=15)
+    symm = spglib.get_symmetry((unitCell.lattice.matrix,
+                                unitCell.frac_coords,
+                                np.array(unitCell.atomic_numbers)),
+                                symprec=0.1, angle_tolerance=15)
+
+#    symm = spglib.get_symmetry((atoms.get_cell(),
+#                             atoms.get_scaled_positions(),
+#                             atoms.get_atomic_numbers()),
+#                             symprec=0.1, angle_tolerance=15)
     equiv = symm['equivalent_atoms']
 
     use_photonSymm = True
     ph = []
     if use_photonSymm:
-        photonSymm(atoms, us, ph, params['photonOrder'])
+        photonSymm(unitCell, us, ph, params['photonOrder'])
     else:
         directions = {1, 2, 3}
         for dir in range(3):
@@ -424,8 +459,8 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
 
 
 
-    symbols = atoms.get_chemical_symbols()
-
+    #symbols = atoms.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in unitCell.species]
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
     '''
@@ -459,21 +494,31 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
     folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
-    printKgrid( atoms, folder )
-    klist=returnKgridList( atoms, 51 )
+    printKgrid( unitCell, folder )
+    klist=returnKgridList( unitCell, 51 )
     # loop for ground state
+    count_gs = 0
     for klist_gs in klist:
-        print( klist_gs[3])
-        if 5 < klist_gs[3] < r_gs: 
+        #print( klist_gs[3])
+        if klist_gs[3] > 6.36:
+            count_gs += 1
+        if 5 < klist_gs[3] < r_gs and count_gs < 5: 
+            print(count_gs)
             kx_gs,ky_gs,kz_gs = klist_gs[0:3]
             kpath_gs = "k-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
             folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
             # loop for excited state
+	    # FC temp
+            count_es = 0
             for klist_es in klist:
-                for i in range(len(symbols)):
-                    atoms[i].tag = 0
-                if 5 < klist_es[3] < r_es:
+                unitCell.remove_oxidation_states()
+                if klist_es[3] > 23.82:
+                    count_es += 1
+                #for i in range(len(symbols)):
+                #    atoms[i].tag = 0
+                unitCell.remove_oxidation_states()
+                if 5 < klist_es[3] < r_es and count_es < 5:
                     kx_es,ky_es,kz_es = klist_es[0:3]
                     kpath_es = "Spectra-" + str(kx_es) + "-" + str(ky_es) + "-" + str(kz_es)
                     folder_spectra = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
@@ -494,26 +539,30 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
                     ecutwfc = xsJSON['QE']['system']['ecutwfc']
                     ecutrho = xsJSON['QE']['system']['ecutrho']
                     psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder_spectra )
-
+                    print(psp)
                     pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
 #    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
                     psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
                                         [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
-
+                    print(psp2)
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-                    for i in psp2:
-                        psp[ i + '1' ] = psp2[i]
                     xsJSON['QE']['system']['ecutwfc'] = ecutwfc
                     xsJSON['QE']['system']['ecutrho'] = ecutrho
 
                     xsJSON['QE']['control']['pseudo_dir'] = "../"
-                    try:
-                        write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
-                            input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
-                    except:
-                        print(xsJSON['QE'], atoms, psp)
-                        raise Exception("FAILED while trying to write qe.in")
+                   # try:
+                   #     write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
+                   #         input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                   # except:
+                   #     print(xsJSON['QE'], atoms, psp)
+                   #     raise Exception("FAILED while trying to write qe.in")
+                    gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                            system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                            kpoints_grid=[kx_gs, ky_gs, kz_gs])
+                    gs_in.write_file(str(folder_spectra / "gs.in"))
 
+                    for i in psp2:
+                        psp[ i + '+' ] = psp2[i]
                     iabs_ = 0
                     iabs = []
                     found = set()
@@ -529,18 +578,27 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
 
                         if i == equiv[i] and sym == symTarg:
 
-                            if prev is not None:
-                                atoms[prev].tag = 0
+                            #if prev is not None:
+                            #    atoms[prev].tag = 0
 
-                            atoms[i].tag = 1
+                            #atoms[i].tag = 1
+                            #prev = i
+                            if prev is not None:
+                                unitCell[prev] = 'Ti'
+
+                            unitCell[i] = 'Ti1'
                             prev = i
 
                             subfolder = folder_spectra / str(i)
                             subfolder.mkdir(parents=True, exist_ok=True)
                             xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
-                            write(str(subfolder / "es.in"), atoms, format='espresso-in',
-                                input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                            #write(str(subfolder / "es.in"), atoms, format='espresso-in',
+                            #    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                            es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                                  system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                                  kpoints_grid=[kx_gs, ky_gs, kz_gs])
+                            es_in.write_file(str(subfolder / "es.in"))
 
                             # OCEAN photon labeling is continuous, so we will do that here too
                             #  not sure that we will actually want dipole-only spectra(?)
@@ -601,7 +659,7 @@ def makeXspectraConv_kf( mpid, unitCell: Atoms, params: dict, r_gs = 30, r_es = 
                                         with open(xanesfolder / "weight.txt", "w") as f:
                                             f.write( str(weight) + "\n" )
 
-def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
+def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key = False, rmin=9):
     #######
 #    psp = dict(Ti1='Ti.fch.upf')
 #    symTarg = 'Ti'
@@ -615,16 +673,26 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
     psp = {}
     symTarg = xsJSON['XS_controls']['element']
 
-    atoms = smaller( unitCell, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+    if sc_key:
+        untiCell = smaller( structure, Rmin=rmin )
+    else:
+        unitCell = structure
+
     us = {}
-    symm = spglib.get_symmetry((atoms.get_cell(),
-                             atoms.get_scaled_positions(),
-                             atoms.get_atomic_numbers()),
-                             symprec=0.1, angle_tolerance=15)
+    symm = spglib.get_symmetry((unitCell.lattice.matrix,
+                                unitCell.frac_coords,
+                                np.array(unitCell.atomic_numbers)),
+                                symprec=0.1, angle_tolerance=15)
+
+#    symm = spglib.get_symmetry((atoms.get_cell(),
+#                             atoms.get_scaled_positions(),
+#                             atoms.get_atomic_numbers()),
+#                             symprec=0.1, angle_tolerance=15)
 
     equiv = symm['equivalent_atoms']
 
-    symbols = atoms.get_chemical_symbols()
+    #symbols = atoms.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in unitCell.species]
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
     '''
@@ -655,9 +723,9 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
     folder = pathlib.Path(env["PWD"]) / "data_converge_ki" / "mp_structures" / mpid / "XS"
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
-    printKgrid( atoms, folder )
+    printKgrid( unitCell, folder )
 
-    klist = returnKgridList( atoms, 51 )
+    klist = returnKgridList( unitCell, 51 )
 
     klist_gs = []
 
@@ -670,9 +738,9 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
             folder = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs
             folder.mkdir(parents=True, exist_ok=True)
 
-            for i in range(len(symbols)):
-               atoms[i].tag = 0
-
+            #for i in range(len(symbols)):
+            #   atoms[i].tag = 0
+            unitCell.remove_oxidation_states()
             kpath_es = "Spectra-" + str(kx_gs) + "-" + str(ky_gs) + "-" + str(kz_gs)
 
             folder_spectra = pathlib.Path(env["PWD"]) / path_tmp / "mp_structures" / mpid / "XS" / kpath_gs / kpath_es
@@ -699,19 +767,23 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
 #    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
             psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
                                         [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
-            for i in psp2:
-                psp[ i + '1' ] = psp2[i]
             xsJSON['QE']['system']['ecutwfc'] = ecutwfc
             xsJSON['QE']['system']['ecutrho'] = ecutrho
 
             xsJSON['QE']['control']['pseudo_dir'] = "../"
-            try:
-                write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
-                    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
-            except:
-                print(xsJSON['QE'], atoms, psp)
-                raise Exception("FAILED while trying to write qe.in")
+            #try:
+            #    write(str(folder_spectra / "gs.in"), atoms, format='espresso-in',
+            #        input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+            #except:
+            #    print(xsJSON['QE'], atoms, psp)
+            #    raise Exception("FAILED while trying to write qe.in")
+            gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                            system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                            kpoints_grid=[kx_gs, ky_gs, kz_gs])
+            gs_in.write_file(str(folder_spectra / "gs.in"))
 
+            for i in psp2:
+                psp[ i + '+' ] = psp2[i]
             iabs_ = 0
             iabs = []
             found = set()
@@ -728,21 +800,30 @@ def makeXspectraConv_ki( mpid, unitCell: Atoms, params: dict, r_gs):
 
                 if i == equiv[i] and sym == symTarg:
 
-                    if prev is not None:
-                        atoms[prev].tag = 0
+                    #if prev is not None:
+                    #    atoms[prev].tag = 0
 
-                    atoms[i].tag = 1
+                    #atoms[i].tag = 1
+                    #prev = i
+                    if prev is not None:
+                        unitCell[prev] = 'Ti'
+
+                    unitCell[i] = 'Ti1'
                     prev = i
 
                     subfolder = folder_spectra / str(i)
                     subfolder.mkdir(parents=True, exist_ok=True)
                     xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
-                    write(str(subfolder / "es.in"), atoms, format='espresso-in',
-                        input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                   # write(str(subfolder / "es.in"), atoms, format='espresso-in',
+                   #     input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                    es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                          system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                          kpoints_grid=[kx_gs, ky_gs, kz_gs])
+                    es_in.write_file(str(subfolder / "es.in"))
 
     
-def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
+def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es ):
     #######
     #psp = dict(Ti1='ti.nch.UPF')
     #symTarg = 'Ti'
@@ -756,18 +837,19 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
     symTarg = xsJSON['XS_controls']['element']
 
     #atoms = smaller( unitCell )
-    atoms = unitCell
+    unitCell = structure
     us = {}
-    symm = spglib.get_symmetry((atoms.get_cell(),
-                             atoms.get_scaled_positions(),
-                             atoms.get_atomic_numbers()),
-                             symprec=0.1, angle_tolerance=15)
+    symm = spglib.get_symmetry((unitCell.lattice.matrix,
+                                unitCell.frac_coords,
+                                np.array(unitCell.atomic_numbers)),
+                                symprec=0.1, angle_tolerance=15)
+
     equiv = symm['equivalent_atoms']
 
     use_photonSymm = True
     ph = []
     if use_photonSymm:
-        photonSymm(atoms, us, ph, params['photonOrder'])
+        photonSymm(unitCell, us, ph, params['photonOrder'])
     else:
         directions = {1, 2, 3}
         for dir in range(3):
@@ -789,8 +871,8 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
 
 
 
-    symbols = atoms.get_chemical_symbols()
-
+    #symbols = atoms.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in unitCell.species]
 
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
     '''
@@ -824,7 +906,7 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
         fecut.unlink()
     folder.mkdir(parents=True, exist_ok=True)
     # a little tedious, but should be OK
-    printKgrid( atoms, folder )
+    printKgrid( unitCell, folder )
     # loop for ecut 
     kx_gs,ky_gs,kz_gs = k_gs
     kx_es,ky_es,kz_es = k_es   
@@ -864,9 +946,9 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
         folder = pathlib.Path(env["PWD"]) / "data_converge_ecut" / "mp_structures" / mpid / "XS" / ecut_path / "Spectra"
         folder.mkdir(parents=True, exist_ok=True)    
             
-        for i in range(len(symbols)):
-            atoms[i].tag = 0
-                    
+        #for i in range(len(symbols)):
+        #    atoms[i].tag = 0
+        unitCell.remove_oxidation_states()            
         pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
         DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
 
@@ -879,19 +961,23 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
                                 [xsJSON['XS_controls']['element']], folder, needWfn=True )
 
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-        for i in psp2:
-            psp[ i + '1' ] = psp2[i]
         xsJSON['QE']['system']['ecutwfc'] = ecutwfc + eshift
         xsJSON['QE']['system']['ecutrho'] = (ecutwfc+ eshift) * ratio
 
         xsJSON['QE']['control']['pseudo_dir'] = "../"
-        try:
-            write(str(folder / "gs.in"), atoms, format='espresso-in',
-                  input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
-        except:
-            print(xsJSON['QE'], atoms, psp)
-            raise Exception("FAILED while trying to write qe.in")
+        #try:
+        #    write(str(folder / "gs.in"), atoms, format='espresso-in',
+        #          input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+        #except:
+        #    print(xsJSON['QE'], atoms, psp)
+        #    raise Exception("FAILED while trying to write qe.in")
+        gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                        system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                        kpoints_grid=[kx_gs, ky_gs, kz_gs])
+        gs_in.write_file(str(folder_spectra / "gs.in"))
 
+        for i in psp2:
+            psp[ i + '+' ] = psp2[i]
         iabs_ = 0
         iabs = []
         found = set()
@@ -907,18 +993,27 @@ def makeXspectraConv_ecut( mpid, unitCell: Atoms, params: dict, k_gs, k_es ):
 
             if i == equiv[i] and sym == symTarg:
 
-                if prev is not None:
-                    atoms[prev].tag = 0
+                #if prev is not None:
+                #    atoms[prev].tag = 0
 
-                atoms[i].tag = 1
+                #atoms[i].tag = 1
+                #prev = i
+                if prev is not None:
+                    unitCell[prev] = 'Ti'
+
+                unitCell[i] = 'Ti1'
                 prev = i
 
                 subfolder = folder / str(i)
                 subfolder.mkdir(parents=True, exist_ok=True)
                 xsJSON['QE']['control']['pseudo_dir'] = "../../"
 
-                write(str(subfolder / "es.in"), atoms, format='espresso-in',
-                    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                #write(str(subfolder / "es.in"), atoms, format='espresso-in',
+                #    input_data=xsJSON['QE'], pseudopotentials=psp, kpts=[kx_gs, ky_gs, kz_gs])
+                es_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
+                          system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
+                          kpoints_grid=[kx_gs, ky_gs, kz_gs])
+                es_in.write_file(str(subfolder / "es.in"))
 
                 # OCEAN photon labeling is continuous, so we will do that here too
                 #  not sure that we will actually want dipole-only spectra(?)
