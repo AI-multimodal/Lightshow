@@ -674,7 +674,7 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
     symTarg = xsJSON['XS_controls']['element']
 
     if sc_key:
-        untiCell = smaller( structure, Rmin=rmin )
+        unitCell = smaller( structure, Rmin=rmin )
     else:
         unitCell = structure
 
