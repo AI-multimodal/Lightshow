@@ -4,8 +4,11 @@ Make the ocean input file and the photon files
 Later add in something to write out the pseudopotentials
 """
 
-from ase.atoms import Atoms
-from ase.io import write
+#from ase.atoms import Atoms
+#from ase.io import write
+from pymatgen.core import Structure
+#from pymatgen.io.pwscf import PWInput
+
 import spglib
 import pathlib
 from os import environ as env
@@ -20,9 +23,7 @@ from xanes_bench.General.kden import printKgrid
 
 module_path = os.path.dirname(xanes_bench.OCEAN.__file__)
 
-
-def makeOcean( mpid, atoms: Atoms, params: dict ):
-
+def makeOcean( mpid, structure: Structure, params: dict ):
 
     xs_fn = os.path.join(module_path, 'ocean.json')
     with open (xs_fn, 'r') as fd:
@@ -41,7 +42,7 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
     
     us = {}
     ph = []
-    photonSymm( atoms, us, ph, params['photonOrder'])
+    photonSymm( structure, us, ph, params['photonOrder'])
 
 
 #    Right now we'll just calculate every atom for ocean instead of just the symmetry ones
@@ -55,17 +56,16 @@ def makeOcean( mpid, atoms: Atoms, params: dict ):
 #
 #    equiv = symm['equivalent_atoms']
 
-    symbols = atoms.get_chemical_symbols()
-
+    #symbols = atoms.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in structure.species]
     oceanJSON['toldfe'] = params['defaultConvPerAtom'] * len( symbols )
-
     
     folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( atoms, folder )
-
+    printKgrid( structure, folder )
+    print("length structure", len(structure))
     try:
-        write_ocean_in(str(folder / "ocean.in"), atoms, input_data=oceanJSON )
+        write_ocean_in(str(folder / "ocean.in"), structure, input_data=oceanJSON )
     except:
         raise Exception("FAILED while trying to write ocean.in")
 

@@ -14,7 +14,7 @@ from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.io.vasp.sets import MPStaticSet
-from pymatgen.io.ase import AseAtomsAdaptor as ase
+#from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 import xanes_bench
 
@@ -34,6 +34,7 @@ def dielectricGuess( gap ):
 def main():
 
     # The script takes a single, positive integer to grab a system from materials project
+    # determine the type of calculation
     print(len(sys.argv))
     if len(sys.argv) < 2:
         print( "Requires MP number" )
@@ -41,10 +42,11 @@ def main():
     else :
         print( str(sys.argv) )
         mpid = 'mp-' + sys.argv[1]
+        # single is the default; can also be set explicitly
+        # TODO: use converged parameter? or MP default?
         if len(sys.argv) == 2:
             typecalc = "single"
             print("Type of Run: {}".format(typecalc))
-        #elif len(sys.argv) == 3: # Only use the second input paramater "single" or "convergence"
         else:
             if sys.argv[2] == "converge_kf" or sys.argv[2] == "converge_e" or sys.argv[2] == "converge_ki" or sys.argv[2] == "single":
                 typecalc = sys.argv[2]
@@ -54,7 +56,9 @@ def main():
                 exit()
 
         if typecalc == "converge_kf" and len(sys.argv) != 7 :
-            print("Requires input for radius cutoff for initial and final state in Angstrom;  a sc_key to control sc or uc case; a Rmin to control the sc size.")
+            print(''' Requires input for radius cutoff for initial and final state in Angstrom;  
+                      a sc_key to control sc or uc case; 
+                      a Rmin to control the sc size. ''')
             exit()
         elif typecalc == "converge_kf" and len(sys.argv) == 7 :
             r_gs = float(sys.argv[3])
@@ -75,15 +79,21 @@ def main():
                 k_gs = tuple(sys.argv[3].split("-"))
                 k_es = tuple(sys.argv[4].split("-"))
 
-        if typecalc == "converge_ki" and len(sys.argv) != 4 :
-            print("Requires input for radius cutoff for ki (same for initial and final) in Angstrom.")
+        if typecalc == "converge_ki" and len(sys.argv) != 6 :
+            print(''' Requires input for radius cutoff for ki (same for initial and final) in Angstrom; 
+                      a sc_key to control sc or uc case; 
+                      a Rmin to control the sc size. ''')
             exit()
-        elif typecalc == "converge_ki" and len(sys.argv) == 4 :
+        elif typecalc == "converge_ki" and len(sys.argv) == 6 :
             if not sys.argv[3].isnumeric() or float(sys.argv[3]) <= 0:
                 print("radius can only accept positive numbers")
                 exit()
             else:
                 radius = float(sys.argv[3])
+                sc_key = True
+                if sys.argv[4].lower().startswith('f'):
+                    sc_key = False
+                rmin = float(sys.argv[5])
 
     # Your hashe materials project key needs to be in a file called mp.key
     mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
@@ -94,7 +104,8 @@ def main():
     # MP api handler
     #print( str(mpkey) )
     mp = MPRester( str(mpkey) )
-
+    # test
+    #mpid = sys.argv[1]
     st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
@@ -137,12 +148,13 @@ def main():
             with open(json_fn, 'w') as f:
                 json.dump(st_dict, f, indent=4, sort_keys=True)
 
-    unitC = ase.get_atoms(st)
+    #unitC = ase.get_atoms(st)
 
     data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
     print( data[0] )
 
-    cBands = getCondBands( unitC.get_volume(), 2.25 )
+    #cBands = getCondBands( unitC.get_volume(), 2.25 )
+    cBands = getCondBands( st.lattice.volume, 2.25 )
     params = dict(defaultConvPerAtom=1E-10, photonOrder=6, conductionBands=cBands)
 
     ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
@@ -218,18 +230,18 @@ def main():
 
     if typecalc == "single":
 
-        makeXspectra( mpid, unitC, params )
+        makeXspectra( mpid, st, params )
 
-        makeOcean( mpid, unitC, params )
+        makeOcean( mpid, st, params )
 
-        makeExcitingXAS( mpid, unitC, params )
+        makeExcitingXAS( mpid, st, params )
     elif typecalc == "converge_kf":
-        makeXspectraConv_kf(mpid,unitC,params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
+        makeXspectraConv_kf(mpid, st, params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
     elif typecalc == "converge_e":
-        makeXspectraConv_ecut( mpid, unitC, params, k_gs, k_es )
+        makeXspectraConv_ecut( mpid, st, params, k_gs, k_es )
     elif typecalc == "converge_ki": 
         ## need to think on how to do the convergence test for sc case since it is merged into the  makeXspectraConv_k
-        makeXspectraConv_ki( mpid, unitC, params, radius )
+        makeXspectraConv_ki( mpid, st, params, radius, sc_key, rmin )
 
 if __name__ == '__main__':
     main()

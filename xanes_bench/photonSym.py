@@ -2,7 +2,8 @@
 """
 Determines set of photon polarization/q-direction along with symmetry unique atoms
 """
-from ase.atoms import Atoms
+#from ase.atoms import Atoms
+from pymatgen.core import Structure
 import spglib
 import pprint
 import numpy as np
@@ -59,16 +60,16 @@ def BuildOh( n, oh, norm ):
 
 
 #def photonSym( mode: str, atoms: Atoms, uniqueSites: dict, photons: list ):
-def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
+def photonSymm( atoms: Structure, uniqueSites: dict, photons: list, order=4 ):
     # for now mode is assumed to be quad
 
 #    uniqueSites = {}
 #    photons = []
 
-    symm= spglib.get_symmetry((atoms.get_cell(),
-                           atoms.get_scaled_positions(),
-                           atoms.get_atomic_numbers()),
-                           symprec=0.1, angle_tolerance=15)
+    symm= spglib.get_symmetry((atoms.lattice.matrix,
+                               atoms.frac_coords,
+                               np.array(atoms.atomic_numbers)),
+                               symprec=0.1, angle_tolerance=15)
 
     equiv = symm['equivalent_atoms']
 
