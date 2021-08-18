@@ -285,8 +285,6 @@ def makeXspectra( mpid, structure: Structure, params: dict ):
                                         [xsJSON['XS_controls']['element']], folder, needWfn=True )
 
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-    for i in psp2:
-        psp[ i + '1' ] = psp2[i]
     xsJSON['QE']['system']['ecutwfc'] = ecutwfc
     xsJSON['QE']['system']['ecutrho'] = ecutrho
 
@@ -306,6 +304,10 @@ def makeXspectra( mpid, structure: Structure, params: dict ):
                     system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                     kpoints_grid=unitCellKpoints)
     gs_in.write_file(str(folder / "gs.in"))
+
+    for i in psp2:
+        psp[ i + '+' ] = psp2[i]
+
     iabs_ = 0
     iabs = []
     found = set()
@@ -537,15 +539,13 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
                     ecutwfc = xsJSON['QE']['system']['ecutwfc']
                     ecutrho = xsJSON['QE']['system']['ecutrho']
                     psp, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir, symbols, folder_spectra )
-
+                    print(psp)
                     pspDatabaseRoot = xsJSON['XS_controls']['core_psp_json']
 #    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
                     psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
                                         [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
-
+                    print(psp2)
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-                    for i in psp2:
-                        psp[ i + '1' ] = psp2[i]
                     xsJSON['QE']['system']['ecutwfc'] = ecutwfc
                     xsJSON['QE']['system']['ecutrho'] = ecutrho
 
@@ -559,8 +559,10 @@ def makeXspectraConv_kf( mpid, structure: Structure, params: dict, r_gs = 30, r_
                     gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                             system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                             kpoints_grid=[kx_gs, ky_gs, kz_gs])
-                    gs_in.write_file(str(folder / "gs.in"))
+                    gs_in.write_file(str(folder_spectra / "gs.in"))
 
+                    for i in psp2:
+                        psp[ i + '+' ] = psp2[i]
                     iabs_ = 0
                     iabs = []
                     found = set()
@@ -765,8 +767,6 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
 #    DatabaseDir = os.path.join(module_path, '..', 'pseudos', 'data' )
             psp2, ecutwfc, ecutrho = unpackPsps( ecutwfc, ecutrho, pspDatabaseRoot, DatabaseDir,
                                         [xsJSON['XS_controls']['element']], folder_spectra, needWfn=True )
-            for i in psp2:
-                psp[ i + '1' ] = psp2[i]
             xsJSON['QE']['system']['ecutwfc'] = ecutwfc
             xsJSON['QE']['system']['ecutrho'] = ecutrho
 
@@ -780,8 +780,10 @@ def makeXspectraConv_ki( mpid, structure: Structure, params: dict, r_gs, sc_key 
             gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                             system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                             kpoints_grid=[kx_gs, ky_gs, kz_gs])
-            gs_in.write_file(str(folder / "gs.in"))
+            gs_in.write_file(str(folder_spectra / "gs.in"))
 
+            for i in psp2:
+                psp[ i + '+' ] = psp2[i]
             iabs_ = 0
             iabs = []
             found = set()
@@ -959,8 +961,6 @@ def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es 
                                 [xsJSON['XS_controls']['element']], folder, needWfn=True )
 
     ##TODO for magnetic systems need a more sophisticated system to append numeral
-        for i in psp2:
-            psp[ i + '1' ] = psp2[i]
         xsJSON['QE']['system']['ecutwfc'] = ecutwfc + eshift
         xsJSON['QE']['system']['ecutrho'] = (ecutwfc+ eshift) * ratio
 
@@ -974,8 +974,10 @@ def makeXspectraConv_ecut( mpid, structure: Structure, params: dict, k_gs, k_es 
         gs_in = PWInput(unitCell, pseudo=psp, control=xsJSON['QE']['control'],
                         system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                         kpoints_grid=[kx_gs, ky_gs, kz_gs])
-        gs_in.write_file(str(folder / "gs.in"))
+        gs_in.write_file(str(folder_spectra / "gs.in"))
 
+        for i in psp2:
+            psp[ i + '+' ] = psp2[i]
         iabs_ = 0
         iabs = []
         found = set()
