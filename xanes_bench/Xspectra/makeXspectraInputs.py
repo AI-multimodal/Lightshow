@@ -31,7 +31,7 @@ def smaller(structure: Structure, Rmin=9.0):
     # need from pymatgen.core import Structure
     conv = Structure(lat, species=Z, coords=pos) 
     #conv = conv * ((Rmin / np.linalg.norm(conv.lattice.matrix, axis=1)).astype(int) + 1)
-    conv.make_supercell((9.0 / np.linalg.norm(conv.lattice.matrix, axis=1)).astype(int) + 1)
+    conv.make_supercell((Rmin / np.linalg.norm(conv.lattice.matrix, axis=1)).astype(int) + 1)
     #structure.make_supercell((9.0 / np.linalg.norm(structure.lattice.matrix, axis=1)).astype(int) + 1)
     prim = structure * ((Rmin / np.linalg.norm(structure.lattice.matrix, axis=1)).astype(int) +1)
     
