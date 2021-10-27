@@ -24,6 +24,7 @@ import re
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
+import math
 
 module_path = os.path.dirname(xanes_bench.__file__)
 
@@ -195,7 +196,28 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     
 
 
+def obtain_kmesh(structure):
+    kppa = structure.lattice.reciprocal_lattice.volume * 100 * structure.num_sites
 
+    if math.fabs((math.floor(kppa ** (1 / 3) + 0.5)) ** 3 - kppa) < 1:
+        kppa += kppa * 0.01
+    latt = structure.lattice.reciprocal_lattice
+    lengths = latt.abc
+    ngrid = kppa / structure.num_sites
+    #mult = (ngrid * structure.lattice.reciprocal_lattice.volume) ** (1 / 3)
+    # mult = (ngrid * 1/lengths[0] * 1/lengths[1] * 1/lengths[2]) ** (1 / 3)
+    mult = (ngrid * 1/lengths[0] * 1/lengths[1] * 1/lengths[2]) ** (1 / 3)
+    # num_div = []
+    # num_div = [int(round(max(mult / (1/l), 1))) for l in lengths]
+    num_div = [int(np.ceil((max(mult / (1/l), 1)))) for l in lengths]
+    # num_div = [int(math.ceil(max(mult / (1/l), 1))) for l in lengths] # ceil instead of floor would be more accurate
+    # for l in lengths:
+    #     if abs(mult - mult // (1/l)) <=0.5:
+    #         print(mult - mult // (1/l))
+    #         num_div.append(int(math.floor(max(mult / (1/l), 1))))
+    #     else:
+    #         num_div.append(int(math.ceil(max(mult / (1/l), 1))))
+    return num_div
 
     
 def main():
@@ -279,9 +301,10 @@ def main():
     #    print( "Requires Monkhorst scheme" )
     #    exit()
 
-    kpoints = kpointDict['kpoints'][0]
+    #kpoints = kpointDict['kpoints'][0]
+    kpoints = obtain_kmesh(st)
     koffset = kpointDict['usershift']
-
+    print(kpoints)
 
     # Make sure k-point grid is reasonable
     if kpoints[0]*kpoints[1]*kpoints[2] < 1 or kpoints[0]*kpoints[1]*kpoints[2] > 1000000 :
