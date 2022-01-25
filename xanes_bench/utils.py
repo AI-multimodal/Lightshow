@@ -2,9 +2,22 @@
 # based on previous work by J Vinson
 import numpy as np
 from math import pi
+import time
+from pathlib import Path
 import xanes_bench
 
 from pymatgen.ext.matproj import MPRester
+
+def setMPR():
+    ''' TODO
+    '''
+    mpkey_fn = Path(xanes_bench.__path__[0]) / "mp.key"
+    with open(mpkey_fn, 'r' ) as f:
+        mpkey = f.read()
+        mpkey = mpkey.strip()
+
+    mpr = MPRester( str(mpkey) )
+    return mpr
 
 def get_structure(mpid):
     ''' get material strcutre from Materials Project
@@ -21,12 +34,7 @@ def get_structure(mpid):
         st_dict : dict
             metadata
     '''
-    mpkey_fn = Path(xanes_bench.__path__[0]) / "mp.key"
-    with open(mpkey_fn, 'r' ) as f:
-        mpkey = f.read()
-        mpkey = mpkey.strip()
-
-    mpr = MPRester( str(mpkey) )
+    mpr = setMPR()
 
     try:
         st = mpr.get_structure_by_material_id(mpid, conventional_unit_cell=False)
@@ -38,7 +46,7 @@ def get_structure(mpid):
     st_dict = st.as_dict().copy()
     st_dict["download_at"] = time.ctime()
     try:
-        st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
+        st_dict["created_at"] = mpr.get_doc(mpid)["created_at"]
     except Exception as e:
         print(e)
         print( "Failed to 'get_doc'\nStopping\n")
