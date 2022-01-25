@@ -13,10 +13,10 @@ from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
 import xanes_bench
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
-from xanes_bench.utils import getCondBands, get_structure
+from xanes_bench.utils import getCondBands, get_structure, setMPR, find_kpts
 
-#from ase.atoms import Atoms
-#from ase.io import write
+from ase.atoms import Atoms
+from ase.io import write
 
 from pathlib import Path
 #from os import environ as env
@@ -228,6 +228,7 @@ def main():
 
     # Your hashed materials project key needs to be in a file called mp.key
     ## get material's structure and metadata
+    mpr = setMPR()
     st, st_dict = get_structure(mpid)
 
     json_dir = "data"
@@ -237,70 +238,36 @@ def main():
             os.makedirs(os.path.dirname(json_fn))
         with open(json_fn, 'w') as f:
             json.dump(st_dict, f, indent=4, sort_keys=True)
-    unitC = ase.get_atoms(st)
+    # convert to pymatgen.core.Structure
+    unitC = ase.get_atoms(st) 
     
     NSCFBands = getCondBands( unitC.get_volume(), 3.5 )
     conductionBands = getCondBands( unitC.get_volume(), 1.5 )
     print( "Conduction bands: ", NSCFBands, conductionBands )
     
-    # Grab and parse k-point information
-    # TODO error checking
-    try:
-        taskid = mp.query( criteria = {'task_id': mpid}, properties =
-                ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
-    except Exception as e:
-        print(e)
-        print( "Failed to get task id\nStopping\n")
-        exit()
-    try:
-        data = mp.get_task_data( taskid, prop="kpoints" )
-    except Exception as e:
-        print(e)
-        print( "Failed to get kpoints data\nStopping\n" )
-
-    # If MP data set is incomplete, fail gracefully
-    if 'kpoints' not in data[0]:
-        print( "Failed to get kpoints from task id :", taskid )
-        exit()
-
-    # Returns a vasp kpoint object, so we need to convert to a dict
-    kpointDict  = data[0]['kpoints'].as_dict()
-
-    # We'll need to figure out the other types of grids, I thought I also saw Gamma
-    #if kpointDict['generation_style'] != 'Monkhorst' :
-    #    print( "Requires Monkhorst scheme" )
-    #    exit()
-
-    kpoints = kpointDict['kpoints'][0]
-    koffset = kpointDict['usershift']
-
-
-    # Make sure k-point grid is reasonable
-    if kpoints[0]*kpoints[1]*kpoints[2] < 1 or kpoints[0]*kpoints[1]*kpoints[2] > 1000000 :
-        print( "Bad k-point grid! ", kpoints )
-        exit()
-
+    kpoints = find_kpts(st)
+    koffset = [0, 0, 0]
 
     # Right now we are not checking for grid shifts. QE will just use a Gamma-centered grid
-
-
     
     # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
-    qe_fn = os.path.join(module_path, 'QE', 'qe.json')
+    qe_fn = module_path / 'QE' / 'qe.json'
 
     # subdir says where to put the input and psps 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mpid, "XS", "groundState")
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
+    ## TODO: change to PWInput from pymatgen
     writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
 
 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "OCEAN", "groundState" )
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / "groundState" 
     subdir.mkdir(parents=True, exist_ok=True)
+    ## TODO: change to PWInput from pymatgen
     writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "EXCITING", "groundState" )
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
-    makeExcitingGRST(mpid, unitC, kpoints, conductionBands, subdir)
+    makeExcitingGRST(mpid, st, kpoints, conductionBands, subdir)
 
 if __name__ == '__main__':
     main()

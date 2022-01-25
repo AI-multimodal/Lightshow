@@ -3,7 +3,6 @@
 # based on John Vinson's version
 import json
 import sys
-import time
 import numpy as np
 from math import exp
 from pathlib import Path
@@ -14,9 +13,7 @@ from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 from xanes_bench.utils import * # TODO
 import xanes_bench
 
-from pymatgen.ext.matproj import MPRester 
 from pymatgen.io.ase import AseAtomsAdaptor as ase
-
 
 def main():
     # The script takes a single, positive integer to grab a system from materials project
@@ -41,6 +38,7 @@ def main():
                 exit()
 
     # get structure from Materials Project 
+    mpr = setMPR()
     st, st_dict = get_structure(mpid)
     if typecalc == "single":
         json_dir = "data"
