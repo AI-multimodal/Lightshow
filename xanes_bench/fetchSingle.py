@@ -11,7 +11,7 @@ from pathlib import Path
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
 from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
-from xanes_bench.utils import *
+from xanes_bench.utils import * # TODO
 import xanes_bench
 
 from pymatgen.ext.matproj import MPRester 
@@ -28,7 +28,7 @@ def main():
         mpid = sys.argv[1]
         # determine type of calculations
         # default : single, can also be set explicitly 
-        # TODO : others?
+        # TODO : others? how to do convergence?
         if len(sys.argv) == 2:
             typecalc = "single"
             print(f"Type of Run: {typecalc}")
@@ -40,18 +40,8 @@ def main():
                 print("Input for run type not supported. \nSuppurted type of run: single") 
                 exit()
 
-    # Read Materials Project API key stored in "mp.key"
-    mpkey_fn = Path(xanes_bench.__path__[0]) / "mp.key"
-    with open(mpkey_fn, 'r' ) as f:
-        mpkey = f.read()
-        mpkey = mpkey.strip()
-    # Materials Project Rester
-    # get structure and save metadata
-    mpr = MPRester(str(mpkey))
-    st = mpr.get_structure_by_material_id(mpid, conventional_unit_cell=False)
-    st_dict = st.as_dict().copy()
-    st_dict["download_at"] = time.ctime()
-    st_dict["created_at"] = mpr.get_doc(mpid)["created_at"]
+    # get structure from Materials Project 
+    st, st_dict = get_structure(mpid)
     if typecalc == "single":
         json_dir = "data"
         for spec_type in ["XS", "OCEAN", "EXCITING"]:
