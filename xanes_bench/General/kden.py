@@ -3,11 +3,10 @@
 
 #from ase.atoms import Atoms
 from pymatgen.core import Structure
-#from ase.units import Bohr
+from ase.units import Bohr
 from math import pi
 import numpy as np
 
-Bohr = 0.52917721056384115
 def printKgrid( unitC: Structure, folder: str ):
 
     fd = open (str(folder / 'k.txt'), 'w') 
