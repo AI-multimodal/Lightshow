@@ -21,14 +21,14 @@ import xanes_bench
 
 module_path = Path(xanes_bench.EXCITING.__path__[0])
 
-def makeExcitingXAS( mpid, struct: Structure, params: dict ):
+def makeExcitingXAS( mpid, structure: Structure, params: dict ):
     ''' construct Exciting input files
 
         Parameters  
         ----------
         mpid : string, mandatory
             materials id from Materials Project
-        struct : pymatgen.core.Structure, mandatory
+        structure : pymatgen.core.Structure, mandatory
             structure file
         params : dict, mandatory
             TODO
@@ -44,10 +44,10 @@ def makeExcitingXAS( mpid, struct: Structure, params: dict ):
         excitingxasJSON= json.load(fd)
     
     # generate ExcitingInput object from pymatgen structure
-    excitinginput = ExcitingInput(struct)
+    excitinginput = ExcitingInput(structure)
    
     # generate reduced and symmetrized structure
-    finder = SpacegroupAnalyzer(struct)
+    finder = SpacegroupAnalyzer(structure)
     struct_red = finder.get_primitive_standard_structure(international_monoclinic = True)
     struct_symm = finder.get_symmetrized_structure()
 
@@ -99,7 +99,8 @@ def makeExcitingXAS( mpid, struct: Structure, params: dict ):
             raise Exception("FAILED while trying to write input.xml")
 
 def makeExcitingGRST( mpid, struct: Structure, kpoints: list, nempty: int, filepath):
-    
+    '''TODO
+    '''
     # read default grst parameters from JSON file
     param_fn = module_path / "exciting.json"
     with open (param_fn, 'r') as fd:

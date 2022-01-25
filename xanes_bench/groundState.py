@@ -1,3 +1,5 @@
+# Fanchen Meng 2022
+# based on previous work by J Vinson
 # coding: latin-1
 #TODO
 # 1. Remove hard-coded values in DOS and conduction band construction
@@ -11,12 +13,13 @@ from pymatgen.ext.matproj import MPRester
 from pymatgen.io.ase import AseAtomsAdaptor as ase
 import xanes_bench
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
+from xanes_bench.utils import getCondBands, get_structure
 
-from ase.atoms import Atoms
-from ase.io import write
+#from ase.atoms import Atoms
+#from ase.io import write
 
-import pathlib
-from os import environ as env
+from pathlib import Path
+#from os import environ as env
 
 import base64, bz2, hashlib
 
@@ -25,16 +28,27 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
 
-module_path = os.path.dirname(xanes_bench.__file__)
+module_path = Path(xanes_bench.__path__[0])
 
-# Return a guess at the number of conduction bands that a given unit-cell volume needs to 
-# cover a given energy range (in Ryd)
-def getCondBands( volume, eRange):
-    return round( 0.256 * volume * ( eRange**(3/2) ) )
-
-#TODO add types for a bit of help
 def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
+    ''' construct QE input files
+        
+        Parameters
+        ----------
+        unitC : mandatory
+        st : 
+        folder : 
+        qe_fn : 
+        pspName : 
+        params : 
+        NSCFBands : 
+        conductionBands : 
+        kpoints : 
 
+        Returns
+        -------
+        TODO
+    '''
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
@@ -206,37 +220,15 @@ def main():
         exit()
     else :
         print( str(sys.argv) )
-        mpid = 'mp-' + sys.argv[1]
+        mpid = sys.argv[1]
 
     params = dict(defaultConvPerAtom=1E-10)
 
     # put in psp database handle here
 
     # Your hashed materials project key needs to be in a file called mp.key
-    mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
-    with open(mpkey_fn, 'r' ) as f:
-        mpkey = f.read()
-        mpkey = mpkey.strip()
-
-    # MP api handler
-    mp = MPRester( str(mpkey) )
-
-    try:
-        st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
-    except Exception as e:
-        print(e)
-        print( "Failed to 'get_structure_by_material_id'\nStopping\n" )
-        exit()
-    #TODO gracefully report errors with connection, fetching structure
-
-    st_dict = st.as_dict().copy()
-    st_dict["download_at"] = time.ctime()
-    try:
-        st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
-    except Exception as e:
-        print(e)
-        print( "Failed to 'get_doc'\nStopping\n")
-        exit()
+    ## get material's structure and metadata
+    st, st_dict = get_structure(mpid)
 
     json_dir = "data"
     for spec_type in ["XS", "OCEAN", "EXCITING"]:
