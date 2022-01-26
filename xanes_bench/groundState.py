@@ -1,3 +1,5 @@
+# Fanchen Meng 2022
+# based on previous work by J Vinson
 # coding: latin-1
 #TODO
 # 1. Remove hard-coded values in DOS and conduction band construction
@@ -5,18 +7,21 @@
 import json
 import sys
 import time
-import os, shutil
+import shutil
 
 from pymatgen.ext.matproj import MPRester
-from pymatgen.io.ase import AseAtomsAdaptor as ase
+#from pymatgen.io.ase import AseAtomsAdaptor as ase
+from pymatgen.io.pwscf import PWInput
+
 import xanes_bench
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
+from xanes_bench.utils import getCondBands, get_structure, setMPR, find_kpts
 
-from ase.atoms import Atoms
-from ase.io import write
+#from ase.atoms import Atoms
+#from ase.io import write
 
-import pathlib
-from os import environ as env
+from pathlib import Path
+#from os import environ as env
 
 import base64, bz2, hashlib
 
@@ -25,32 +30,43 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
 
-module_path = os.path.dirname(xanes_bench.__file__)
+module_path = Path(xanes_bench.__path__[0])
 
-# Return a guess at the number of conduction bands that a given unit-cell volume needs to 
-# cover a given energy range (in Ryd)
-def getCondBands( volume, eRange):
-    return round( 0.256 * volume * ( eRange**(3/2) ) )
+def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
+    ''' construct QE input files
+        
+        Parameters
+        ----------
+        unitC : mandatory !! need remove
+        st : pymatgen.core.Structure, mandatory
+        folder : 
+        qe_fn : 
+        pspName : 
+        params : 
+        NSCFBands : 
+        conductionBands : 
+        kpoints : 
 
-#TODO add types for a bit of help
-def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
-
+        Returns
+        -------
+        TODO
+    '''
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
-    symbols = unitC.get_chemical_symbols()
+#    symbols = unitC.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in st.species]
 
     qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
     qeJSON['QE']['control']['pseudo_dir'] = "../"
 
-    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + ".json" )
+    psp_fn = module_path / "pseudos" / "data" / Path(pspName + ".json")
     with open (psp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     
-    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + "_pseudos.json")
+    psp_fn = module_path / "pseudos" / "data" / Path(pspName + "_pseudos.json")
     with open ( psp_fn, 'r' ) as pspDatabaseFile:
         pspFullData = json.load( pspDatabaseFile )
-
 
     psp = dict()
     minSymbols = set( symbols )
@@ -74,11 +90,9 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
         print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
         print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
 
-
-        fileName = os.path.join( folder, "..", pspDatabase[ symbol ]['filename'] )
+        fileName = Path(folder) / ".." / pspDatabase[ symbol ]['filename']
         with open( fileName, 'w' ) as f:
             f.write( pspString.decode("utf-8") )
-
 
     nelectron = 0
     for symbol in symbols:
@@ -89,10 +103,15 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 
     # Write SCF input
     try:
-        write(str(folder / "scf.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+        scf_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_grid=kpoints)
+        scf_in.write_file(str(folder / "scf.in"))
+
+#        write(str(folder / "scf.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write scf.in")
 
 
@@ -109,10 +128,15 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 #    qeJSON['QE']['electrons']['conv_thr'] = 0.01
 
     try:
-        write(str(folder / "nscf.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+        nscf_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_grid=kpoints)
+        nscf_in.write_file(str(folder / "nscf.in"))
+
+#        write(str(folder / "nscf.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf.in")
 
 
@@ -122,14 +146,19 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     #TODO This is a hack to get around lack of k-path support
     ## We don't pass a kpoint spec which should give us "K_POINTS gamma"
     try:
-        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp )
+        nscftmp_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_mode='gamma', kpoints_grid=[], kpoints_shift=[])
+        nscftmp_in.write_file(str(folder / "nscf_tmp.in"))
+
+#        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp )
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf_temp.in")
 
     ## Now, slurp in entire file and get rid of K_POINT
-    with open ( str(folder / "nscf_temp.in"), 'r' ) as f:
+    with open ( str(folder / "nscf_tmp.in"), 'r' ) as f:
         NSCFtemp = re.sub('K_POINTS\s+gamma', '', f.read(), flags=re.IGNORECASE)
 
     ## Now do k-path
@@ -155,7 +184,7 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 
     # Loop over the separate paths
     for i in range(len(kpath.kpath['path'])):
-        KString = "K_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
+        KString = "\nK_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
@@ -206,109 +235,53 @@ def main():
         exit()
     else :
         print( str(sys.argv) )
-        mpid = 'mp-' + sys.argv[1]
+        mpid = sys.argv[1]
 
     params = dict(defaultConvPerAtom=1E-10)
 
     # put in psp database handle here
 
     # Your hashed materials project key needs to be in a file called mp.key
-    mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
-    with open(mpkey_fn, 'r' ) as f:
-        mpkey = f.read()
-        mpkey = mpkey.strip()
-
-    # MP api handler
-    mp = MPRester( str(mpkey) )
-
-    try:
-        st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
-    except Exception as e:
-        print(e)
-        print( "Failed to 'get_structure_by_material_id'\nStopping\n" )
-        exit()
-    #TODO gracefully report errors with connection, fetching structure
-
-    st_dict = st.as_dict().copy()
-    st_dict["download_at"] = time.ctime()
-    try:
-        st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
-    except Exception as e:
-        print(e)
-        print( "Failed to 'get_doc'\nStopping\n")
-        exit()
+    ## get material's structure and metadata
+    mpr = setMPR()
+    st, st_dict = get_structure(mpid)
 
     json_dir = "data"
     for spec_type in ["XS", "OCEAN", "EXCITING"]:
-        json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
-        if not os.path.exists(os.path.dirname(json_fn)):
-            os.makedirs(os.path.dirname(json_fn))
+        json_fn = Path(f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json")
+        if not Path.exists(json_fn.parent):
+                Path.mkdir(json_fn.parent, parents=True, exist_ok=True)
         with open(json_fn, 'w') as f:
             json.dump(st_dict, f, indent=4, sort_keys=True)
-    unitC = ase.get_atoms(st)
+    # convert to pymatgen.core.Structure
+#    unitC = ase.get_atoms(st) 
     
-    NSCFBands = getCondBands( unitC.get_volume(), 3.5 )
-    conductionBands = getCondBands( unitC.get_volume(), 1.5 )
+    NSCFBands = getCondBands( st.lattice.volume, 3.5 )
+    conductionBands = getCondBands( st.lattice.volume, 1.5 )
     print( "Conduction bands: ", NSCFBands, conductionBands )
     
-    # Grab and parse k-point information
-    # TODO error checking
-    try:
-        taskid = mp.query( criteria = {'task_id': mpid}, properties =
-                ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
-    except Exception as e:
-        print(e)
-        print( "Failed to get task id\nStopping\n")
-        exit()
-    try:
-        data = mp.get_task_data( taskid, prop="kpoints" )
-    except Exception as e:
-        print(e)
-        print( "Failed to get kpoints data\nStopping\n" )
-
-    # If MP data set is incomplete, fail gracefully
-    if 'kpoints' not in data[0]:
-        print( "Failed to get kpoints from task id :", taskid )
-        exit()
-
-    # Returns a vasp kpoint object, so we need to convert to a dict
-    kpointDict  = data[0]['kpoints'].as_dict()
-
-    # We'll need to figure out the other types of grids, I thought I also saw Gamma
-    #if kpointDict['generation_style'] != 'Monkhorst' :
-    #    print( "Requires Monkhorst scheme" )
-    #    exit()
-
-    kpoints = kpointDict['kpoints'][0]
-    koffset = kpointDict['usershift']
-
-
-    # Make sure k-point grid is reasonable
-    if kpoints[0]*kpoints[1]*kpoints[2] < 1 or kpoints[0]*kpoints[1]*kpoints[2] > 1000000 :
-        print( "Bad k-point grid! ", kpoints )
-        exit()
-
+    kpoints = find_kpts(st)
+    koffset = [0, 0, 0]
 
     # Right now we are not checking for grid shifts. QE will just use a Gamma-centered grid
-
-
     
     # defaults, will be common for both "ocean" and "XS" as they are both (for now) using QE
-    qe_fn = os.path.join(module_path, 'QE', 'qe.json')
+    qe_fn = module_path / 'QE' / 'qe.json'
 
     # subdir says where to put the input and psps 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mpid, "XS", "groundState")
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
+    ## TODO: change to PWInput from pymatgen
+    writeQE( st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
 
-
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "OCEAN", "groundState" )
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / "groundState" 
     subdir.mkdir(parents=True, exist_ok=True)
-    writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
+    ## TODO: change to PWInput from pymatgen
+    writeQE( st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
 
-    subdir = pathlib.Path(env['PWD'], "data", "mp_structures",mpid, "EXCITING", "groundState" )
+    subdir = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
-    makeExcitingGRST(mpid, unitC, kpoints, conductionBands, subdir)
+    makeExcitingGRST(mpid, st, kpoints, conductionBands, subdir)
 
 if __name__ == '__main__':
     main()
