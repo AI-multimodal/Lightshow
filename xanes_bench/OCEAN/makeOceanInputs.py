@@ -1,35 +1,43 @@
+# F Meng 2022
 # J Vinson 2020
 """
 Make the ocean input file and the photon files
 Later add in something to write out the pseudopotentials
 """
 
-#from ase.atoms import Atoms
-#from ase.io import write
 from pymatgen.core import Structure
-#from pymatgen.io.pwscf import PWInput
 
 import spglib
-import pathlib
-from os import environ as env
-import sys
+from pathlib import Path
 import numpy as np
-from xanes_bench.photonSym import photonSymm
 import json
+from xanes_bench.photonSym import photonSymm
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
 import xanes_bench.OCEAN
-import os
 from xanes_bench.General.kden import printKgrid
 
-module_path = os.path.dirname(xanes_bench.OCEAN.__file__)
+module_path = Path(xanes_bench.OCEAN.__path__[0])
 
 def makeOcean( mpid, structure: Structure, params: dict ):
+    ''' construct ocean input files
 
-    xs_fn = os.path.join(module_path, 'ocean.json')
+        Parameters
+        ----------
+        mpid : str, mandatory
+            materials id in Materials Project
+        structure : pymatgen.core.Structure, mandatory
+            structure data
+        params : dict, mandatory
+            TODO
+
+        Returns
+        -------
+        None
+        * save input files to corresponding directories
+    '''
+    xs_fn = module_path / 'ocean.json'
     with open (xs_fn, 'r') as fd:
         oceanJSON = json.load(fd)
-#    with open ("OCEAN/ocean.json", 'r') as fd:
-#        oceanJSON = json.load(fd)
 
     if params['diemac'] is not None:
         oceanJSON['diemac'] = params['diemac']
@@ -38,7 +46,8 @@ def makeOcean( mpid, structure: Structure, params: dict ):
         oceanJSON['nbands'] = -1 * params['conductionBands']
 
     if params['scf.kpoints'] is not None:
-        oceanJSON['ngkpt'] = "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+        oceanJSON['ngkpt'] = \
+                f"{params['scf.kpoints'][0]} {params['scf.kpoints'][1]} {params['scf.kpoints'][2]}"
     
     us = {}
     ph = []
@@ -46,24 +55,12 @@ def makeOcean( mpid, structure: Structure, params: dict ):
 
 
 #    Right now we'll just calculate every atom for ocean instead of just the symmetry ones
-#    oceanJSON['edges'] = ""
-#    for site,  in us
-
-#    symm= spglib.get_symmetry((atoms.get_cell(),
-#                             atoms.get_scaled_positions(),
-#                             atoms.get_atomic_numbers()),
-#                             symprec=0.1, angle_tolerance=15)
-#
-#    equiv = symm['equivalent_atoms']
-
-    #symbols = atoms.get_chemical_symbols()
     symbols = [str(i).split()[-1] for i in structure.species]
     oceanJSON['toldfe'] = params['defaultConvPerAtom'] * len( symbols )
     
-    folder = pathlib.Path(env["PWD"]) / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
+    folder = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / "Spectra"
     folder.mkdir(parents=True, exist_ok=True)
     printKgrid( structure, folder )
-    print("length structure", len(structure))
     try:
         write_ocean_in(str(folder / "ocean.in"), structure, input_data=oceanJSON )
     except:

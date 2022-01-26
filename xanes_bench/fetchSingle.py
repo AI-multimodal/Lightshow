@@ -1,160 +1,56 @@
 # coding: latin-1
-
+# Fanchen Meng, 2022
+# based on John Vinson's version
 import json
 import sys
-import time
-from math import exp, atan, pi
-import os
+import numpy as np
+from math import exp
+from pathlib import Path
 
-#from xanes_bench.EXCITING.makeExcitingInputs import makeExciting
-# TODO: add implementation of photonSym to avoid import error
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
-from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra, makeXspectraConv_kf, makeXspectraConv_ecut, makeXspectraConv_ki
+from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
-
-from pymatgen.ext.matproj import MPRester
-from pymatgen.io.vasp.sets import MPStaticSet
-#from pymatgen.io.ase import AseAtomsAdaptor as ase
-
+from xanes_bench.utils import * # TODO
 import xanes_bench
 
-# Return a guess at the number of conduction bands that a given unit-cell volume needs to 
-# cover a given energy range (in Ryd)
-#JTV
-#TODO needs to be unified with groundState.py, both call the same function 
-#     and the prefactor should always be the same
-def getCondBands( volume, eRange):
-    return round( 0.256 * volume * ( eRange**(3/2) ) )
-
-def dielectricGuess( gap ):
-    if gap < 0.00001:
-        return 1000000
-    return 1.0/(2*atan(.164475*gap)/pi)
+from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 def main():
-
     # The script takes a single, positive integer to grab a system from materials project
     # determine the type of calculation
-    print(len(sys.argv))
     if len(sys.argv) < 2:
         print( "Requires MP number" )
         exit()
-    else :
-        print( str(sys.argv) )
-        mpid = 'mp-' + sys.argv[1]
-        # single is the default; can also be set explicitly
-        # TODO: use converged parameter? or MP default?
+    else:
+        mpid = sys.argv[1]
+        # determine type of calculations
+        # default : single, can also be set explicitly 
+        # TODO : others? how to do convergence?
         if len(sys.argv) == 2:
             typecalc = "single"
-            print("Type of Run: {}".format(typecalc))
+            print(f"Type of Run: {typecalc}")
         else:
-            if sys.argv[2] == "converge_kf" or sys.argv[2] == "converge_e" or sys.argv[2] == "converge_ki" or sys.argv[2] == "single":
+            if sys.argv[2] == "single":
                 typecalc = sys.argv[2]
-                print("Type of Run: {}".format(typecalc))
+                print(f"Type of Run: {typecalc}")
             else:
-                print("Input for run type not supported. \nSuppurted type of run: single, converge_ki, converge_kf, converge_e")
+                print("Input for run type not supported. \nSuppurted type of run: single") 
                 exit()
 
-        if typecalc == "converge_kf" and len(sys.argv) != 7 :
-            print(''' Requires input for radius cutoff for initial and final state in Angstrom;  
-                      a sc_key to control sc or uc case; 
-                      a Rmin to control the sc size. ''')
-            exit()
-        elif typecalc == "converge_kf" and len(sys.argv) == 7 :
-            r_gs = float(sys.argv[3])
-            r_es = float(sys.argv[4])
-            sc_key = True
-            if sys.argv[5].lower().startswith('f'):
-                sc_key = False
-            rmin = float(sys.argv[6])
-
-        if typecalc == "converge_e" and len(sys.argv) != 5 :
-            print("Requires input for k-mesh for initial and final state.")
-            exit()
-        elif typecalc == "converge_e" and len(sys.argv) == 5 :
-            if len(sys.argv[3]) != 5 or len(sys.argv[4]) != 5 :
-                print("k_meshes should be provided using string, e.g. 3-3-3")
-                exit()
-            else:
-                k_gs = tuple(sys.argv[3].split("-"))
-                k_es = tuple(sys.argv[4].split("-"))
-
-        if typecalc == "converge_ki" and len(sys.argv) != 6 :
-            print(''' Requires input for radius cutoff for ki (same for initial and final) in Angstrom; 
-                      a sc_key to control sc or uc case; 
-                      a Rmin to control the sc size. ''')
-            exit()
-        elif typecalc == "converge_ki" and len(sys.argv) == 6 :
-            if not sys.argv[3].isnumeric() or float(sys.argv[3]) <= 0:
-                print("radius can only accept positive numbers")
-                exit()
-            else:
-                radius = float(sys.argv[3])
-                sc_key = True
-                if sys.argv[4].lower().startswith('f'):
-                    sc_key = False
-                rmin = float(sys.argv[5])
-
-    # Your hashe materials project key needs to be in a file called mp.key
-    mpkey_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "mp.key")
-    with open(mpkey_fn, 'r' ) as f:
-        mpkey = f.read()
-        mpkey = mpkey.strip()
-
-    # MP api handler
-    #print( str(mpkey) )
-    mp = MPRester( str(mpkey) )
-    # test
-    #mpid = sys.argv[1]
-    st = mp.get_structure_by_material_id(mpid, conventional_unit_cell=False)
-    st_dict = st.as_dict().copy()
-    st_dict["download_at"] = time.ctime()
-    st_dict["created_at"] = mp.get_doc(mpid)["created_at"]
+    # get structure from Materials Project 
+    mpr = setMPR()
+    st, st_dict = get_structure(mpid)
     if typecalc == "single":
         json_dir = "data"
         for spec_type in ["XS", "OCEAN", "EXCITING"]:
-            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json"
-            if not os.path.exists(os.path.dirname(json_fn)):
-                os.makedirs(os.path.dirname(json_fn))
-            with open(json_fn, 'w') as f:
-                json.dump(st_dict, f, indent=4, sort_keys=True)
-    elif typecalc == "converge_kf":
-        json_dir = "data_converge_kf_uc"
-        if sc_key:
-            json_dir = "data_converge_kf_sc"
-        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
-        for spec_type in ["XS"]: 
-            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
-            if not os.path.exists(os.path.dirname(json_fn)):
-                os.makedirs(os.path.dirname(json_fn))
-            with open(json_fn, 'w') as f:
-                json.dump(st_dict, f, indent=4, sort_keys=True)
-    elif typecalc == "converge_e": 
-        json_dir = "data_converge_ecut"
-        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
-        for spec_type in ["XS"]: 
-            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
-            if not os.path.exists(os.path.dirname(json_fn)):
-                os.makedirs(os.path.dirname(json_fn))
-            with open(json_fn, 'w') as f:
-                json.dump(st_dict, f, indent=4, sort_keys=True)
-    elif typecalc == "converge_ki": 
-        json_dir = "data_converge_ki"
-        # right now converge only support XSpetra "OCEAN", "EXCITING" to be added
-        for spec_type in ["XS"]: 
-            json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/{mpid}.json"
-            if not os.path.exists(os.path.dirname(json_fn)):
-                os.makedirs(os.path.dirname(json_fn))
+            json_fn = Path(f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json") 
+            if not Path.exists(json_fn.parent):
+                Path.mkdir(json_fn.parent, parents=True, exist_ok=True)
             with open(json_fn, 'w') as f:
                 json.dump(st_dict, f, indent=4, sort_keys=True)
 
-    #unitC = ase.get_atoms(st)
-
-    data = mp.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
-    print( data[0] )
-
-    #cBands = getCondBands( unitC.get_volume(), 2.25 )
-    cBands = getCondBands( st.lattice.volume, 2.25 )
+    data = mpr.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
+    cBands = getCondBands( st.lattice.volume, 2.25 ) 
     params = dict(defaultConvPerAtom=1E-10, photonOrder=6, conductionBands=cBands)
 
     ## Update OCEAN dielectric constant with calculated value or band_gap inverse-like
@@ -173,75 +69,21 @@ def main():
         else:
             params['diemac'] = 1000000
         print(params['diemac'])
-    
 
-    # Grab and parse k-point information
-    # FC added: this part can be done by using MPStaticSet 
-    #           in case there is no taskid for some materials
-    # TODO error checking
- #   try:
- #       taskid = mp.query( criteria = {'task_id': mpid}, properties =
- #               ['blessed_tasks'])[0]['blessed_tasks']['GGA Static']
- #   except Exception as e:
- #       print(e)
- #       print( "Failed to get task id\nStopping\n")
- #       exit()
- #   try:
- #       data = mp.get_task_data( taskid, prop="kpoints" )
- #   except Exception as e:
- #       print(e)
- #       print( "Failed to get kpoints data\nStopping\n" )
- #
- #   # If MP data set is incomplete, fail gracefully
- #   if 'kpoints' not in data[0]:
- #       print( "Failed to get kpoints from task id :", taskid )
- #       exit()
- #
- #   # Returns a vasp kpoint object, so we need to convert to a dict
- #   kpointDict  = data[0]['kpoints'].as_dict()
- #
- #   # We'll need to figure out the other types of grids, I thought I also saw Gamma
- #   #if kpointDict['generation_style'] != 'Monkhorst' :
- #   #    print( "Requires Monkhorst scheme" )
- #   #    exit()
- #
- #   kpoints = kpointDict['kpoints'][0]
- #   koffset = kpointDict['usershift']
-
-    # this is the default settings for the static calculation on MP
-    static_set = MPStaticSet(st)
-    kpoints = static_set.kpoints.kpts[0]
+    # get k-points using 45 Bohr threshold
+    # valid for unitcell calculations, e.g. OCEAN, EXCITING
+    kpoints = find_kpts(st)
     koffset = [0.0, 0.0, 0.0]
-    
-
-
-    # Make sure k-point grid is reasonable
-    if kpoints[0]*kpoints[1]*kpoints[2] < 1 or kpoints[0]*kpoints[1]*kpoints[2] > 1000000 :
-        print( "Bad k-point grid! ", kpoints )
-        exit()
-
     params['scf.kpoints'] = kpoints
-
 
     ## Add absorbing species and edge to parameters
     params['species']='Ti'
     params['edge']='K'
 
-
     if typecalc == "single":
-
-        makeXspectra( mpid, st, params )
-
+        makeXspectra( mpid, ase.get_atoms(st), params )
         makeOcean( mpid, st, params )
-
         makeExcitingXAS( mpid, st, params )
-    elif typecalc == "converge_kf":
-        makeXspectraConv_kf(mpid, st, params, r_gs, r_es, sc_key, rmin) # how to transfer kpoints?
-    elif typecalc == "converge_e":
-        makeXspectraConv_ecut( mpid, st, params, k_gs, k_es )
-    elif typecalc == "converge_ki": 
-        ## need to think on how to do the convergence test for sc case since it is merged into the  makeXspectraConv_k
-        makeXspectraConv_ki( mpid, st, params, radius, sc_key, rmin )
 
 if __name__ == '__main__':
     main()

@@ -9,9 +9,8 @@ from pymatgen.core import Structure
 import os
 import sys
 from pymatgen.io.vasp.sets import MPStaticSet
-#from ase.units import Bohr
+from ase.units import Bohr
 
-Bohr = 0.52917721056384115
 def write_ocean_in( filename: str, structure: Structure, input_data: dict ):
 
     filename = os.path.expanduser(filename)
