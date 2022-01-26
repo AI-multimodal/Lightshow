@@ -7,16 +7,18 @@
 import json
 import sys
 import time
-import os, shutil
+import shutil
 
 from pymatgen.ext.matproj import MPRester
-from pymatgen.io.ase import AseAtomsAdaptor as ase
+#from pymatgen.io.ase import AseAtomsAdaptor as ase
+from pymatgen.io.pwscf import PWInput
+
 import xanes_bench
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
 from xanes_bench.utils import getCondBands, get_structure, setMPR, find_kpts
 
-from ase.atoms import Atoms
-from ase.io import write
+#from ase.atoms import Atoms
+#from ase.io import write
 
 from pathlib import Path
 #from os import environ as env
@@ -30,13 +32,13 @@ import numpy as np
 
 module_path = Path(xanes_bench.__path__[0])
 
-def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
+def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
     ''' construct QE input files
         
         Parameters
         ----------
-        unitC : mandatory
-        st : 
+        unitC : mandatory !! need remove
+        st : pymatgen.core.Structure, mandatory
         folder : 
         qe_fn : 
         pspName : 
@@ -52,19 +54,19 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
-    symbols = unitC.get_chemical_symbols()
+#    symbols = unitC.get_chemical_symbols()
+    symbols = [str(i).split()[-1] for i in st.species]
 
     qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
     qeJSON['QE']['control']['pseudo_dir'] = "../"
 
-    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + ".json" )
+    psp_fn = module_path / "pseudos" / "data" / Path(pspName + ".json")
     with open (psp_fn, 'r' ) as pspDatabaseFile:
         pspDatabase = json.load( pspDatabaseFile )
     
-    psp_fn = os.path.join(module_path, "pseudos", "data", pspName + "_pseudos.json")
+    psp_fn = module_path / "pseudos" / "data" / Path(pspName + "_pseudos.json")
     with open ( psp_fn, 'r' ) as pspDatabaseFile:
         pspFullData = json.load( pspDatabaseFile )
-
 
     psp = dict()
     minSymbols = set( symbols )
@@ -88,11 +90,9 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
         print( 'Expected hash:  ' + pspDatabase[symbol]['md5'] )
         print( 'Resultant hash: ' + hashlib.md5( pspString ).hexdigest() )
 
-
-        fileName = os.path.join( folder, "..", pspDatabase[ symbol ]['filename'] )
+        fileName = Path(folder) / ".." / pspDatabase[ symbol ]['filename']
         with open( fileName, 'w' ) as f:
             f.write( pspString.decode("utf-8") )
-
 
     nelectron = 0
     for symbol in symbols:
@@ -103,10 +103,15 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 
     # Write SCF input
     try:
-        write(str(folder / "scf.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+        scf_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_grid=kpoints)
+        scf_in.write_file(str(folder / "scf.in"))
+
+#        write(str(folder / "scf.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write scf.in")
 
 
@@ -123,10 +128,15 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 #    qeJSON['QE']['electrons']['conv_thr'] = 0.01
 
     try:
-        write(str(folder / "nscf.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
+        nscf_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_grid=kpoints)
+        nscf_in.write_file(str(folder / "nscf.in"))
+
+#        write(str(folder / "nscf.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf.in")
 
 
@@ -136,14 +146,19 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
     #TODO This is a hack to get around lack of k-path support
     ## We don't pass a kpoint spec which should give us "K_POINTS gamma"
     try:
-        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
-            input_data=qeJSON['QE'], pseudopotentials=psp )
+        nscftmp_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_mode='gamma', kpoints_grid=[], kpoints_shift=[])
+        nscftmp_in.write_file(str(folder / "nscf_tmp.in"))
+
+#        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
+#            input_data=qeJSON['QE'], pseudopotentials=psp )
     except:
-        print(qeJSON['QE'], unitC, psp)
+        print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf_temp.in")
 
     ## Now, slurp in entire file and get rid of K_POINT
-    with open ( str(folder / "nscf_temp.in"), 'r' ) as f:
+    with open ( str(folder / "nscf_tmp.in"), 'r' ) as f:
         NSCFtemp = re.sub('K_POINTS\s+gamma', '', f.read(), flags=re.IGNORECASE)
 
     ## Now do k-path
@@ -169,7 +184,7 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
 
     # Loop over the separate paths
     for i in range(len(kpath.kpath['path'])):
-        KString = "K_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
+        KString = "\nK_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
@@ -233,16 +248,16 @@ def main():
 
     json_dir = "data"
     for spec_type in ["XS", "OCEAN", "EXCITING"]:
-        json_fn = f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json"
-        if not os.path.exists(os.path.dirname(json_fn)):
-            os.makedirs(os.path.dirname(json_fn))
+        json_fn = Path(f"{json_dir}/mp_structures/{mpid}/{spec_type}/groundState/{mpid}.json")
+        if not Path.exists(json_fn.parent):
+                Path.mkdir(json_fn.parent, parents=True, exist_ok=True)
         with open(json_fn, 'w') as f:
             json.dump(st_dict, f, indent=4, sort_keys=True)
     # convert to pymatgen.core.Structure
-    unitC = ase.get_atoms(st) 
+#    unitC = ase.get_atoms(st) 
     
-    NSCFBands = getCondBands( unitC.get_volume(), 3.5 )
-    conductionBands = getCondBands( unitC.get_volume(), 1.5 )
+    NSCFBands = getCondBands( st.lattice.volume, 3.5 )
+    conductionBands = getCondBands( st.lattice.volume, 1.5 )
     print( "Conduction bands: ", NSCFBands, conductionBands )
     
     kpoints = find_kpts(st)
@@ -257,13 +272,12 @@ def main():
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
     ## TODO: change to PWInput from pymatgen
-    writeQE( unitC, st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
-
+    writeQE( st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
 
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / "groundState" 
     subdir.mkdir(parents=True, exist_ok=True)
     ## TODO: change to PWInput from pymatgen
-    writeQE( unitC, st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
+    writeQE( st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
 
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
