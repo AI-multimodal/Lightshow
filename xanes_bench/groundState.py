@@ -135,19 +135,6 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
     # Now we want the band struture version
     #TODO revist number of bands?
     #TODO This is a hack to get around lack of k-path support
-    try:
-        nscftmp_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
-                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
-                    kpoints_mode='gamma', kpoints_grid=[], kpoints_shift=[])
-        nscftmp_in.write_file(str(folder / "nscf_tmp.in"))
-    except:
-        print(qeJSON['QE'], st, psp)
-        raise Exception("FAILED while trying to write nscf_temp.in")
-
-    ## Now, slurp in entire file and get rid of K_POINT
-    with open ( str(folder / "nscf_tmp.in"), 'r' ) as f:
-        NSCFtemp = re.sub('K_POINTS\s+gamma', '', f.read(), flags=re.IGNORECASE)
-
     ## Now do k-path
     qeJSON['QE']['control']['calculation'] = 'bands'
     ## Might have multiple k-point paths, best to break them into separate files
@@ -171,7 +158,7 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
 
     # Loop over the separate paths
     for i in range(len(kpath.kpath['path'])):
-        KString = "\nK_POINTS crystal_b\n%i\n" % len(kpath.kpath['path'][i])
+        KList = [str(len(kpath.kpath['path'][i])) + '\n']
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
@@ -184,25 +171,27 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
             cart = np.dot( bMatrix, coords )
             dist = np.linalg.norm(cart-prevCart)
             kpointCount.append( int( dist/targetKpointSpacing ) )
-    #        prevCoords = coords
             prevCart = cart
             totKpointCount += int( dist/targetKpointSpacing )
 
         kpointCount.append( int(1) )
-#        print( totKpointCount )
-#        print( len(kpath.kpath['path'][i]) )
 
         for j in range(len(kpath.kpath['path'][i])):
             symbol = kpath.kpath['path'][i][j]
             coords = kpath.kpath['kpoints'][symbol]
-#            print( "%16.12f %16.12f %16.12f %i" % (coords[0],coords[1],coords[2],kpointCount[j]) )
-            KString += "%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j])
+            KList.append("%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j]))
 
-#        print( "  " )
-
-        with open ( str(folder / "nscf_band" ) + ".%i.in" % (i+1), 'w' ) as f:
-            f.write( NSCFtemp )
-            f.write( KString )
+       # with open ( str(folder / "nscf_band" ) + ".%i.in" % (i+1), 'w' ) as f:
+       #     f.write( NSCFtemp )
+       #     f.write( KString )
+        try:
+            nscftmp_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
+                    system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
+                    kpoints_mode='crystal_b', kpoints_grid=KList, kpoints_shift=[])
+            nscftmp_in.write_file(str(folder / "nscf_band" ) + ".%i.in" % (i+1))
+        except:
+            print(qeJSON['QE'], st, psp)
+            raise Exception("FAILED while trying to write nscf_temp.in")
 
 
     #TODO move these options to the json
