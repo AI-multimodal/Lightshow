@@ -1,4 +1,7 @@
 # This is a simple tool to compare to plots
+# Fanchen Meng, 2022
+# FC TODO 1. paser for different codes
+#         2. compatible with convergece
 
 import numpy as np
 from scipy import interpolate
