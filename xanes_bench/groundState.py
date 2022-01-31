@@ -37,15 +37,17 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
         
         Parameters
         ----------
-        unitC : mandatory !! need remove
         st : pymatgen.core.Structure, mandatory
-        folder : 
-        qe_fn : 
-        pspName : 
-        params : 
-        NSCFBands : 
-        conductionBands : 
-        kpoints : 
+            structure data
+        folder : pathlib.Path, mandatory
+            folder to save the input files
+        qe_fn : pathlib.Path, mandatory
+            file to save metadata
+        pspName : str, mandatory
+        params : dict, mandatory 
+        NSCFBands : int, mandatory
+        conductionBands : int, mandatory
+        kpoints : list, mandatory
 
         Returns
         -------
@@ -54,7 +56,6 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
-#    symbols = unitC.get_chemical_symbols()
     symbols = [str(i).split()[-1] for i in st.species]
 
     qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
@@ -107,14 +108,9 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
                     system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
                     kpoints_grid=kpoints)
         scf_in.write_file(str(folder / "scf.in"))
-
-#        write(str(folder / "scf.in"), unitC, format='espresso-in',
-#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write scf.in")
-
-
 
     # Write NSCF input for DOS (regular k-point mesh)
     qeJSON['QE']['system']['nbnd'] = round( nelectron/2 + NSCFBands )
@@ -124,17 +120,12 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
     qeJSON['QE']['electrons']['diago_full_acc'] = True
 #   # This is new option as of 6.6, but should failsafe to default in earlier
     qeJSON['QE']['control']['disk_io'] = 'nowf'
-#    qeJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols ) * 100000000
-#    qeJSON['QE']['electrons']['conv_thr'] = 0.01
 
     try:
         nscf_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
                     system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
                     kpoints_grid=kpoints)
         nscf_in.write_file(str(folder / "nscf.in"))
-
-#        write(str(folder / "nscf.in"), unitC, format='espresso-in',
-#            input_data=qeJSON['QE'], pseudopotentials=psp, kpts=kpoints)
     except:
         print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf.in")
@@ -144,15 +135,11 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
     # Now we want the band struture version
     #TODO revist number of bands?
     #TODO This is a hack to get around lack of k-path support
-    ## We don't pass a kpoint spec which should give us "K_POINTS gamma"
     try:
         nscftmp_in = PWInput(st, pseudo=psp, control=qeJSON['QE']['control'],
                     system=qeJSON['QE']['system'], electrons=qeJSON['QE']['electrons'],
                     kpoints_mode='gamma', kpoints_grid=[], kpoints_shift=[])
         nscftmp_in.write_file(str(folder / "nscf_tmp.in"))
-
-#        write(str(folder / "nscf_temp.in"), unitC, format='espresso-in',
-#            input_data=qeJSON['QE'], pseudopotentials=psp )
     except:
         print(qeJSON['QE'], st, psp)
         raise Exception("FAILED while trying to write nscf_temp.in")
@@ -222,11 +209,6 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
     with open ( str( folder / "dos.in") , 'w' ) as f:
         f.write("&DOS\n  outdir = './'\n  prefix = 'nscf'\n  fildos = 'nscf.dos'\n  degauss = 0.018374661087827\n  deltaE = 0.02\n/\n")
     
-
-
-
-
-    
 def main():
 
     # The script takes a single, positive integer to grab a system from materials project
@@ -240,9 +222,7 @@ def main():
     params = dict(defaultConvPerAtom=1E-10)
 
     # put in psp database handle here
-
-    # Your hashed materials project key needs to be in a file called mp.key
-    ## get material's structure and metadata
+    # get material's structure and metadata
     mpr = setMPR()
     st, st_dict = get_structure(mpid)
 
@@ -259,7 +239,8 @@ def main():
     NSCFBands = getCondBands( st.lattice.volume, 3.5 )
     conductionBands = getCondBands( st.lattice.volume, 1.5 )
     print( "Conduction bands: ", NSCFBands, conductionBands )
-    
+
+    # use 45 rule for now
     kpoints = find_kpts(st)
     koffset = [0, 0, 0]
 
@@ -271,12 +252,10 @@ def main():
     # subdir says where to put the input and psps 
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / "groundState"
     subdir.mkdir(parents=True, exist_ok=True)
-    ## TODO: change to PWInput from pymatgen
     writeQE( st, subdir , qe_fn, 'SSSP_precision', params, NSCFBands, conductionBands, kpoints )
 
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / "groundState" 
     subdir.mkdir(parents=True, exist_ok=True)
-    ## TODO: change to PWInput from pymatgen
     writeQE( st, subdir , qe_fn, 'PD_stringent', params, NSCFBands, conductionBands, kpoints )
 
     subdir = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "groundState"
