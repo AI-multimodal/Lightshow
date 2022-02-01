@@ -89,8 +89,8 @@ def returnKgridList( unitC: Structure, maxLen=53.0 ):
         kpt[3] = klen
         kglist.append( kpt.copy() )
 
-    for i in kglist:
-        print(i)
+#    for i in kglist:
+#        print(i)
 
     return kglist
 

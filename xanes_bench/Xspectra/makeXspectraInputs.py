@@ -178,7 +178,6 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
 
     if params['scf.kpoints'] is not None:
         xs_kpoints = params['scf.kpoints']
-
     xsJSON['XS']['kpts']['kpts'] = f"{xs_kpoints[0]} {xs_kpoints[1]} {xs_kpoints[2]}"
 
     us = {}
@@ -212,10 +211,12 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
                 us[i] = 1
     # get element symbols
     symbols = [str(i).split()[-1] for i in unitCell.species]
-
+    
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    folder = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / \
+    json_dir = params['json_dir']
+
+    folder = Path.cwd() / json_dir / "mp_structures" / mpid / "XS" / \
             Path(f"Spectra-{xs_kpoints[0]}-{xs_kpoints[1]}-{xs_kpoints[2]}")
     folder.mkdir(parents=True, exist_ok=True)
     printKgrid( unitCell, folder )

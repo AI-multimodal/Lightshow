@@ -57,8 +57,8 @@ def makeOcean( mpid, structure: Structure, params: dict ):
 #    Right now we'll just calculate every atom for ocean instead of just the symmetry ones
     symbols = [str(i).split()[-1] for i in structure.species]
     oceanJSON['toldfe'] = params['defaultConvPerAtom'] * len( symbols )
-    
-    folder = Path.cwd() / "data" / "mp_structures" / mpid / "OCEAN" / \
+    json_dir = params['json_dir']
+    folder = Path.cwd() / json_dir / "mp_structures" / mpid / "OCEAN" / \
             Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}")
     folder.mkdir(parents=True, exist_ok=True)
     printKgrid( structure, folder )
