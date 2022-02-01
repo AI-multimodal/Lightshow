@@ -256,7 +256,7 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
             if prev is not None:
                 unitCell[prev] = 'Ti'
 
-            unitCell[i] = 'Ti1'
+            unitCell[i] = 'Ti+'
             prev = i
 
             subfolder = folder / str(i)
@@ -267,7 +267,7 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
                           system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                           kpoints_grid=kpoints)
             es_in.write_file(str(subfolder / "es.in"))
-
+            unitCell[i] = 'Ti'
             # OCEAN photon labeling is continuous, so we will do that here too
             #  not sure that we will actually want dipole-only spectra(?)
             totalweight = 0
