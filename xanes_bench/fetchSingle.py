@@ -10,6 +10,7 @@ from pathlib import Path
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
 from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
+from xanes_bench.General.kden import returnKpoint
 from xanes_bench.utils import * # TODO
 import xanes_bench
 
@@ -73,6 +74,9 @@ def main():
     # get k-points using 45 Bohr threshold
     # valid for unitcell calculations, e.g. OCEAN, EXCITING
     kpoints = find_kpts(st)
+    print(kpoints)
+    kpoints = returnKpoint(st, 24)
+    print(kpoints)
     koffset = [0.0, 0.0, 0.0]
     params['scf.kpoints'] = kpoints
 
