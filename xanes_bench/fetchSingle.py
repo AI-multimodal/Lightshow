@@ -113,7 +113,7 @@ def main():
         st = build_supercell(ase.get_atoms(st))
         klist = returnKgridList(st, 35)
         for k in klist:
-            kpoints = k[0:3]
+            kpoints = k[0:3] # k[3] is the klen, can be used to control the delta
             params['scf.kpoints'] = kpoints
             makeXspectra( mpid, st, params )
 
