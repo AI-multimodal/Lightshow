@@ -83,7 +83,8 @@ def makeExcitingXAS( mpid, structure: Structure, params: dict ):
 
 
     # generate filepath
-    folder = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "Spectra"
+    folder = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / \
+             Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}")
     folder.mkdir(parents=True, exist_ok=True)
     
     # write input file for XAS calculation
