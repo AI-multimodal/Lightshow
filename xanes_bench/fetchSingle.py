@@ -12,6 +12,7 @@ from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
 from xanes_bench.General.kden import returnKpoint
 from xanes_bench.utils import * # TODO
+from xanes_bench.Xspectra.preprocessing import build_supercell
 import xanes_bench
 
 from pymatgen.io.ase import AseAtomsAdaptor as ase
@@ -43,12 +44,11 @@ def main():
     st, st_dict = get_structure(mpid)
     if typecalc == "single":
         json_dir = "data"
-        for spec_type in ["XS", "OCEAN", "EXCITING"]:
-            json_fn = Path(f"{json_dir}/mp_structures/{mpid}/{spec_type}/Spectra/{mpid}.json") 
-            if not Path.exists(json_fn.parent):
-                Path.mkdir(json_fn.parent, parents=True, exist_ok=True)
-            with open(json_fn, 'w') as f:
-                json.dump(st_dict, f, indent=4, sort_keys=True)
+        json_fn = Path(f"{json_dir}/mp_structures/{mpid}/{mpid}.json") 
+        if not Path.exists(json_fn.parent):
+            Path.mkdir(json_fn.parent, parents=True, exist_ok=True)
+        with open(json_fn, 'w') as f:
+            json.dump(st_dict, f, indent=4, sort_keys=True)
 
     data = mpr.query(criteria={"task_id": mpid}, properties=["diel","band_gap"])
     cBands = getCondBands( st.lattice.volume, 2.25 ) 
@@ -73,10 +73,7 @@ def main():
 
     # get k-points using 45 Bohr threshold
     # valid for unitcell calculations, e.g. OCEAN, EXCITING
-    kpoints = find_kpts(st)
-    print(kpoints)
-    kpoints = returnKpoint(st, 24)
-    print(kpoints)
+    kpoints = returnKpoint(st, 23.813) # 23.813 A = 45 Bohr
     koffset = [0.0, 0.0, 0.0]
     params['scf.kpoints'] = kpoints
 
@@ -84,10 +81,15 @@ def main():
     params['species']='Ti'
     params['edge']='K'
 
+
     if typecalc == "single":
-        makeXspectra( mpid, ase.get_atoms(st), params )
         makeOcean( mpid, st, params )
         makeExcitingXAS( mpid, st, params )
+        # build supercell for xspectra here
+        st = build_supercell(ase.get_atoms(st))
+        kpoints = returnKpoint(st, 23.813)
+        params['scf.kpoints'] = kpoints
+        makeXspectra( mpid, st, params )
 
 if __name__ == '__main__':
     main()
