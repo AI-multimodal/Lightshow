@@ -83,9 +83,6 @@ def main():
 
     # get k-points using 45 Bohr threshold
     # valid for unitcell calculations, e.g. OCEAN, EXCITING
-    kpoints = returnKpoint(st, 23.813) # 23.813 Ang = 45 Bohr
-    koffset = [0.0, 0.0, 0.0]
-    params['scf.kpoints'] = kpoints
 
     ## Add absorbing species and edge to parameters
     params['species']='Ti'
@@ -93,10 +90,17 @@ def main():
 
 
     if typecalc == "single":
+        # OCEAN
+        kpoints = returnKpoint(st, 17) # 17 Ang = 32.125 Bohr
+        koffset = [0.0, 0.0, 0.0]
+        params['scf.kpoints'] = kpoints
         makeOcean( mpid, st, params )
         folder = Path(f"{json_dir}/mp_structures/{mpid}/OCEAN")
         printKgrid( st, folder )
-
+        # EXCITING
+        kpoints = returnKpoint(st, 23.813) # 23.813 Ang = 45 Bohr
+        koffset = [0.0, 0.0, 0.0]
+        params['scf.kpoints'] = kpoints
         makeExcitingXAS( mpid, st, params )
         folder = Path(f"{json_dir}/mp_structures/{mpid}/EXCITING")
         printKgrid( st, folder )
@@ -111,7 +115,7 @@ def main():
 
     if typecalc == "converge":
         # for OCEAN and EXCITING
-        klist = returnKgridList(st, 35) # 50 in Ang
+        klist = returnKgridList(st, 30) # 55 in Bohr
 
         for k in klist:
             kpoints = k[0:3]
@@ -127,7 +131,7 @@ def main():
         # for XSpectra
         st = build_supercell(ase.get_atoms(st))
 
-        klist = returnKgridList(st, 35)
+        klist = returnKgridList(st, 45) # 85 in Bohr
         for k in klist:
             kpoints = k[0:3] # k[3] is the klen, can be used to control the delta
             params['scf.kpoints'] = kpoints
