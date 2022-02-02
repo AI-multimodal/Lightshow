@@ -112,10 +112,6 @@ def main():
     if typecalc == "converge":
         # for OCEAN and EXCITING
         klist = returnKgridList(st, 35) # 50 in Ang
-        folder = Path(f"{json_dir}/mp_structures/{mpid}/OCEAN")
-        printKgrid( st, folder )
-        folder = Path(f"{json_dir}/mp_structures/{mpid}/EXCITING")
-        printKgrid( st, folder )
 
         for k in klist:
             kpoints = k[0:3]
@@ -123,16 +119,21 @@ def main():
             makeOcean( mpid, st, params )
             makeExcitingXAS( mpid, st, params )
 
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/OCEAN")
+        printKgrid( st, folder )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/EXCITING")
+        printKgrid( st, folder )
+
         # for XSpectra
         st = build_supercell(ase.get_atoms(st))
-        folder = Path(f"{json_dir}/mp_structures/{mpid}/XS")
-        printKgrid( st, folder )
 
         klist = returnKgridList(st, 35)
         for k in klist:
             kpoints = k[0:3] # k[3] is the klen, can be used to control the delta
             params['scf.kpoints'] = kpoints
             makeXspectra( mpid, st, params )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/XS")
+        printKgrid( st, folder )
 
 if __name__ == '__main__':
     main()
