@@ -2,14 +2,15 @@
 """
 
 #from ase.atoms import Atoms
+from pathlib import Path
 from pymatgen.core import Structure
 from ase.units import Bohr
 from math import pi
 import numpy as np
 
-def printKgrid( unitC: Structure, folder: str ):
+def printKgrid( unitC: Structure, folder: Path ):
 
-    fd = open (str(folder / 'k.txt'), 'w') 
+    fd = open (folder / 'k.txt', 'w') 
 #    recip = atoms.cell.reciprocal().lengths()
 
     #vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
@@ -94,9 +95,9 @@ def returnKgridList( unitC: Structure, maxLen=53.0 ):
 
     return kglist
 
-def readKgrid( folder: str ):
+def readKgrid( folder: Path ):
     klist={}
-    with open (str(folder / 'k.txt'), 'r') as fd:
+    with open (folder / 'k.txt', 'r') as fd:
         for line in fd.readlines():
             kx,ky,kz= line.split()[0:3]
             if not kx.isnumeric():

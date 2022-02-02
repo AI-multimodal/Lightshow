@@ -10,7 +10,7 @@ from pathlib import Path
 from xanes_bench.OCEAN.makeOceanInputs import makeOcean
 from xanes_bench.Xspectra.makeXspectraInputs import makeXspectra
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingXAS
-from xanes_bench.General.kden import returnKpoint, returnKgridList
+from xanes_bench.General.kden import returnKpoint, returnKgridList, printKgrid
 from xanes_bench.utils import * # TODO
 from xanes_bench.Xspectra.preprocessing import build_supercell
 import xanes_bench
@@ -94,15 +94,29 @@ def main():
 
     if typecalc == "single":
         makeOcean( mpid, st, params )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/OCEAN")
+        printKgrid( st, folder )
+
         makeExcitingXAS( mpid, st, params )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/EXCITING")
+        printKgrid( st, folder )
+
         # build supercell for xspectra here
         st = build_supercell(ase.get_atoms(st))
         kpoints = returnKpoint(st, 23.813)
         params['scf.kpoints'] = kpoints
         makeXspectra( mpid, st, params )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/XS")
+        printKgrid( st, folder )
+
     if typecalc == "converge":
         # for OCEAN and EXCITING
         klist = returnKgridList(st, 35) # 50 in Ang
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/OCEAN")
+        printKgrid( st, folder )
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/EXCITING")
+        printKgrid( st, folder )
+
         for k in klist:
             kpoints = k[0:3]
             params['scf.kpoints'] = kpoints
@@ -111,6 +125,9 @@ def main():
 
         # for XSpectra
         st = build_supercell(ase.get_atoms(st))
+        folder = Path(f"{json_dir}/mp_structures/{mpid}/XS")
+        printKgrid( st, folder )
+
         klist = returnKgridList(st, 35)
         for k in klist:
             kpoints = k[0:3] # k[3] is the klen, can be used to control the delta
