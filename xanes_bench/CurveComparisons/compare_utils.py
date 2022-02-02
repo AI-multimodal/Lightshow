@@ -583,186 +583,109 @@ def makeInterpolateWithWindow( plot, doWindow ):
     return plot[0:windowStop,:], interpolate.interp1d( plot[0:windowStop,0], plot[0:windowStop,1], 
                                                        assume_sorted=True, kind='cubic', bounds_error=False )
 
-    
-
-# Takes a list of two files, assumes both files are formated with two columns 
-# compares the two datasets using cosineSimilarity
-#
-# saveFiles: list of files to read
-# shiftAvg: Option to shift the y-values of each data set such that the average value is 0
-#
-#TODO: 
-#  1. Column flexibility, e.g., 1:3 [(0,2)]
-#  2. Different comparison methods
-#  3. Default shift for the search
-#
-def comparePlots( p1, p2, window=False, radius=0 ):
+def comparePlots( omega,p1, p2, window=False, inverse=False):
 
     plot1, interp1 = makeInterpolateWithWindow( p1, window )
     plot2, interp2 = makeInterpolateWithWindow( p2, window )
+    pearson = PearsonCoeff( omega, plot1, plot2, interp1, interp2, inverse )
+    spearman = SpearmanCoeff( omega, plot1, plot2, interp1, interp2, inverse )
+    coss = CosSimilar( omega, plot1, plot2, interp1, interp2, True)
 
-    maxp1 = plot1[np.argmax( plot1[:,1] ), 0 ]
-    maxp2 = plot2[np.argmax( plot2[:,1] ), 0 ]
+    return pearson, spearman, coss
+    #print( "{:12f}  {:12f}  {:10f}  {:12.8f}  {:12.8f}  {:12.8f}  {:10f}".format( radius, omega, alpha, coss, pearson, spearman, relArea, ))
+
+def minCos(plot1, plot2, step=0.01):
+    # hard coded
+    # need to find a more robust way
+    start = 12
+    stop = -12
+
+    if start <= stop:
+        print('WARNING: Start {} is larger than stop {}]'.format(start, stop))
+        exit()
+    # 
+    pearson={}
+    spearman={}
+    coss = {}
+
+    i = start
+    while i > stop:
+        pearson[i],spearman[i],coss[i] = comparePlots(i, plot1, plot2)
+        i -=step
+
+    # find omega according to coss
+    m = 100
+    for i,j in coss.items():
+        if j < m:
+            m = j
+            m_ind = i
+
+    ## check if the gradient makes sense
+    gplot1 = np.vstack((plot1[:,0],np.gradient(plot1[:,1],plot1[1,0]-plot1[0,0]))).T
+    gplot2 = np.vstack((plot2[:,0],np.gradient(plot2[:,1],plot2[1,0]-plot2[0,0]))).T
     
-    omega = maxp1-maxp2
-
-    bounds = [ [ plot1[0,0] -plot2[-1,0], plot1[-1,0]-plot2[0,0] ] ]
-    res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), 
-                    method='L-BFGS-B', bounds=bounds, options={'iprint':-1, 'eps': 1e-08 }, jac='3-point')
-    if not res.success:
-        res = minimize( CosSimilar, omega, args = ( plot1, plot2, interp1, interp2, True ), 
-                        method='Powell', bounds=bounds )
-    if not res.success:
-        print( "Optmizing energy shift failed" )
-        exit()
-
-    omega = res.x[0]
-    coss = 1-res.fun
-
-    pearson = PearsonCoeff( omega, plot1, plot2, interp1, interp2 )
-    spearman = SpearmanCoeff( omega, plot1, plot2, interp1, interp2 )
-
-    alpha = 1.0
-    res2 = minimize( RMSDcurves, alpha, args = ( res.x[0], plot1, plot2, interp1, interp2 ), 
-                     method='Nelder-Mead', options={'fatol': 1e-8})
-    if not res2.success:
-        print( "Optimizing RMSD scaling failed")
-        exit()
-
-    alpha = res2.x[0]
-    rmsd = res2.fun
-    relArea = 100*relAreaBetweenCurves( alpha, omega, plot1, plot2, interp1, interp2 )
-
-    print( "{:12f}  {:12f}  {:10f}  {:12.8f}  {:12.8f}  {:12.8f}  {:10f}".format( radius, omega, alpha, coss, pearson, spearman, relArea, ))
-
-
-def parseEXCITINGFile( string, polar ):
-    plot = None
-    for p in polar:
-        f = "EPSILON-{:s}/EPSILON_NAR_BSE-singlet-TDA-BAR_SCR-full_OC{:d}{:d}.OUT".format( string, p, p )
-        if os.path.isfile( f ):
-            if plot is None:
-                plot = np.loadtxt( f, skiprows=18, usecols=(0,2) )
-            else:
-                plot[:,1] += np.loadtxt( f, skiprows=18, usecols=(2) )
-        else:
-            return None
-
-    return plot
-
-
-def parseOCEANFile( site, polar, kpoint ):
-    plot = None
-    k = [ int(kpoint[0]), int(kpoint[1]), int(kpoint[2]) ]
-    for s in site:
-        for p in polar:
-            f = "CNBSE-{:d}.{:d}.{:d}/absspct_Ti.{:04d}_1s_{:02d}".format( k[0], k[1], k[2], s, p )
-            if os.path.isfile( f ):
-                if plot is None:
-                    plot = np.loadtxt( f, skiprows=2, usecols=(0,2) )
-                else:
-                    plot[:,1] += np.loadtxt( f, skiprows=2, usecols=(2) )
-            else:
-                return None
-
-    return plot
-
-def parseXSpectraFile( site, polar, kpoint ):
-    plot = None
-    k = [ int(kpoint[0]), int(kpoint[1]), int(kpoint[2]) ]
-    #TODO site support!!
-    # Need to build out support for *correctly* averaging over symmetry unique sites
-    # For now, 
-    for s in site:
-        for p in polar:
-            f = "Spectra-{:d}-{:d}-{:d}/{:d}/dipole{:d}/xanes.dat".format( k[0], k[1], k[2], s, p )
-            if os.path.isfile( f ):
-                if plot is None:
-                    plot = np.loadtxt( f, skiprows=4, usecols=(0,1) )
-                else:
-                    plot[:,1] += np.loadtxt( f, skiprows=4, usecols=(1) )
-            else:
-                return None
-
-    return plot
-        
-
-def parseFileK( program, site, polarization, kpoint ):
-    if program == 'O':
-        return parseOCEANFile( site, polarization, kpoint )
-    elif program == 'X':
-        return parseXSpectraFile( site, polarization, kpoint )
+    x1 = peak_loc(gplot1)
+    x2 = peak_loc(gplot2)
+    
+    if abs(x1 - m_ind - x2 ) < 1:
+        pass #return m_ind
     else:
-        return None
+        cossplot = np.vstack((list(coss.keys()),list(coss.values()))).T
+        for i in valley_loc(cossplot):
+            if abs(x1 - i - x2 ) < 1:
+                print('*',end='.')
+                m_ind = i
 
-def loadPlotsKpoints( program, site, polarization ):
+##     if m_ind == start :
+##         print('{} Start wrong!'.format(mpid))
+##     elif m_ind == stop:
+##         print('{} Stop wrong!'.format(mpid))
+        
+    return pearson, spearman, coss, m_ind 
 
-    plots = []
-    foundKpoints = []
+def peak_loc(plot):
+    ''' locate the peak positon of a spectrum
+        
+        Parameters
+        ----------
+        plot : 2d-array
 
-    kpointArray = np.loadtxt( '../k.txt', skiprows=1, usecols=(0,1,2,5) )
+        Returns
+        -------
+        position of the peak
+    '''
+    return plot[plot[:,1].argmax(),0]
 
-    for k in kpointArray:
-        p = parseFileK( program, site, polarization, k[0:3] )
-        if p is not None:
-            plots.append( p )
-            foundKpoints.append( k )
+def valley_loc(plot):
+    ''' locate the valley positions of a spectrum
 
-    return plots, foundKpoints
-
-
-# Given a string, find all the 
-def loadPlotsS( program, site, polarization, string ):
-    plots = []
-    foundParam = []
-    attemptParam = []
-
-    if program == 'E':
-        for d in os.listdir():
-            t = re.search( "EPSILON-" + string + "(\d+\.?\.*)", d )
-            if t:
-                attemptParam.append( t.group(1) )
-
-        for i in sorted( attemptParam ):
-            p = parseEXCITINGFile( string+i, polarization )
-            if p is not None:
-                plots.append( p )
-                # This hack is because the k-points have the length param as the 4th object in a list
-                foundParam.append( [0,0,0,float(i)])
-
-    return plots, foundParam
+        Parameters
+        ----------
+        plot : 2d-array
 
 
-def main():
+    '''
+    valley = []
+    valley_tmp = []
+    length = int(np.ceil(len(plot)/60))
+    for i in range(1,len(plot)-1):
+        if plot[i,1] - plot[i-1,1] < 0 and plot[i+1,1] - plot[i,1] > 0:
+            valley_tmp.append(i)
 
-    program = 'X'
-    method = 'K'
-    string = 'gk'
-#    site = [1,2,3,4,5,6,7,8]
-    site = [0]
-    polarization = [1,2,3]
+    for i in valley_tmp:
+        if i < length:
+            left = left = np.array(plot[0:i,1]).mean()
+        else:
+            left = np.array(plot[i-length:i,1]).mean()
 
-    if method == 'K':
-        plots, kpoints = loadPlotsKpoints( program, site, polarization )
-    elif method == 'S':
-        plots, kpoints = loadPlotsS( program, site, polarization, string )
-
-#    for k in kpoints:
-#        print( k )
-    print( "#i Largest k-point grid: ", kpoints[-1] )
-    if len(plots) < 2:
-        print( "Didn't find enough plots" )
-        exit()
-
-    # Radius is replaced with the param for non-kpoint runs
-    print( "#   Radius       Shift        Scale       CosSimilar  Pearson     Spearman   Rel Area" )
-    print( "#   (Bohr)       (eV)                                                          (%)" )
-    for i in range(len(plots)-1):
-        comparePlots( plots[-1], plots[i], True, kpoints[i][3] )
-
-    exit()
+        if i + length > len(plot):
+            right = np.array(plot[i+1:len(plot),1]).mean()
+        else:
+            right = np.array(plot[i+1:i+length,1]).mean()
 
 
-if __name__ == '__main__':
-    main()
+        if plot[i,1] < left and plot[i,1] < right:
+                valley.append(plot[i,0])
+    return valley
+
 
