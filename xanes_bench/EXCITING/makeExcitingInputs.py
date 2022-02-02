@@ -81,9 +81,10 @@ def makeExcitingXAS( mpid, structure: Structure, params: dict ):
             excitingxasJSON['xs']['BSE']['xasspecies']=str(i)
     
 
-
+    json_dir = params['json_dir']
     # generate filepath
-    folder = Path.cwd() / "data" / "mp_structures" / mpid / "EXCITING" / "Spectra"
+    folder = Path.cwd() / json_dir / "mp_structures" / mpid / "EXCITING" / \
+             Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}")
     folder.mkdir(parents=True, exist_ok=True)
     
     # write input file for XAS calculation

@@ -24,27 +24,6 @@ from collections import OrderedDict
 
 module_path = Path(xanes_bench.Xspectra.__path__[0])
 
-def smaller(atoms: Atoms, Rmin=9.0):
-    ''' Build the supercell
-    
-        Parameters
-        ----------
-        atoms : structure in ase.atom format
-        Rmin : float, optional
-            the desired minimum lattice constant
-
-        Returns
-        -------
-        pymatgen.core.Structure
-    '''
-    prim =  atoms * ((Rmin / np.linalg.norm(atoms.cell, axis=1)).astype(int) + 1)
-    lat, pos, Z = spglib.standardize_cell((atoms.get_cell(),
-                                           atoms.get_scaled_positions(),
-                                           atoms.get_atomic_numbers()))
-    conv = Atoms(Z, cell=lat, positions=pos@lat, pbc=True)
-    conv = conv * ((Rmin / np.linalg.norm(conv.cell, axis=1)).astype(int) + 1)
-    return ase.get_structure(conv) if len(conv) <= len(prim) else ase.get_structure(prim)
-
 def ortho(lat, i, j):
     o = np.linalg.solve(lat.T, np.cross(lat[i], lat[j]))
     return tuple(o / np.linalg.norm(o))
@@ -171,7 +150,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
             XSparams['kpts']['kpts'] + " " + XSparams['kpts']['shift'] ]
     return '\n'.join(inp) + '\n'
 
-def makeXspectra( mpid, structure: Atoms, params: dict ):
+def makeXspectra( mpid, unitCell: Structure, params: dict ):
     ''' build the input files for the XSpectra workflow.
         
         Parameters
@@ -189,15 +168,16 @@ def makeXspectra( mpid, structure: Atoms, params: dict ):
     # target element
     symTarg = xsJSON['XS_controls']['element']
     # build supercell | convert to pymatgen.
-    unitCell = smaller( structure, Rmin=float(xsJSON['XS_controls']['Rmin']) )
+    #unitCell = smaller( structure, Rmin=float(xsJSON['XS_controls']['Rmin']) )
 
     if float(xsJSON['XS_controls']['Rmin']) >= 9:
         # use Gamma point for ground state calculations (es.in and gs.in)
         kpoints = [1,1,1]
     else:
         kpoints = find_kpts(unitCell)
-    xs_kpoints = find_kpts(unitCell)
 
+    if params['scf.kpoints'] is not None:
+        xs_kpoints = params['scf.kpoints']
     xsJSON['XS']['kpts']['kpts'] = f"{xs_kpoints[0]} {xs_kpoints[1]} {xs_kpoints[2]}"
 
     us = {}
@@ -231,12 +211,14 @@ def makeXspectra( mpid, structure: Atoms, params: dict ):
                 us[i] = 1
     # get element symbols
     symbols = [str(i).split()[-1] for i in unitCell.species]
-
+    
     xsJSON['QE']['electrons']['conv_thr'] = params['defaultConvPerAtom'] * len( symbols )
 
-    folder = Path.cwd() / "data" / "mp_structures" / mpid / "XS" / "Spectra"
+    json_dir = params['json_dir']
+
+    folder = Path.cwd() / json_dir / "mp_structures" / mpid / "XS" / \
+            Path(f"Spectra-{xs_kpoints[0]}-{xs_kpoints[1]}-{xs_kpoints[2]}")
     folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( unitCell, folder )
 
     pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
     DatabaseDir = module_path / '..' / 'pseudos' / 'data' 
@@ -273,7 +255,7 @@ def makeXspectra( mpid, structure: Atoms, params: dict ):
             if prev is not None:
                 unitCell[prev] = 'Ti'
 
-            unitCell[i] = 'Ti1'
+            unitCell[i] = 'Ti+'
             prev = i
 
             subfolder = folder / str(i)
@@ -284,7 +266,7 @@ def makeXspectra( mpid, structure: Atoms, params: dict ):
                           system=xsJSON['QE']['system'], electrons=xsJSON['QE']['electrons'],
                           kpoints_grid=kpoints)
             es_in.write_file(str(subfolder / "es.in"))
-
+            unitCell[i] = 'Ti'
             # OCEAN photon labeling is continuous, so we will do that here too
             #  not sure that we will actually want dipole-only spectra(?)
             totalweight = 0
