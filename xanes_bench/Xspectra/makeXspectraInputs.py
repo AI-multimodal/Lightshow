@@ -219,7 +219,6 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
     folder = Path.cwd() / json_dir / "mp_structures" / mpid / "XS" / \
             Path(f"Spectra-{xs_kpoints[0]}-{xs_kpoints[1]}-{xs_kpoints[2]}")
     folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( unitCell, folder )
 
     pspDatabaseRoot = xsJSON['XS_controls']['psp_json']
     DatabaseDir = module_path / '..' / 'pseudos' / 'data' 

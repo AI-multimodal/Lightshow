@@ -14,7 +14,6 @@ import json
 from xanes_bench.photonSym import photonSymm
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
 import xanes_bench.OCEAN
-from xanes_bench.General.kden import printKgrid
 
 module_path = Path(xanes_bench.OCEAN.__path__[0])
 
@@ -61,7 +60,6 @@ def makeOcean( mpid, structure: Structure, params: dict ):
     folder = Path.cwd() / json_dir / "mp_structures" / mpid / "OCEAN" / \
             Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}")
     folder.mkdir(parents=True, exist_ok=True)
-    printKgrid( structure, folder )
     try:
         write_ocean_in(str(folder / "ocean.in"), structure, input_data=oceanJSON )
     except:
