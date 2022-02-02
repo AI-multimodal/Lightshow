@@ -1,3 +1,4 @@
+# Fanchen Meng, 2022
 import json
 import sys
 import os
@@ -274,8 +275,7 @@ def main():
             exit()
 
 
-    for m in mpid.split():
-        mp = "mp-" + m
+    for mp in mpid.split():
         print( "Running {:s}".format( mp ) )
         # Maybe make this more robust to keep someone from running 'ooooooooooo', but for now ...
         #  ie, could use a hash/dictionary
