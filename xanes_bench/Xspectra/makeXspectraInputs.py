@@ -247,7 +247,7 @@ def makeXspectra( mpid, unitCell: Structure, params: dict ):
     psp = OrderedDict(psp)
     for i,j in enumerate(psp.keys()):
         if j == symTarg+'+':
-            iabs = i
+            iabs = i+1
             
     prev = None
     for i, sym in enumerate(symbols):
