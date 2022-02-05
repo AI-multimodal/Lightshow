@@ -11,13 +11,14 @@ class XSplot():
         Spectra = None
         for iab in self.absorber:
             for polar in self.polar:
-                path = self.path + "/" + iab + "/" + "dipole" + polar
+                dipole = "dipole" + polar
+                path = self.path  /  iab  /  dipole 
                 #print(path)
                 if Spectra is None:
 #                     Spectra = np.loadtxt(path + "/xanes.dat", comments='#')
-                    Spectra = np.loadtxt( path + "/xanes.dat", skiprows=4, usecols=(0,1)  )
+                    Spectra = np.loadtxt( path / "xanes.dat", skiprows=4, usecols=(0,1)  )
                 else:
-                    Spectra[:,1] += np.loadtxt( path + "/xanes.dat", skiprows=4, usecols=(1)  )
+                    Spectra[:,1] += np.loadtxt( path / "xanes.dat", skiprows=4, usecols=(1)  )
 #                     Spectra[:,1] += np.loadtxt(path + "/xanes.dat", comments='#') # did not take average
         return Spectra
 
