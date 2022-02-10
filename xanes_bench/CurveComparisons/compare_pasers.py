@@ -136,7 +136,7 @@ class Excitingplot():
 #             element = "Ti"
 #             p = int(polar)
 #             site = int(iab) + 1
-            path = self.path  / f"EPSILON_BSE-IP_SCR-full_OC{polar}.OUT" #.format( element, site, p) 
+            path = self.path  / f"EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT" #.format( element, site, p) 
             #print(path)
             if Spectra is None:
 #                     Spectra = np.loadtxt(path + "/xanes.dat", comments='#')
