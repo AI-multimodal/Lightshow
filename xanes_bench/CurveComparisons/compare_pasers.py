@@ -23,6 +23,23 @@ class XSplot():
 #                     Spectra[:,1] += np.loadtxt(path + "/xanes.dat", comments='#') # did not take average
         return Spectra
 
+    def exists(self):
+        out = []
+        for iab in self.absorber:
+            for polar in self.polar:
+                dipole = "dipole" + polar
+                path = self.path  /  iab  /  dipole
+                if not Path(path / "xanes.dat").exists():
+                    out.append(False)
+                    print(f'{Path(path / "xanes.dat")} not exists')
+                else:
+                    out.append(True)
+        if all(out):
+            return True
+        else:
+            return False
+                    
+
     @property
     def x(self):
         return self.spectra[:,0]
