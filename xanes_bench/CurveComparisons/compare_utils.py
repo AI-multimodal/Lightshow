@@ -583,7 +583,7 @@ def makeInterpolateWithWindow( plot, doWindow ):
     return plot[0:windowStop,:], interpolate.interp1d( plot[0:windowStop,0], plot[0:windowStop,1], 
                                                        assume_sorted=True, kind='cubic', bounds_error=False )
 
-def comparePlots( omega,p1, p2, window=False, inverse=False):
+def comparePlots( omega, p1, p2, window=False, inverse=False):
 
     plot1, interp1 = makeInterpolateWithWindow( p1, window )
     plot2, interp2 = makeInterpolateWithWindow( p2, window )
