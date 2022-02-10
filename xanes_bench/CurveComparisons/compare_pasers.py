@@ -60,6 +60,22 @@ class XSplot():
         return self.nspectra[:,1]
 
 
+class XSplot_rescale(XSplot):
+    def __init__(self, folder, volume, egrid, e1s, ehomo, absorber=['0'], polar=['1', '2', '3']):
+        super(XSplot_rescale, self).__init__(folder, absorber, polar)
+        self.egrid = np.linspace(egrid[0], egrid[1], egrid[2])
+        self.e1s = e1s
+        self.homo = ehomo
+        self.omega = self.egrid + self.homo - self.e1s
+        self.omega_ry = self.omega/13.6056980659/2 # 2 is from ry to hartree used in OCEAN & EXCITING
+        self.volume = volume
+    @property
+    def y(self):
+        return self.spectra[:,1] /self.omega_ry*137.04/self.volume
+    @property
+    def ny(self):
+        return self.y
+
 class OCEANplot():
     def __init__(self, folder, absorber=['0'],polar = ['1', '2', '3']):
         self.path = Path(folder)
