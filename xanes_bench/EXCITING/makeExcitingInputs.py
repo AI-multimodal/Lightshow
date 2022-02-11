@@ -6,7 +6,7 @@ Make the exciting input file and the photon files
 """
 
 from pymatgen.core import Structure
-import spglib
+#import spglib
 from pathlib import Path
 import sys
 
