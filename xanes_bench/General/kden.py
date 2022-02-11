@@ -1,7 +1,6 @@
+# Fanchen Meng, 2022
 """ Prints list of k-point grids 
 """
-
-#from ase.atoms import Atoms
 from pathlib import Path
 from pymatgen.core import Structure
 from ase.units import Bohr
@@ -9,7 +8,19 @@ from math import pi
 import numpy as np
 
 def printKgrid( unitC: Structure, folder: Path ):
+    ''' write a list of kmesh with corresponding Bohr radii into file
 
+        Parameters
+        ----------
+        unitC : pymatgen.core.Structure, mandatory
+            input structure 
+        folder : pathlib.Path, mandatory
+            path to which the 'k.txt' file is written
+
+        Return
+        ------
+        None
+    '''
     fd = open (folder / 'k.txt', 'w') 
 #    recip = atoms.cell.reciprocal().lengths()
 
