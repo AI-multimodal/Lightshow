@@ -81,23 +81,25 @@ def makeExcitingXAS( mpid, structure: Structure, params: dict ):
             excitingxasJSON['xs']['BSE']['xasspecies']=str(i)
     
 
-    json_dir = params['json_dir']
-    # generate filepath
-    folder = Path.cwd() / json_dir / "mp_structures" / mpid / "EXCITING" / \
-             Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}")
-    folder.mkdir(parents=True, exist_ok=True)
+        json_dir = params['json_dir']
+        # generate filepath
+        folder = Path.cwd() / json_dir / "mp_structures" / mpid / "EXCITING" / \
+                 Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}") 
+        folder.mkdir(parents=True, exist_ok=True)
     
-    # write input file for XAS calculation
-    for i in ineq_atoms:
-    
-        filepath_xas=str(folder / 'input_xas')+str(i+1)+'.xml'
-        excitingxasJSON['xs']['BSE']['xasatom']=str(i+1)
+        # write input file for XAS calculation
+        for j in ineq_atoms:
+            
+            folder_xas = folder / str(j)
+            folder_xas.mkdir(parents=True, exist_ok=True)
+            filepath_xas=str(folder / str(j) /'input_xas.xml')
+            excitingxasJSON['xs']['BSE']['xasatom']=str(j+1)
 
-        try:
-            excitinginput.write_file('primitive', filepath_xas, 
-                                     bandstr=False, **excitingxasJSON)
-        except:
-            raise Exception("FAILED while trying to write input.xml")
+            try:
+                excitinginput.write_file('primitive', filepath_xas, 
+                                         bandstr=False, **excitingxasJSON)
+            except:
+                raise Exception("FAILED while trying to write input.xml")
 
 def makeExcitingGRST( mpid, struct: Structure, kpoints: list, nempty: int, filepath):
     '''TODO
