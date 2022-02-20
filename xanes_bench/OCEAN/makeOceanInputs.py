@@ -7,7 +7,7 @@ Later add in something to write out the pseudopotentials
 
 from pymatgen.core import Structure
 
-import spglib
+#import spglib
 from pathlib import Path
 import numpy as np
 import json

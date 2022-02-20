@@ -10,24 +10,20 @@ import time
 import shutil
 
 from pymatgen.ext.matproj import MPRester
-#from pymatgen.io.ase import AseAtomsAdaptor as ase
 from pymatgen.io.pwscf import PWInput
 
 import xanes_bench
 from xanes_bench.EXCITING.makeExcitingInputs import makeExcitingGRST
-from xanes_bench.utils import getCondBands, get_structure, setMPR, find_kpts
+from xanes_bench.utils import getCondBands, get_structure, setMPR
 
-#from ase.atoms import Atoms
-#from ase.io import write
 
 from pathlib import Path
-#from os import environ as env
-
 import base64, bz2, hashlib
 
 import re
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.symmetry.bandstructure import HighSymmKpath
+from pymatgen.io.vasp.sets import MPStaticSet
 import numpy as np
 
 module_path = Path(xanes_bench.__path__[0])
@@ -229,8 +225,9 @@ def main():
     conductionBands = getCondBands( st.lattice.volume, 1.5 )
     print( "Conduction bands: ", NSCFBands, conductionBands )
 
-    # use 45 rule for now
-    kpoints = find_kpts(st)
+    # use MP default 
+    static_set = MPStaticSet(st)
+    kpoints = static_set.kpoints.kpts[0]
     koffset = [0, 0, 0]
 
     # Right now we are not checking for grid shifts. QE will just use a Gamma-centered grid

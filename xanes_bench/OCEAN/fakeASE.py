@@ -25,9 +25,11 @@ def write_ocean_in( filename: str, structure: Structure, input_data: dict ):
     # TODO: corresponding pymatgen methods? using StaticSet?
     #if any(atoms.get_initial_magnetic_moments()):
     #    raise NameError( 'Spin=2 not implemented yet' )
-    static = MPStaticSet(structure)
-    if any(static.incar['MAGMOM']) > 0 or any(static.incar['MAGMOM']) < 0 :
-        raise NameError( 'Spin=2 not implemented yet' )
+    # TODO: how to choose the spin for OCEAN?
+#    static = MPStaticSet(structure)
+#    if any(static.incar['MAGMOM']) > 0 or any(static.incar['MAGMOM']) < 0 :
+#        raise NameError( 'Spin=2 not implemented yet' )
+
 #    atomic_species = OrderedDict()
 #    atomic_species_str = []    
 #    znucl = []

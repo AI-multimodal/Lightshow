@@ -6,7 +6,7 @@
         "vkloff": "0.05 0.03 0.13", 
         "nempty": "30", 
         "gqmax": "4.0", 
-        "broad": "0.018", 
+        "broad": "0.0327069", 
         "tevout": "true", 
         "tappinfo": "true", 
         "energywindow": {"intv": "178.2 180.5", 

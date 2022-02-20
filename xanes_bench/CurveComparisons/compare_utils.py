@@ -5,17 +5,18 @@
 
 import numpy as np
 from scipy import interpolate
-from scipy.optimize import minimize_scalar, minimize
-import pathlib
-import os
-from os import environ as env
-from os import path
+#from scipy.optimize import minimize_scalar, minimize
+#import pathlib
+#import os
+#from os import environ as env
+#from os import path
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
-import re
+#import re
 
 from scipy.ndimage import gaussian_filter1d
 
+from xanes_bench.CurveComparisons.compare_pasers import XSplot_rescale
 
 def gaussAvgAndDiff( gWidth, omega, plot1, plot2 ):
     firstp1 = plot1[1,1]
@@ -583,7 +584,7 @@ def makeInterpolateWithWindow( plot, doWindow ):
     return plot[0:windowStop,:], interpolate.interp1d( plot[0:windowStop,0], plot[0:windowStop,1], 
                                                        assume_sorted=True, kind='cubic', bounds_error=False )
 
-def comparePlots( omega,p1, p2, window=False, inverse=False):
+def comparePlots( omega, p1, p2, window=False, inverse=False):
 
     plot1, interp1 = makeInterpolateWithWindow( p1, window )
     plot2, interp2 = makeInterpolateWithWindow( p2, window )
@@ -688,4 +689,60 @@ def valley_loc(plot):
                 valley.append(plot[i,0])
     return valley
 
+def trucate_spectra(plot):
+    ''' truncate spectra from OCEAN or EXCITING
 
+        Parameters
+        ----------
+        plot : one of the parsers defined in compare_parsers, mandatory
+            spectra class
+
+        Return
+        ------
+        index : int
+    '''
+    x = plot.nx
+    y = plot.ny
+
+    logic = y > 0.5
+
+    seq = y == y[logic][-1]
+    index = seq.argmax()
+    return index
+
+
+def compare_between_codes(file1, file2):
+    ''' Atomatic align the spectra and calculate the spearman coefficient
+        Comparison was done for epsilon instead of cross-section
+
+        Parameters
+        ----------
+        file1 : one of the parsers defined in compare_parsers, mandatory
+            spectra1
+        file2 : one of the parsers defined in compare_parsers, mandatory
+            spectra2
+
+        Return
+        ------
+        shift : real
+            relative shift between the two spectra, sign is meaningful
+        spearman : real
+            spearman coefficient, which is calculated as log(1-spearman)
+    '''
+    
+    if not isinstance(file1, XSplot_rescale):
+        index = trucate_spectra(file1)
+        plot1 = np.stack((file1.x[:index], file1.y[:index])).T
+    else:
+        plot1 = np.stack((file1.x, file1.y)).T
+
+    if not isinstance(file2, XSplot_rescale):
+        index = trucate_spectra(file2)
+        plot2 = np.stack((file2.x[:index], file2.y[:index])).T
+    else:
+        plot2 = np.stack((file2.x, file2.y)).T
+
+    pears, spear, coss, shift = minCos(plot1, plot2, step=0.01)
+    
+    spearman = comparePlots( shift, plot1, plot2)[1]
+    return shift, np.log10(1-spearman)

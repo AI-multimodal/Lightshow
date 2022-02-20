@@ -142,7 +142,7 @@ def xinput(mode, iabs, dirs, xkvec, XSparams: dict, plot=False):
 
     inp += ["&pseudos",
             "    filecore = '../../../Core.wfc'",
-            "    r_paw(1) = 1.6", # hard-coded to Ti
+            "    r_paw(1) = 1.79", # hard-coded to Ti w/ core-hole
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str( XSparams['cut_occ']['cut_desmooth']),
