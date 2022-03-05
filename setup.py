@@ -23,6 +23,7 @@ setup(
             "computeQErmsd = xanes_bench.computeQErmsd:main",
             "runQE = xanes_bench.RunScripts.runQE:main",
             "curveCompare = xanes_bench.curveCompare:main",
+            "collectQE = xanes_bench.RunScripts.collectQE:main",
         ]
     }
 )
