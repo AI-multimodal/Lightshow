@@ -268,7 +268,7 @@ def main():
         clusterJSON = json.load(fd)
 
     for mp in mpid.split():
-        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", "mp-" + mp )
+        subdir = pathlib.Path(env['PWD'], "data", "mp_structures",  mp )
         print( subdir )
         if not os.path.isdir(subdir):
             print("Couldn't find ", subdir )
