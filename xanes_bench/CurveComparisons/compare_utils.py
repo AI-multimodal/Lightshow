@@ -711,7 +711,7 @@ def trucate_spectra(plot):
     return index
 
 
-def compare_between_codes(file1, file2):
+def compare_between_codes(file1, file2, itm=1):
     ''' Atomatic align the spectra and calculate the spearman coefficient
         Comparison was done for epsilon instead of cross-section
 
@@ -744,5 +744,8 @@ def compare_between_codes(file1, file2):
 
     pears, spear, coss, shift = minCos(plot1, plot2, step=0.01)
     
-    spearman = comparePlots( shift, plot1, plot2)[1]
-    return shift, np.log10(1-spearman)
+    spearman = comparePlots( shift, plot1, plot2)[itm] # 0 for pearson, 1 for spearman, 2 for coss
+    if itm != 2:
+        return shift, np.log10(1-spearman)
+    else:
+        return shift, np.log10(spearman)

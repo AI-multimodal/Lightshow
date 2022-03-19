@@ -75,6 +75,9 @@ class XSplot_rescale(XSplot):
     @property
     def ny(self):
         return self.y
+    @property
+    def scaspectra(self):
+        return np.stack((self.x,self.y)).T
 
 class OCEANplot():
     def __init__(self, folder, absorber=['0'],polar = ['1', '2', '3']):
