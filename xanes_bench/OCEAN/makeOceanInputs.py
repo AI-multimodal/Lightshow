@@ -14,6 +14,7 @@ import json
 from xanes_bench.photonSym import photonSymm
 from xanes_bench.OCEAN.fakeASE import write_ocean_in
 import xanes_bench.OCEAN
+from pymatgen.core import Element
 
 module_path = Path(xanes_bench.OCEAN.__path__[0])
 
@@ -34,10 +35,15 @@ def makeOcean( mpid, structure: Structure, params: dict ):
         None
         * save input files to corresponding directories
     '''
+    ## determine element and edge to be calculated
+    Edges = {"K" : 1}
+    edge = Edges[params['edge']]
+    element = Element(params['species'])
+
     xs_fn = module_path / 'ocean.json'
     with open (xs_fn, 'r') as fd:
         oceanJSON = json.load(fd)
-
+    oceanJSON['edges'] = f"-{element.number} {edge} 0"
     if params['diemac'] is not None:
         oceanJSON['diemac'] = params['diemac']
 
