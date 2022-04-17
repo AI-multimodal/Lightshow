@@ -61,7 +61,8 @@
         "edge": "K",
         "kden": "-1",
         "psp": {
-            "Ti+": "Ti.fch.upf"
+            "Ti+": "Ti.fch.upf",
+	    "Co+": "Co.fch.upf"
         },
         "Rmin": "9.0",
         "scf_kden": "-1",
