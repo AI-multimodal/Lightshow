@@ -49,7 +49,7 @@ def calculate_similarity_last(mpid, code):
         last_spectra = XSplot(last_spectra_fn, site_list)
     elif code == 'OCEAN':
         last_spectra = OCEANplot(last_spectra_fn, site_list)
-    elif code == 'EXCITIG':
+    elif code == 'EXCITING':
         last_spectra = Excitingplot(last_spectra_fn, site_list)
 
     while not last_spectra.exists():
@@ -70,7 +70,7 @@ def calculate_similarity_last(mpid, code):
             this_spectra = XSplot(this_spectra_fn, site_list)
         elif code == 'OCEAN':
             this_spectra = OCEANplot(this_spectra_fn, site_list)
-        elif code == 'EXCITIG':
+        elif code == 'EXCITING':
             this_spectra = Excitingplot(this_spectra_fn, site_list)
         if this_spectra.exists():
             spearman = comparePlots(0, this_spectra.spectra, last_spectra.spectra)[1]

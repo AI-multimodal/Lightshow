@@ -1,0 +1,11 @@
+{
+    "MPI": 16,
+    "OPENMP": 1,
+    "nodes": 1,
+    "memory": 16,
+    "para_prefix": "mpirun",
+    "task_flag": "-n",
+    "bonus_flag": "",
+    "QE_BIN": "/home/fmeng1/Software/qe-6.8/bin",
+    "EXCITING_BIN": ""
+}

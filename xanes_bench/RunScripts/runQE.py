@@ -1,3 +1,4 @@
+# Fanchen Meng, 2022
 import json
 import sys
 import os
@@ -267,15 +268,14 @@ def main():
         clusterJSON = json.load(fd)
 
     for mp in mpid.split():
-        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", "mp-" + mp )
+        subdir = pathlib.Path(env['PWD'], "data", "mp_structures",  mp )
         print( subdir )
         if not os.path.isdir(subdir):
             print("Couldn't find ", subdir )
             exit()
 
 
-    for m in mpid.split():
-        mp = "mp-" + m
+    for mp in mpid.split():
         print( "Running {:s}".format( mp ) )
         # Maybe make this more robust to keep someone from running 'ooooooooooo', but for now ...
         #  ie, could use a hash/dictionary

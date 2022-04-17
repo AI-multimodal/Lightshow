@@ -1,3 +1,4 @@
+# Fanchen Meng, 2022
 import json
 import sys
 import os
@@ -101,13 +102,12 @@ def main():
         clusterJSON = json.load(fd)
 
     for mp in mpid.split():
-        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", "mp-" + mp )
+        subdir = pathlib.Path(env['PWD'], "data", "mp_structures", mp )
         if not os.path.isdir(subdir):
             print("Couldn't find ", subdir )
             exit()
 
-    for m in mpid.split():
-        mp = "mp-" + m
+    for mp in mpid.split():
         print( "Collecting {:s}".format( mp ) )
         for p in program:
             if( p == 'O' or p == 'o' ):
