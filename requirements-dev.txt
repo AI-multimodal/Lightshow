@@ -1,0 +1,15 @@
+codecov
+coverage
+flake8
+pytest
+pytest-cov
+sphinx
+twine
+pre-commit
+black
+nbstripout
+ipython
+matplotlib
+numpydoc
+sphinx-copybutton
+sphinx_rtd_theme
