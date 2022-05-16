@@ -329,7 +329,7 @@ class Database(MSONable):
 
         root = Path(root)
         root.mkdir(exist_ok=True, parents=True)
-        # writer_metadata_path = root / Path("write_metadata.json")
+        # writer_metadata_path = root / Path("writer_metadata.json")
 
         for key in tqdm(self._structures.keys(), disable=self._verbose < 2):
 
@@ -372,4 +372,4 @@ class Database(MSONable):
             for option, check_pass in zip(options, option_green_light):
                 if not check_pass:
                     continue
-                option.write()
+                option.write_inputs()
