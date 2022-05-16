@@ -12,6 +12,7 @@ from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ
+from lightshow import pymatgen_utils
 
 
 def _fetch_from_MP(mpr, mpid, metadata_keys):
@@ -134,7 +135,7 @@ class Database(MSONable):
             str(path.parent): Structure.from_file(path)
             for path in Path(root).rglob(filename)
         }
-        return cls(structures, None)
+        return cls(structures, None, dict())
 
     @classmethod
     def from_materials_project(
@@ -239,7 +240,8 @@ class Database(MSONable):
         data = _from_mpids_list(mpids, api_key, metadata_keys, verbose=verbose)
 
         # Instantiate the class and return
-        return cls(data["structures"], data["metadata"])
+        errors = {"MPRestError": data["errors"]}
+        return cls(data["structures"], data["metadata"], errors)
 
     @property
     def structures(self):
@@ -269,9 +271,105 @@ class Database(MSONable):
 
         return self._metadata
 
-    def __init__(self, structures, metadata):
+    @property
+    def errors(self):
+        """A dictionary containing any errors as tracked during the process of
+        constructing the Dataset.
+
+        Returns
+        -------
+        dict
+        """
+
+        return self._errors
+
+    def __init__(self, structures, metadata, errors):
         """Initializer for the Database class. Note it is recommended to use
         the classmethods to initialize this object."""
 
         self._structures = structures
         self._metadata = metadata
+        self._errors = errors
+
+    def write(
+        self,
+        root,
+        options=[],
+        fail_one_fail_all=True,
+        max_primitive_total_atoms=1e16,
+        supercell_cutoff=9.0,
+        max_supercell_total_atoms=1e16,
+    ):
+        """Summary
+
+        Parameters
+        ----------
+        root : TYPE
+            Description
+        options : list, optional
+            Description
+        """
+
+        writer_metadata = {
+            "locals": {
+                key: value
+                for key, value in locals().items()
+                if key not in ["self", "options"]
+            },
+            "created_at": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+            "errors": {
+                "max_primitive_total_atoms": [],
+                "max_supercell_total_atoms": [],
+                "max_inequivalent_sites": [],
+                "max_bands": [],
+                "no_potcar": [],
+            },
+            "options": [option.as_dict() for option in options],
+        }
+
+        root = Path(root)
+        root.mkdir(exist_ok=True, parents=True)
+        # writer_metadata_path = root / Path("write_metadata.json")
+
+        for key in tqdm(self._structures.keys(), disable=self._verbose < 2):
+
+            structure = self._structures[key]
+            primitive_structure = structure.get_primitive_structure()
+
+            # Check if the primitive cell has too many atoms. If it does,
+            # we simply continue at this point
+            if len(primitive_structure) > max_primitive_total_atoms:
+                writer_metadata["errors"]["max_primitive_total_atoms"].append(
+                    {
+                        "name": key,
+                        "primitive_cell_size": len(primitive_structure),
+                    }
+                )
+                continue
+
+            # Construct the supercell which will be used in general for VASP
+            # calculations, but will be helpful in referencing
+            supercell = pymatgen_utils.make_supercell(
+                structure, supercell_cutoff
+            ).get_sorted_structure()
+
+            # If the supercell is too large, we continue as well.
+            if len(supercell) > max_supercell_total_atoms:
+                writer_metadata["errors"]["max_supercell_total_atoms"].append(
+                    {"name": key, "supercell_size": len(supercell)}
+                )
+                continue
+
+            # Check which calculations get the final approval to be written to
+            # disk
+            option_green_light = [option.check_pass() for option in options]
+
+            # If fail_one_fail_all is enabled, and any of the options has
+            # failed, we continue to the next material
+            if not all(option_green_light) and fail_one_fail_all:
+                continue
+
+            for option, check_pass in zip(options, option_green_light):
+                if not check_pass:
+                    continue
+                option.write()
