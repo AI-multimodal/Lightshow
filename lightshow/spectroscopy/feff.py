@@ -55,6 +55,11 @@ class FEFFParameters(MSONable):
     nkpts : int
         The number of k-points used in the Brillouin zone. Only used if
         FEFF is run in reciprocal space mode.
+    spectrum : str
+        The type of spectroscopy to be run. This is used to set the default
+        cards through Pymatgen. These defaults can be overridden by setting
+        the ``cards`` argument when instantiating the class. The type of
+        calculation to run. Should likely be either ``"XANES"`` or ``"EXAFS"``.
     """
 
     @property
@@ -77,7 +82,39 @@ class FEFFParameters(MSONable):
     def nkpts(self):
         return self._nkpts
 
-    def get_FEFFDictSets(self, structure, spectrum="XANES"):
+    @property
+    def spectrum(self):
+        return self._spectrum
+
+    @property
+    def calculation_type(self):
+        """This is the name of the directory that will correspond to the type
+        of calculation being run. In this case, FEFF-{spectrum}.
+
+        Returns
+        -------
+        str
+        """
+
+        return f"FEFF-{self._spectrum}"
+
+    def __init__(
+        self,
+        absorbing_sites,
+        cards,
+        edge="K",
+        radius=9.0,
+        nkpts=1000,
+        spectrum="XANES",
+    ):
+        self._absorbing_sites = absorbing_sites
+        self._cards = cards
+        self._edge = edge
+        self._radius = radius
+        self._nkpts = nkpts
+        self._spectrum = spectrum
+
+    def get_FEFFDictSets(self, structure):
         """Constructs and returns a list of the
         :class:`pymatgen.io.feff.sets.FEFFDictSet objects.
 
@@ -86,10 +123,6 @@ class FEFFParameters(MSONable):
         structure : pymatgen.core.structure.Structure
             The Pymatgen structure. Note that the ``absorbing_sites`` must
             correspond to the provided structure.
-        spectrum : str, optional
-            The type of spectroscopy to be run. This is used to set the default
-            cards through Pymatgen. These defaults can be overridden by setting
-            the ``cards`` argument when instantiating the class.
 
         Returns
         -------
@@ -102,12 +135,12 @@ class FEFFParameters(MSONable):
             If an invalid ``spectrum`` argument is provided.
         """
 
-        if spectrum == "XANES":
+        if self._spectrum == "XANES":
             default_cards = copy(MPXANESSet.CONFIG)
-        elif spectrum == "EXAFS":
+        elif self._spectrum == "EXAFS":
             default_cards = copy(MPEXAFSSet.CONFIG)
         else:
-            raise ValueError(f"Unknown spectrum type {spectrum}")
+            raise ValueError(f"Unknown spectrum type {self._spectrum}")
 
         default_cards.pop("EDGE")
         default_keys = default_cards.keys()
@@ -119,7 +152,7 @@ class FEFFParameters(MSONable):
             FEFFDictSet(
                 site,
                 structure,
-                spectrum=spectrum,
+                spectrum=self._spectrum,
                 config_dict=default_cards,
                 edge=self._edge,
                 radius=self._radius,
@@ -128,12 +161,3 @@ class FEFFParameters(MSONable):
             )
             for site in self._absorbing_sites
         ]
-
-    def __init__(
-        self, absorbing_sites, cards, edge="K", radius=9.0, nkpts=1000
-    ):
-        self._absorbing_sites = absorbing_sites
-        self._cards = cards
-        self._edge = edge
-        self._radius = radius
-        self._nkpts = nkpts
