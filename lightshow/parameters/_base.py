@@ -1,9 +1,18 @@
+from abc import ABC, abstractmethod
+
 from monty.json import MSONable
 
 
-class _BaseParameters(MSONable):
+class _BaseParameters(MSONable, ABC):
+    @abstractmethod
     def validate(self, structure, sites):
-        raise NotImplementedError
+        ...
 
+    @abstractmethod
     def write(self):
-        raise NotImplementedError
+        ...
+
+    @property
+    @abstractmethod
+    def calculation_name(self):
+        ...
