@@ -1,10 +1,12 @@
 from copy import copy
+from pathlib import Path
 
-from monty.json import MSONable
 from pymatgen.io.feff.sets import MPXANESSet, MPEXAFSSet, FEFFDictSet
 
+from lightshow.parameters._base import _BaseParameters
 
-class FEFFParameters(MSONable):
+
+class FEFFParameters(_BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
     for a FEFF calculation. This class is a lightweight wrapper for the
     ``FEFFDictSet``, containing some extra information and methods used for
@@ -13,9 +15,6 @@ class FEFFParameters(MSONable):
 
     Parameters
     ----------
-    absorbing_sites : list
-        A list of integers corresponding to absorbing sites. Note that these
-        should be determined ahead of time.
     cards : dict
         A dictionary of of the cards to be used in the FEFF calculations.
         For example, for XANES, one might wish to use something like
@@ -63,10 +62,6 @@ class FEFFParameters(MSONable):
     """
 
     @property
-    def absorbing_sites(self):
-        return self._absorbing_sites
-
-    @property
     def cards(self):
         return self._cards
 
@@ -87,7 +82,7 @@ class FEFFParameters(MSONable):
         return self._spectrum
 
     @property
-    def calculation_type(self):
+    def calculation_name(self):
         """This is the name of the directory that will correspond to the type
         of calculation being run. In this case, FEFF-{spectrum}.
 
@@ -100,21 +95,19 @@ class FEFFParameters(MSONable):
 
     def __init__(
         self,
-        absorbing_sites,
         cards,
         edge="K",
         radius=9.0,
         nkpts=1000,
         spectrum="XANES",
     ):
-        self._absorbing_sites = absorbing_sites
         self._cards = cards
         self._edge = edge
         self._radius = radius
         self._nkpts = nkpts
         self._spectrum = spectrum
 
-    def get_FEFFDictSets(self, structure):
+    def get_FEFFDictSets(self, structure, absorbing_sites):
         """Constructs and returns a list of the
         :class:`pymatgen.io.feff.sets.FEFFDictSet objects.
 
@@ -123,6 +116,8 @@ class FEFFParameters(MSONable):
         structure : pymatgen.core.structure.Structure
             The Pymatgen structure. Note that the ``absorbing_sites`` must
             correspond to the provided structure.
+        absorbing_sites : list
+            A list of integers corresponding to absorbing sites.
 
         Returns
         -------
@@ -159,5 +154,51 @@ class FEFFParameters(MSONable):
                 nkpts=self._nkpts,
                 user_tag_settings=user_tag_settings,
             )
-            for site in self._absorbing_sites
+            for site in absorbing_sites
         ]
+
+    def validate(self, structure, sites):
+        """Validates that the structure is compatible with a FEFF calculation.
+        For FEFF, this method always returns True, as there is nothing specific
+        to check.
+
+        Parameters
+        ----------
+        structure : pymatgen.core.structure.Structure
+            The Pymatgen structure of interest.
+
+        Returns
+        -------
+        bool
+            Always returns True.
+        """
+
+        return True
+
+    def write(self, root, structure, sites):
+        """Writes the input files for the provided structure and sites. In the
+        case of FEFF, if sites is None (usually indicating a global calculation
+        such as a neutral potential electronic relaxation method in VASP), then
+        write does nothing.
+
+        Parameters
+        ----------
+        structure : pymatgen.core.structure.Structure
+            The Pymatgen structure of interest.
+        sites : list
+            A list of int, where each int corresponds to the site index of the
+            site to write.
+        """
+
+        root = Path(root)
+        root.mkdir(exist_ok=True, parents=True)
+
+        # Get the directory names
+        species = [structure[site].specie.symbol for site in sites]
+        names = [f"{site:03}_{specie}" for site, specie in zip(sites, species)]
+
+        dict_sets = self.get_FEFFDictSets(structure, sites)
+
+        for dict_set, name in zip(dict_sets, names):
+            path = root / Path(name)
+            dict_set.write_input(path)
