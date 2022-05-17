@@ -158,25 +158,7 @@ class FEFFParameters(_BaseParameters):
             for site in absorbing_sites
         ]
 
-    def validate(self, structure, sites):
-        """Validates that the structure is compatible with a FEFF calculation.
-        For FEFF, this method always returns True, as there is nothing specific
-        to check.
-
-        Parameters
-        ----------
-        structure : pymatgen.core.structure.Structure
-            The Pymatgen structure of interest.
-
-        Returns
-        -------
-        bool
-            Always returns True.
-        """
-
-        return True
-
-    def write(self, root, structure, sites):
+    def write(self, target_directory, **kwargs):
         """Writes the input files for the provided structure and sites. In the
         case of FEFF, if sites is None (usually indicating a global calculation
         such as a neutral potential electronic relaxation method in VASP), then
@@ -184,15 +166,28 @@ class FEFFParameters(_BaseParameters):
 
         Parameters
         ----------
-        structure : pymatgen.core.structure.Structure
-            The Pymatgen structure of interest.
-        sites : list
-            A list of int, where each int corresponds to the site index of the
-            site to write.
+        target_directory : os.PathLike
+            The target directory to which to save the FEFF input files.
+        **kwargs
+            Must contain the ``structure`` key (the
+            :class:`pymatgen.core.structure.Structure` of interest) and the
+            ``sites`` key (a list of int, where each int corresponds to the
+            site index of the site to write).
+
+        Returns
+        -------
+        dict
+            A dictionary containing the status and errors key. In the case of
+            FEFF, there are no possible errors at this stage other than
+            critical ones that would cause program termination, so the returned
+            object is always ``{"pass": True, "errors": dict()}``.
         """
 
-        root = Path(root)
-        root.mkdir(exist_ok=True, parents=True)
+        structure = kwargs["structure"]
+        sites = kwargs["sites"]
+
+        target_directory = Path(target_directory)
+        target_directory.mkdir(exist_ok=True, parents=True)
 
         # Get the directory names
         species = [structure[site].specie.symbol for site in sites]
@@ -201,5 +196,7 @@ class FEFFParameters(_BaseParameters):
         dict_sets = self.get_FEFFDictSets(structure, sites)
 
         for dict_set, name in zip(dict_sets, names):
-            path = root / Path(name)
+            path = target_directory / Path(name)
             dict_set.write_input(path)
+
+        return {"pass": True, "errors": dict()}

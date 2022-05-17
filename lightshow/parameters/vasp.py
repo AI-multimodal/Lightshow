@@ -1,14 +1,16 @@
-from copy import copy
+from copy import copy, deepcopy
 from functools import lru_cache
-
-import numpy as np
 from pathlib import Path
 import warnings
 
 from monty.json import MSONable
+import numpy as np
 from pymatgen.io.vasp.sets import DictSet
 from pymatgen.io.vasp.inputs import Incar as pmgIncar
 from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
+from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
+
+from lightshow.parameters._base import _BaseParameters
 
 
 class Incar(pmgIncar):
@@ -16,7 +18,7 @@ class Incar(pmgIncar):
     manipulation of the INCAR file as a dictionary but with a few extra
     methods, such as saving and loading from file."""
 
-    DEFAULT_SCF = {
+    DEFAULT_NEUTRAL = {
         "ALGO": "Normal",
         "EDIFF": 1e-05,
         "IBRION": 2,
@@ -67,7 +69,7 @@ class Incar(pmgIncar):
         "SYMPREC": 1e-05,
     }
 
-    def _adj_mag(
+    def adj_mag(
         self,
         struct,
         config_dict={
@@ -109,15 +111,16 @@ class Incar(pmgIncar):
             "KPOINTS": {"reciprocal_density": 100},
         },
     ):
-        """Adjusts the INCAR to use the default magmom and +U from pymatgen.
+        """Adjusts the INCAR to use the default magmom and +U from Pymatgen.
 
         Parameters
         ----------
         struct : pymatgen.core.structure.Structure
-            The structure data for which the INCAR will be built
+            The structure data for which the INCAR will be built.
         config_dict : dict, optional
-            The default settings for magmom from Materials Project
+            The default MAGMOM settings from the Materials Project.
         """
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             incar_tmp = DictSet(struct, config_dict).incar
@@ -132,7 +135,7 @@ class Incar(pmgIncar):
         for k, v in incar_tmp.items():
             self[k] = v
 
-    def _adj_u(
+    def adj_u(
         self,
         elements,
         config_dict={
@@ -146,22 +149,21 @@ class Incar(pmgIncar):
             "W": 6.2,
         },
     ):
-        """Uses the Materials Project default values for the Hubburd U value,
-        but since the LDAUU tag shoud match the elements in the POSCAR, weneed
-        to add the u value (if needed) at the very end stage,  e.g. at the
-        function write_single_VASP_files
+        """Updates the INCAR using the Materials Project default values for the
+        Hubburd U values.
 
         Parameters
         ----------
-        elements : str
-            string of element which should be the same as the element line
-            in POSCAR
+        elements : list
+            A list of str, containing the elements in the same order as the
+            element line in the POSCAR.
         config_dict : dict, optional
-            default U values for the transition metal elements as in Materials Project
+            Default Materials Project U values for the transition metal
+            elements.
         """
 
-        tm = ["Co", "Cr", "Fe", "Mn", "Mo", "Ni", "V", "W"]
-        o_f = ["O", "F"]
+        tm = list(config_dict.keys())
+        o_f = ["O", "F"]  # TODO: Fanchen, why just O and F?
         len_tm = len([ele for ele in tm if ele in elements])
         len_of = len([ele for ele in o_f if ele in elements])
         if len_tm > 0 and len_of > 0:
@@ -194,15 +196,26 @@ class Incar(pmgIncar):
         """
 
         if scf:
-            klass = cls(Incar.DEFAULT_SCF)
+            klass = cls(Incar.DEFAULT_NEUTRAL)
         else:
             klass = cls(Incar.DEFAULT_COREHOLE)
         klass.check_params()
         return klass
 
-    def write(self, filename):
-        assert "INCAR" == Path(filename).name
-        self.write_file(filename)
+    def check_params(self):
+        assert "NBANDS" in self.keys()
+        super().check_params()
+
+    def write(self, target_directory):
+        """Writes the INCAR file to the target directory.
+
+        Parameters
+        ----------
+        target_directory : os.PathLike
+            The target directory to which to save the INCAR file.
+        """
+
+        self.write_file(Path(target_directory) / Path("INCAR"))
 
 
 class Kpoints(pmgKpoints):
@@ -259,13 +272,19 @@ class Kpoints(pmgKpoints):
 
         return Kpoints(kpts=(k,))
 
-    def write_file(self, filename, assert_name=True):
-        if assert_name:
-            assert "KPOINTS" == Path(filename).name
-        super().write_file(filename)
+    def write(self, target_directory):
+        """Writes the KPOINTS file to the target directory.
+
+        Parameters
+        ----------
+        target_directory : os.PathLike
+            The target directory to which to save the KPOINTS file.
+        """
+
+        self.write_file(Path(target_directory) / Path("KPOINTS"))
 
 
-class PotcarGenerator(MSONable):
+class PotcarConstructor(MSONable):
     """Summary"""
 
     # https://www.vasp.at/wiki/index.php/Available_PAW_potentials
@@ -351,7 +370,7 @@ class PotcarGenerator(MSONable):
         self._root = Path(root).resolve
         assert Path(self._root).exists()
         self._element_mapping = copy(
-            PotcarGenerator.DEFAULT_ELEMENT_MAPPING
+            PotcarConstructor.DEFAULT_ELEMENT_MAPPING
         ).update(element_mapping)
 
     def check_POTCAR_exists(self, list_of_elements):
@@ -379,6 +398,35 @@ class PotcarGenerator(MSONable):
             except KeyError:
                 el.append(False)
         return el
+
+    def check_POSCAR_valid(self, poscar):
+        """Checks the poscar against the potcar data to ensure that all elements
+        have a valid potential.
+
+        Parameters
+        ----------
+        poscar : Poscar
+
+        Returns
+        -------
+        str
+            The elements that do not exist, else None if no error.
+        """
+
+        s = poscar.site_symbols
+        elements_exist = self.check_POTCAR_exists(s)
+
+        if not all(elements_exist):
+            dont_exist = ",".join(
+                [
+                    xx
+                    for xx, tf in zip(poscar.site_symbols, elements_exist)
+                    if not tf
+                ]
+            )
+            return dont_exist
+
+        return None
 
     @lru_cache(256)
     def _get_element_lines(self, element):
@@ -446,7 +494,7 @@ class PotcarGenerator(MSONable):
 
     # TODO: Fanchen: can you fix the equation in this docstring? Doesn't look
     # correct, or at least it's not clear
-    def get_total_bands_via_heg_approximation(self, structure, eRange):
+    def get_total_bands_via_heg(self, structure, eRange):
         """Gets an approximation for the total number of bands to use in the
         calculation based on the free electron gas model, such that a range of
         ``eRange`` is covered in the spectrum. The method assumes all electrons
@@ -501,7 +549,8 @@ class PotcarGenerator(MSONable):
         target_directory : os.PathLike
             The target directory to which to save the POTCAR file.
         elements : list
-            A list of str: the element symbols to use.
+            A list of str: the elements to use in the POTCAR file, in the
+            correct order.
         """
 
         path = Path(target_directory) / Path("POTCAR")
@@ -513,3 +562,343 @@ class PotcarGenerator(MSONable):
         with open(path, "w") as f:
             for line in lines:
                 f.write(line)
+
+
+class Poscar(pmgPoscar):
+    """Custom Poscar file, lightweight wrapper for the pymatgen verison.
+
+    .. warning::
+
+        This :class:`.Poscar` class is only tested with VASP >6.2. It is likely
+        compatible with earlier versions, but the user should proceed with
+        caution in those cases.
+    """
+
+    def __len__(self):
+        return len(self.structure)
+
+    def write_single_site(
+        self, target_directory, site_index=None, check_atom_type=None
+    ):
+        """Writes the VASP POSCAR file for the specified ``site_index``.
+
+        Parameters
+        ----------
+        target_directory : os.PathLike
+            The target directory to which to save the POSCAR file.
+        site_index : int, optional
+            In corehole calculations, we must move the site of interest to the
+            first entry in the POSCAR file, and ensure that the element lines
+            in said POSCAR are changed accordingly. For example,
+            ``Ti O -> Ti Ti O`` and ``6 10 -> 1 5 10``, are changed in order to
+            properly reflect the new ordering of atoms. This is to simplify how
+            the POTCAR file is saved, and indicates for VASP to use a different
+            potential for the atom with the corehole on it. Default is None
+            (indicating no changes to be made, this is useful for neutral
+            potential calculations).
+        check_atom_type : str, optional
+            If not None, asserts that the found atom type in the POSCAR lines
+            is the same as the provided atom type.
+
+        Returns
+        -------
+        list
+            A list of str: the ordering of the elements for the POTCAR file.
+        """
+
+        path = Path(target_directory) / Path("POSCAR")
+
+        # This might be specific to certain versions of VASP
+        STRUCTURE_START_INDEX = 8
+
+        # In the case of e.g. the neutral potential calculation, the base class
+        # method write_file can be used
+        if site_index is None:
+            self.write_file(path)
+            return self.site_symbols
+
+        # Get the default lines for the POSCAR file
+        lines = self.get_string().split("\n")
+
+        # We need to make some modifications depending on the type of
+        # calculation this is. Lines indexed by 5 and 6 are the ones that
+        # need to be changed, and lines 8 onward contain the structure data
+        # to be swapped.
+        assert isinstance(site_index, int)
+        assert site_index >= 0
+        site_index += STRUCTURE_START_INDEX
+
+        # Get the atom type of the site provided
+        atom_type = lines[site_index].split()[-1]
+
+        # Assert if provided
+        if check_atom_type is not None:
+            assert atom_type == check_atom_type
+
+        # Get the location of the atom type
+        atom_type_loc = np.where(np.array(self.site_symbols) == atom_type)[
+            0
+        ].item()
+        new_line_5 = [atom_type, *self.site_symbols]
+        line_6_asint = [int(xx) for xx in self.natoms]
+        line_6_asint[atom_type_loc] -= 1
+        new_line_6_asint = [1, *line_6_asint]
+        new_line_6 = [str(xx) for xx in new_line_6_asint]
+
+        # Use the new lines 5 and 6
+        lines[5] = " ".join(new_line_5)
+        lines[6] = " ".join(new_line_6)
+
+        # Execute the swap. First, get the line of interest
+        move_to_front = lines[site_index]
+
+        # Delete that entry from the list
+        del lines[site_index]
+
+        # And insert back at the top
+        lines.insert(STRUCTURE_START_INDEX, move_to_front)
+
+        # And save
+        with open(path, "w") as f:
+            for line in lines:
+                f.write(f"{line}\n")
+
+        return new_line_5
+
+
+class VASPParameters(_BaseParameters):
+    """A one-stop-shop for modifying the VASP parameters for some calculation.
+    Due to the relative complexity of setting up a VASP calculation (as opposed
+    to e.g. FEFF), the :class:`.VASPParameters` object...
+
+    Parameters
+    ----------
+    incar : dict or :class:`.Incar`
+        The INCAR VASP parameter information. If of type dict, then an
+        :class:`.Incar` class will be instantiated from it. Can also be of type
+        :class:`.Incar` directly. The number of bands does not have to be
+        directly specified, as it can be estimated based on the structural
+        information as long as ``nbands_estimator`` is not ``None``.
+    kpoints_method : str
+        Precise name of the classmethod defined in
+        :class:`pymatgen.io.vasp.inputs.Kpoints`, or ``"custom"``, which is
+        defined in Lightshow's :class:`.Kpoints` module.
+    potcar_directory : os.PathLike
+        The location in which the potential files are stored. These files
+        should be stored in a precise directory format, specifically: the
+        first level in should contain potential files of the form
+        ``Pb_d_GW``, ``Pb_sv_GW``, ``Pd``, etc. For some element, the specific
+        choice is determined first by the ``potcar_element_mapping`` and then
+        by the defaults in the :class:`.PotcarConstructor` class.
+    kpoints_method_kwargs : dict
+        Optional arguments to pass to the classmethod used to construct the
+        kpoints.
+    potcar_element_mapping : dict
+        A custom element mapping which will override, element-by-element,
+        defaults in the :class:`.PotcarConstructor` class.
+    nbands_estimator : str
+    """
+
+    @property
+    def incar(self):
+        return self._incar
+
+    @property
+    def calculation_name(self):
+        return "VASP"
+
+    def get_KPOINTS(self, structure):
+        """Calls the static methods defined on Kpoints (and it's corresponding
+        base class) using the set arguments.
+
+        Parameters
+        ----------
+        structure : pymatgen.core.structure.Structure
+
+        Returns
+        -------
+        pymatgen.io.vasp.inputs.Kpoints
+        """
+
+        f = getattr(Kpoints, self._kpoints_method)
+        return f(structure, **self._kpoints_method_kwargs)
+
+    def estimate_n_bands(self, structure):
+        """Uses the ``nbands_estimator`` information provided at instantiation
+        to estimate the number of bands to use for a calculation.
+
+        Parameters
+        ----------
+        structure : pymatgen.core.structure.Structure
+
+        Returns
+        -------
+        int
+
+        Raises
+        ------
+        KeyError
+            If ``nbands_estimator`` is None, and there is no ``NBANDS`` key
+            provided in the INCAR. Will also throw a KeyError if the correct
+            parameter information (for the specified method) is not contained
+            in ``nbands_parameters``.
+        ValueError
+            If the specified ``nbands_method`` is not one of ``None``,
+            ``int`` or ``"heg"``.
+        """
+
+        cond2 = isinstance(self._nbands_estimator, int)
+        if self._nbands_estimator is None or cond2:
+            if self._incar.get("NBANDS") is None:
+                raise KeyError(
+                    "nbands_estimator is None or int and the INCAR does not "
+                    "contain  a specified number of bands"
+                )
+
+        if self._nbands_estimator is None:
+            return self._incar["NBANDS"]
+
+        if cond2:
+            nvalence = self._potcar_constructor.get_n_valence_electrons(
+                structure
+            )
+            nb = nvalence * self._nbands_estimator
+        elif self._nbands_method == "heg":
+            nb = self._potcar_constructor.get_total_bands_via_heg(
+                structure, self._nbands_parameters["erange"]
+            )
+        else:
+            raise ValueError(f"Unknown nbands_method={self._nbands_method}")
+
+        return nb
+
+    def __init__(
+        self,
+        incar,
+        kpoints_method,
+        potcar_directory,
+        kpoints_method_kwargs=dict(),
+        potcar_element_mapping=dict(),
+        nbands_estimator=None,
+        nbands_parameters=dict(),
+        max_bands=int(1e16),
+        force_spin_unpolarized=False,
+    ):
+        # Load the INCAR information
+        if isinstance(incar, Incar):
+            self._incar = incar
+        elif isinstance(incar, dict):
+            self._incar = Incar(incar)
+        else:
+            raise ValueError(
+                f"Unknown incar type: {type(incar)}. Should be of type "
+                "Incar or dict"
+            )
+
+        # Method for generating the KPOINTS file
+        self._kpoints_method = kpoints_method
+        self._kpoints_method_kwargs = kpoints_method_kwargs
+
+        # POTCAR information
+        self._potcar_directory = potcar_directory
+        self._potcar_element_mapping = potcar_element_mapping
+        self._potcar_constructor = PotcarConstructor(
+            potcar_directory, potcar_element_mapping
+        )
+
+        # Estimator method for the number of bands
+        self._nbands_estimator = nbands_estimator
+        self._nbands_parameters = nbands_parameters
+
+        # Other parameters
+        self._max_bands = max_bands
+        self._force_spin_unpolarized = force_spin_unpolarized
+
+    def write(self, target_directory, **kwargs):
+        """Summary
+
+        Parameters
+        ----------
+        target_directory : os.PathLike
+            The target directory to which to save the VASP input files.
+        **kwargs
+            Must contain the ``structure`` key (the
+            :class:`pymatgen.core.structure.Structure` of interest) and the
+            ``sites`` key (a list of int, where each int corresponds to the
+            site index of the site to write).
+
+        Returns
+        -------
+        dict
+            A dictionary containing the status and errors key.
+
+        Raises
+        ------
+        ValueError
+            If the symmetrically inequivalent sites provided is None but the
+            CH_LSPEC flag is True in the INCAR.
+        """
+
+        errors = dict()
+
+        incar = deepcopy(self._incar)
+        sites = kwargs.get("sites")
+        ch_lspec = incar.get("CH_LSPEC", False)
+        if sites is None and ch_lspec:
+            raise ValueError(
+                "Corehole calculation has been selected via the presence of "
+                "CH_LSPEC in the INCAR, but no sites were provided."
+            )
+
+        structure = deepcopy(kwargs["structure"])
+
+        # Check the validity of the calculations
+        nb = self.estimate_n_bands(structure)
+        if nb > self._max_bands:
+            errors["n_bands"] = nb
+
+        poscar = Poscar(structure)
+        potcar_check = self._potcar_constructor.check_POSCAR_valid(poscar)
+        if potcar_check is not None:
+            errors["potentials_do_not_exist"] = potcar_check
+
+        incar["NBANDS"] = self.estimate_n_bands(structure)
+        if self._force_spin_unpolarized:
+            incar["ISPIN"] = 1
+            try:
+                incar.pop("MAGMOM")
+            except KeyError:
+                pass
+        else:
+            incar.adj_mag(structure)
+
+        if len(errors) > 0:
+            return {"pass": False, "errors": errors}
+
+        kpoints = self.get_KPOINTS(structure)
+        species = [structure[site].specie.symbol for site in sites]
+
+        # Green light for corehole calculations
+        if ch_lspec:
+            for site, specie in zip(sites, species):
+                path = target_directory / Path(f"{site:03}_{specie}")
+                elements = poscar.write_single_site(
+                    path, site_index=site, check_atom_type=specie
+                )
+                self._potcar_constructor.write(path, elements)
+                kpoints.write(path)
+                incar.adj_u(elements)
+                incar.write(path)
+
+        # Else assume this is just a standard neutral potential calculation
+        else:
+            path = target_directory / Path("SCF")
+            elements = poscar.write_single_site(
+                path, site_index=None, check_atom_type=None
+            )
+            self._potcar_constructor.write(path, elements)
+            kpoints.write(path)
+            incar.adj_u(elements)
+            incar.write(path)
+
+        return {"pass": True, "errors": dict()}

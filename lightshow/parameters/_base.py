@@ -5,11 +5,7 @@ from monty.json import MSONable
 
 class _BaseParameters(MSONable, ABC):
     @abstractmethod
-    def validate(self, structure, sites):
-        ...
-
-    @abstractmethod
-    def write(self):
+    def write(self, target_directory, kwargs):
         ...
 
     @property
