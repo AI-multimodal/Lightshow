@@ -296,8 +296,7 @@ class Database(MSONable):
         self,
         root,
         absorbing_atom=None,
-        options=[],
-        fail_one_fail_all=True,
+        options=dict(),
         max_primitive_total_atoms=int(1e16),
         supercell_cutoff=9.0,
         max_supercell_total_atoms=int(1e16),
@@ -326,14 +325,13 @@ class Database(MSONable):
             VASP electronic structure self-consistent procedure) will be
             performed.
         options : list, optional
-            A list of :class:`lightshow.parameters._base._BaseParameters`
+            A list of tuple, where the first entry is the user-defined name of
+            the calculation (this sets the directory structure) and the second
+            entry is of :class:`lightshow.parameters._base._BaseParameters`
             objects or derived instances. The choice of options not only
             specifies which calculations to setup, each of the options also
             contains the complete set of parameters necessary to characterize
             each individual set of input files (for e.g. FEFF, VASP, etc.).
-        fail_one_fail_all : bool, optional
-            If True, if a single option fails a sanity check, none of the input
-            files for that entire structure will be written.
         max_primitive_total_atoms : int, optional
             The maximum number of allowed total atoms in the primitive cell.
         supercell_cutoff : float, optional
@@ -342,6 +340,8 @@ class Database(MSONable):
         max_supercell_total_atoms : int, optional
             The maximum number of allowed total atoms in any supercell
             constructed during the process of writing the input files.
+        max_inequivalent_sites : TYPE, optional
+            Description
         pbar : bool, optional
             If True, enables the :class:`tqdm` progress bar.
         """
@@ -362,9 +362,9 @@ class Database(MSONable):
                 "max_inequivalent_sites": [],
                 "writer": [],
             },
-            "options": {
-                option.calculation_name: option.as_dict() for option in options
-            },
+            "options": [
+                (name, option.as_dict()) for (name, option) in options
+            ],
             "version": __version__,
         }
 
@@ -421,12 +421,13 @@ class Database(MSONable):
 
             kwargs = {"structure": supercell, "sites": inequiv}
 
-            for option in zip(options):
-                path = root / Path(key) / Path(option.calculation_name)
+            # Write the files that we can
+            for (name, option) in options:
+                path = root / Path(key) / Path(name)
                 status = option.write(path, **kwargs)
                 if not status["pass"]:
                     writer_metadata["errors"]["writer"].append(
-                        status["errors"]
+                        {"name": key, **status["errors"]}
                     )
 
         # Save a metadata file (not a serialized version of this class) to
