@@ -1,12 +1,13 @@
 from copy import copy
 from pathlib import Path
 
+from monty.json import MSONable
 from pymatgen.io.feff.sets import MPXANESSet, MPEXAFSSet, FEFFDictSet
 
 from lightshow.parameters._base import _BaseParameters
 
 
-class FEFFParameters(_BaseParameters):
+class FEFFParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
     for a FEFF calculation. This class is a lightweight wrapper for the
     ``FEFFDictSet``, containing some extra information and methods used for
@@ -80,18 +81,6 @@ class FEFFParameters(_BaseParameters):
     @property
     def spectrum(self):
         return self._spectrum
-
-    @property
-    def calculation_name(self):
-        """This is the name of the directory that will correspond to the type
-        of calculation being run. In this case, FEFF-{spectrum}.
-
-        Returns
-        -------
-        str
-        """
-
-        return f"FEFF-{self._spectrum}"
 
     def __init__(
         self,

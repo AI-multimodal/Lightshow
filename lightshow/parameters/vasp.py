@@ -181,25 +181,24 @@ class Incar(pmgIncar):
             self["LDAUU"] = ldauu
 
     @classmethod
-    def from_default(cls, scf=True):
+    def from_default(cls, neutral=True):
         """A simple classmethod for loading the default specs.
 
         Parameters
         ----------
-        scf : bool, optional
-            Description
+        neutral : bool, optional
+            If True, returns the default for a neutral potential electronic
+            structure relaxation. Otherwise, assumes a corehole potential.
 
         Returns
         -------
-        TYPE
-            Description
+        Incar
         """
 
-        if scf:
+        if neutral:
             klass = cls(Incar.DEFAULT_NEUTRAL)
         else:
             klass = cls(Incar.DEFAULT_COREHOLE)
-        klass.check_params()
         return klass
 
     def check_params(self):
@@ -219,6 +218,16 @@ class Incar(pmgIncar):
 
 
 class Kpoints(pmgKpoints):
+    """Method for constructing the Kpoints objects.
+
+    .. note::
+
+        There are many more custom ways to instantiate the Kpoints objects than
+        just the :class:`Kpoints.custom` method listed below. The full list
+        can be found in the `Pymatgen documentation <https://pymatgen.org/
+        pymatgen.io.vasp.inputs.html#pymatgen.io.vasp.inputs.Kpoints>`_.
+    """
+
     @staticmethod
     def custom(supercell, cutoff=32.0, max_radii=50.0):
         """Customizes the KPOINTS file. For a kmesh sampling, e.g. [m, n, p],
@@ -367,11 +376,10 @@ class PotcarConstructor(MSONable):
     }
 
     def __init__(self, root, element_mapping=dict()):
-        self._root = Path(root).resolve
+        self._root = Path(root).resolve()
         assert Path(self._root).exists()
-        self._element_mapping = copy(
-            PotcarConstructor.DEFAULT_ELEMENT_MAPPING
-        ).update(element_mapping)
+        self._element_mapping = copy(PotcarConstructor.DEFAULT_ELEMENT_MAPPING)
+        self._element_mapping.update(element_mapping)
 
     def check_POTCAR_exists(self, list_of_elements):
         """Iterates through a list of element symbols and checks to see that a
@@ -531,7 +539,7 @@ class PotcarConstructor(MSONable):
 
         ANG2BOHR = 1.88873
         volume_bohr = structure.volume * ANG2BOHR**3
-        Nv = self.get_total_valence(structure)
+        Nv = self.get_total_valence_electrons(structure)
 
         tmp1 = eRange / 27.2114 + 1.841 / (
             volume_bohr / Nv * 3.0 / 4.0 / np.pi
@@ -666,7 +674,7 @@ class Poscar(pmgPoscar):
         return new_line_5
 
 
-class VASPParameters(_BaseParameters):
+class VASPParameters(MSONable, _BaseParameters):
     """A one-stop-shop for modifying the VASP parameters for some calculation.
     Due to the relative complexity of setting up a VASP calculation (as opposed
     to e.g. FEFF), the :class:`.VASPParameters` object...
@@ -702,10 +710,6 @@ class VASPParameters(_BaseParameters):
     @property
     def incar(self):
         return self._incar
-
-    @property
-    def calculation_name(self):
-        return "VASP"
 
     def get_KPOINTS(self, structure):
         """Calls the static methods defined on Kpoints (and it's corresponding
@@ -763,21 +767,21 @@ class VASPParameters(_BaseParameters):
                 structure
             )
             nb = nvalence * self._nbands_estimator
-        elif self._nbands_method == "heg":
+        elif self._nbands_estimator == "heg":
             nb = self._potcar_constructor.get_total_bands_via_heg(
                 structure, self._nbands_parameters["erange"]
             )
         else:
-            raise ValueError(f"Unknown nbands_method={self._nbands_method}")
+            raise ValueError(f"Unknown nbands method={self._nbands_estimator}")
 
         return nb
 
     def __init__(
         self,
         incar,
-        kpoints_method,
         potcar_directory,
-        kpoints_method_kwargs=dict(),
+        kpoints_method="custom",
+        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
         potcar_element_mapping=dict(),
         nbands_estimator=None,
         nbands_parameters=dict(),
@@ -871,6 +875,7 @@ class VASPParameters(_BaseParameters):
                 pass
         else:
             incar.adj_mag(structure)
+        incar.check_params()
 
         if len(errors) > 0:
             return {"pass": False, "errors": errors}
@@ -882,6 +887,7 @@ class VASPParameters(_BaseParameters):
         if ch_lspec:
             for site, specie in zip(sites, species):
                 path = target_directory / Path(f"{site:03}_{specie}")
+                path.mkdir(exist_ok=True, parents=True)
                 elements = poscar.write_single_site(
                     path, site_index=site, check_atom_type=specie
                 )
@@ -893,6 +899,7 @@ class VASPParameters(_BaseParameters):
         # Else assume this is just a standard neutral potential calculation
         else:
             path = target_directory / Path("SCF")
+            path.mkdir(exist_ok=True, parents=True)
             elements = poscar.write_single_site(
                 path, site_index=None, check_atom_type=None
             )
