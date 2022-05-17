@@ -301,6 +301,7 @@ class Database(MSONable):
         max_primitive_total_atoms=int(1e16),
         supercell_cutoff=9.0,
         max_supercell_total_atoms=int(1e16),
+        max_inequivalent_sites=int(1e16),
         pbar=True,
     ):
         """Summary
@@ -359,8 +360,7 @@ class Database(MSONable):
                 "max_primitive_total_atoms": [],
                 "max_supercell_total_atoms": [],
                 "max_inequivalent_sites": [],
-                "max_bands": [],
-                "no_potcar": [],
+                "writer": [],
             },
             "options": {
                 option.calculation_name: option.as_dict() for option in options
@@ -411,22 +411,23 @@ class Database(MSONable):
                 else None
             )
 
-            # Check which calculations get the final approval to be written to
-            # disk
-            options_status = [
-                option.validate(structure, inequiv) for option in options
-            ]
-
-            # If fail_one_fail_all is enabled, and any of the options has
-            # failed, we continue to the next material
-            if not all(options_status) and fail_one_fail_all:
+            # Check the number of inequivalent sites against the maximum
+            # allowed
+            if len(inequiv) > max_inequivalent_sites:
+                writer_metadata["errors"]["max_inequivalent_sites"].append(
+                    {"key": key, "n_ineqivalent_sites": len(inequiv)}
+                )
                 continue
 
-            for option, check_pass in zip(options, options_status):
-                if not check_pass:
-                    continue
-                path = root / option.calculation_name
-                option.write(path, supercell, inequiv)
+            kwargs = {"structure": supercell, "sites": inequiv}
+
+            for option in zip(options):
+                path = root / Path(key) / Path(option.calculation_name)
+                status = option.write(path, **kwargs)
+                if not status["pass"]:
+                    writer_metadata["errors"]["writer"].append(
+                        status["errors"]
+                    )
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
