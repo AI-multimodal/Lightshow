@@ -1,5 +1,6 @@
-import ase
 import numpy as np
+from pymatgen.io.ase import AseAtomsAdaptor as ase
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 def make_supercell(prim, cutoff=9.0):
@@ -40,3 +41,39 @@ def make_supercell(prim, cutoff=9.0):
         site.properties["magmom"] = magmom[idx]
 
     return structure
+
+
+def get_symmetrically_inequivalent_sites(structure, atom_type):
+    """Gets the symmetrically inequivalent sites as found by the
+    SpacegroupAnalyzer class from Pymatgen.
+
+    Parameters
+    ----------
+    structure : pymatgen.core.structure.Structure
+        The Pymatgen structure of interest.
+    atom_type : str
+        The absorbing atom symbol, e.g. "Ti".
+
+    Returns
+    -------
+    list of int
+        The list of symmetrically inequivalent sites in the structure.
+    """
+
+    # Get the symmetrically inequivalent indexes
+    equi = (
+        SpacegroupAnalyzer(structure)
+        .get_symmetrized_structure()
+        .equivalent_indices
+    )
+
+    # Equivalent indexes must all share the same atom type
+    atoms = np.array([str(structure[xx[0]].specie) for xx in equi])
+
+    # Find where the atom type is equal to the target
+    where_target = np.where(atoms == atom_type)[0]
+
+    # Get the absorbing atom indexes
+    # TODO: I think this list comprehension can be improved
+    # Something feels wrong about it
+    return [xx[0] for ii, xx in enumerate(equi) if ii in where_target]

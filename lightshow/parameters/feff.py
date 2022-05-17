@@ -109,7 +109,7 @@ class FEFFParameters(_BaseParameters):
 
     def get_FEFFDictSets(self, structure, absorbing_sites):
         """Constructs and returns a list of the
-        :class:`pymatgen.io.feff.sets.FEFFDictSet objects.
+        :class:`pymatgen.io.feff.sets.FEFFDictSet` objects.
 
         Parameters
         ----------
@@ -117,12 +117,13 @@ class FEFFParameters(_BaseParameters):
             The Pymatgen structure. Note that the ``absorbing_sites`` must
             correspond to the provided structure.
         absorbing_sites : list
-            A list of integers corresponding to absorbing sites.
+            A list of int corresponding to absorbing sites.
 
         Returns
         -------
         list
-            A list of FEFFDictSet objects. One for each absorbing site.
+            A list of :class:`pymatgen.io.feff.sets.FEFFDictSet` objects. One
+            for each absorbing site.
 
         Raises
         ------

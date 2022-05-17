@@ -4,6 +4,7 @@ the `Materials Project Database <https://materialsproject.org/>`_, as well as
 utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
+import json
 from pathlib import Path
 
 from monty.json import MSONable
@@ -11,7 +12,7 @@ from pymatgen.core.structure import Structure
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
-from lightshow import _get_API_key_from_environ
+from lightshow import _get_API_key_from_environ, __version__
 from lightshow import pymatgen_utils
 
 
@@ -294,21 +295,57 @@ class Database(MSONable):
     def write(
         self,
         root,
+        absorbing_atom=None,
         options=[],
         fail_one_fail_all=True,
-        max_primitive_total_atoms=1e16,
+        max_primitive_total_atoms=int(1e16),
         supercell_cutoff=9.0,
-        max_supercell_total_atoms=1e16,
+        max_supercell_total_atoms=int(1e16),
+        pbar=True,
     ):
         """Summary
 
+        .. note::
+
+            At the end of writing the files, a ``writer_metadata.json`` file
+            will be saved along with the directories containing the input
+            files. This metadata file contains all information about the
+            parameters used to construct the input files, including those
+            passed as arguments to this method.
+
         Parameters
         ----------
-        root : TYPE
-            Description
+        root : os.PathLike
+            The target root directory to save all of the input files.
+        absorbing_atom : str, optional
+            The absorbing atom type symbol, e.g. ``"Ti"``. Note that if None,
+            any calculations in which the absorbing atom is required (e.g. all
+            spectroscopy) will be skipped. Only calculations that do not
+            require absorbing atoms to be specified (e.g. neutral potential
+            VASP electronic structure self-consistent procedure) will be
+            performed.
         options : list, optional
-            Description
+            A list of :class:`lightshow.parameters._base._BaseParameters`
+            objects or derived instances. The choice of options not only
+            specifies which calculations to setup, each of the options also
+            contains the complete set of parameters necessary to characterize
+            each individual set of input files (for e.g. FEFF, VASP, etc.).
+        fail_one_fail_all : bool, optional
+            If True, if a single option fails a sanity check, none of the input
+            files for that entire structure will be written.
+        max_primitive_total_atoms : int, optional
+            The maximum number of allowed total atoms in the primitive cell.
+        supercell_cutoff : float, optional
+            Parameter used for constructing the supercells. Default is 9
+            Angstroms. TODO: this needs clearer documentation.
+        max_supercell_total_atoms : int, optional
+            The maximum number of allowed total atoms in any supercell
+            constructed during the process of writing the input files.
+        pbar : bool, optional
+            If True, enables the :class:`tqdm` progress bar.
         """
+
+        root = str(Path(root).resolve())  # Get absolute path
 
         writer_metadata = {
             "locals": {
@@ -318,20 +355,24 @@ class Database(MSONable):
             },
             "created_at": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
             "errors": {
+                "MPRestError": self._errors["MPRestError"],
                 "max_primitive_total_atoms": [],
                 "max_supercell_total_atoms": [],
                 "max_inequivalent_sites": [],
                 "max_bands": [],
                 "no_potcar": [],
             },
-            "options": [option.as_dict() for option in options],
+            "options": {
+                option.calculation_name: option.as_dict() for option in options
+            },
+            "version": __version__,
         }
 
         root = Path(root)
         root.mkdir(exist_ok=True, parents=True)
-        # writer_metadata_path = root / Path("writer_metadata.json")
+        writer_metadata_path = root / Path("writer_metadata.json")
 
-        for key in tqdm(self._structures.keys(), disable=self._verbose < 2):
+        for key in tqdm(self._structures.keys(), disable=not pbar):
 
             structure = self._structures[key]
             primitive_structure = structure.get_primitive_structure()
@@ -360,16 +401,34 @@ class Database(MSONable):
                 )
                 continue
 
+            # If inequiv is None, that means that the absorbing_atom was not
+            # specified
+            inequiv = (
+                pymatgen_utils.get_symmetrically_inequivalent_sites(
+                    structure, absorbing_atom
+                )
+                if absorbing_atom is not None
+                else None
+            )
+
             # Check which calculations get the final approval to be written to
             # disk
-            option_green_light = [option.check_pass() for option in options]
+            options_status = [
+                option.validate(structure, inequiv) for option in options
+            ]
 
             # If fail_one_fail_all is enabled, and any of the options has
             # failed, we continue to the next material
-            if not all(option_green_light) and fail_one_fail_all:
+            if not all(options_status) and fail_one_fail_all:
                 continue
 
-            for option, check_pass in zip(options, option_green_light):
+            for option, check_pass in zip(options, options_status):
                 if not check_pass:
                     continue
-                option.write_inputs()
+                path = root / option.calculation_name
+                option.write(path, supercell, inequiv)
+
+        # Save a metadata file (not a serialized version of this class) to
+        # disk along with the input files
+        with open(writer_metadata_path, "w") as outfile:
+            json.dump(writer_metadata, outfile, indent=4, sort_keys=True)
