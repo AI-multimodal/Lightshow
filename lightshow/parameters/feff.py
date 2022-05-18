@@ -62,26 +62,6 @@ class FEFFParameters(MSONable, _BaseParameters):
         calculation to run. Should likely be either ``"XANES"`` or ``"EXAFS"``.
     """
 
-    @property
-    def cards(self):
-        return self._cards
-
-    @property
-    def edge(self):
-        return self._edge
-
-    @property
-    def radius(self):
-        return self._radius
-
-    @property
-    def nkpts(self):
-        return self._nkpts
-
-    @property
-    def spectrum(self):
-        return self._spectrum
-
     def __init__(
         self,
         cards,
