@@ -296,14 +296,34 @@ class Database(MSONable):
         self,
         root,
         absorbing_atom=None,
-        options=dict(),
+        options=[],
         max_primitive_total_atoms=int(1e16),
         supercell_cutoff=9.0,
         max_supercell_total_atoms=int(1e16),
         max_inequivalent_sites=int(1e16),
         pbar=True,
     ):
-        """Summary
+        """The core method of the :class:`.Database` class. This method will
+        write all input files specified in the ``options`` parameter to disk.
+        Of particular note is the directory structure, which is always
+        consistent regardless of the type of calculation: At the first level is
+        the ``key`` (usually an mpid) indexing the material of interest. At the
+        next level is the user-specified "name" of the calculation, which are
+        the first elements of each tuple in the ``options``. Next are
+        the material-specific calculations. For example, in spectroscopy
+        calculations, each absorbing atom will have it's own directory at this
+        level. Within each of those are the input files for that calculation.
+        For example::
+
+            mp-390
+                VASP
+                    000_Ti
+                    SCF
+                FEFF-XANES
+                    000_Ti
+                        # ... (input files)
+            mvc-11115
+                # ...
 
         .. note::
 
@@ -340,8 +360,10 @@ class Database(MSONable):
         max_supercell_total_atoms : int, optional
             The maximum number of allowed total atoms in any supercell
             constructed during the process of writing the input files.
-        max_inequivalent_sites : TYPE, optional
-            Description
+        max_inequivalent_sites : int, optional
+            The maximum number of allowed inequivalent sites in any primitive
+            cell. This can be set to a low value to help avoid calculations of
+            amorphous materials.
         pbar : bool, optional
             If True, enables the :class:`tqdm` progress bar.
         """

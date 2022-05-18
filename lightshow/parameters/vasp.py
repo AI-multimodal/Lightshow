@@ -14,9 +14,8 @@ from lightshow.parameters._base import _BaseParameters
 
 
 class Incar(pmgIncar):
-    """Inherits the pymatgen Incar class class. Allows for the standard
-    manipulation of the INCAR file as a dictionary but with a few extra
-    methods, such as saving and loading from file."""
+    """Inherits the Pymatgen Incar class. Allows for the standard manipulation
+    of the INCAR file as a dictionary but with a few extra methods."""
 
     DEFAULT_NEUTRAL = {
         "ALGO": "Normal",
@@ -202,7 +201,20 @@ class Incar(pmgIncar):
         return klass
 
     def check_params(self):
-        assert "NBANDS" in self.keys()
+        """Raises warnings for erroneous INCAR tags/parameters (see the
+        `pymatgen.io.vasp.inputs documentation <https://pymatgen.org/
+        pymatgen.io.vasp.inputs.html>`_ for precisely what this does). In
+        addition, will actually raise a ValueError if "NBANDS" is not present
+        in the INCAR.
+
+        Raises
+        ------
+        ValueError
+            If "NBANDS" is not in the INCAR ``keys``.
+        """
+
+        if "NBANDS" not in self.keys():
+            raise ValueError("NBANDS not present in INCAR parameters")
         super().check_params()
 
     def write(self, target_directory):
