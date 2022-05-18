@@ -294,10 +294,31 @@ class Kpoints(pmgKpoints):
 
 
 class PotcarConstructor(MSONable):
-    """Summary"""
+    """A helper class used to create the POTCAR input files for VASP
+    calculations. The default choices for the types of potentials chosen is
+    detailed in :class:`.PotcarConstructor.DEFAULT_ELEMENT_MAPPING` and is
+    chosen from the recommended potentials for GW/RPA calculations found
+    `here <https://www.vasp.at/wiki/index.php/
+    Available_PAW_potentials#Recommended_potentials_for_GW.
+    2FRPA_calculations>`_.
 
-    # https://www.vasp.at/wiki/index.php/Available_PAW_potentials
-    # using "Recommended potentials for GW/RPA calculations"
+    .. warning::
+
+        The potential files fall under the VASP license. If you do not have a
+        VASP license, you cannot use VASP potential files. Please take a look
+        at the VASP `website <https://www.vasp.at/>`_ for more details.
+
+    Parameters
+    ----------
+    root : str
+        The location of the potential file-containing directories, e.g.,
+        ``"Ti_sv_GW"``.
+    element_mapping : dict
+        Overrides specific defaults in the
+        :class:`.PotcarConstructor.DEFAULT_ELEMENT_MAPPING`. Note that only
+        provided values will be overridden, and others will fallback to the
+        defaults.
+    """
 
     DEFAULT_ELEMENT_MAPPING = {
         "Ti": "Ti_sv_GW",
@@ -454,8 +475,8 @@ class PotcarConstructor(MSONable):
 
     @lru_cache(256)
     def get_n_valence_electrons(self, element):
-        """Reads the total number of valence electrons from the second line of
-        the potential file.
+        """For a given element, reads the total number of valence electrons
+        from the second line of the potential file.
 
         Parameters
         ----------
@@ -573,7 +594,8 @@ class PotcarConstructor(MSONable):
 
 
 class Poscar(pmgPoscar):
-    """Custom Poscar file, lightweight wrapper for the pymatgen verison.
+    """Custom Poscar file, lightweight wrapper for the
+    :class:`pymatgen.io.vasp.inputs.Poscar` class.
 
     .. warning::
 

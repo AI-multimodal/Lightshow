@@ -1,3 +1,4 @@
 monty
 tqdm
 pymatgen
+numpy
