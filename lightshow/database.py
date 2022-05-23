@@ -345,9 +345,7 @@ class Database(MSONable):
             VASP electronic structure self-consistent procedure) will be
             performed.
         options : list, optional
-            A list of tuple, where the first entry is the user-defined name of
-            the calculation (this sets the directory structure) and the second
-            entry is of :class:`lightshow.parameters._base._BaseParameters`
+            A list of :class:`lightshow.parameters._base._BaseParameters`
             objects or derived instances. The choice of options not only
             specifies which calculations to setup, each of the options also
             contains the complete set of parameters necessary to characterize
@@ -378,15 +376,13 @@ class Database(MSONable):
             },
             "created_at": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
             "errors": {
-                "MPRestError": self._errors["MPRestError"],
+                "MPRestError": self._errors.get("MPRestError", dict()),
                 "max_primitive_total_atoms": [],
                 "max_supercell_total_atoms": [],
                 "max_inequivalent_sites": [],
                 "writer": [],
             },
-            "options": [
-                (name, option.as_dict()) for (name, option) in options
-            ],
+            "options": [option.as_dict() for option in options],
             "version": __version__,
         }
 
@@ -444,8 +440,8 @@ class Database(MSONable):
             kwargs = {"structure": supercell, "sites": inequiv}
 
             # Write the files that we can
-            for (name, option) in options:
-                path = root / Path(key) / Path(name)
+            for option in options:
+                path = root / Path(key) / Path(option.name)
                 status = option.write(path, **kwargs)
                 if not status["pass"]:
                     writer_metadata["errors"]["writer"].append(
