@@ -1,0 +1,56 @@
+name: CI pipeline
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.7]
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Setup and install standard requirements
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install .
+        python3 -m pip list
+
+    - name: Install dev requirements
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        python3 -m pip install '.[dev]'
+        python3 -m pip list
+
+    - name: Run tests
+      shell: bash -l {0}
+      env:
+      	PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
+      run: |
+        set -vxeuo pipefail
+        pytest -v --cov --cov-report xml lightshow/_tests
+
+    # - name: Upload code coverage
+    #   uses: codecov/codecov-action@v2
+    #   timeout-minutes: 10
+    #   with:
+    #     token: ${{ secrets.CODECOV_TOKEN }}
+    #     fail_ci_if_error: false
