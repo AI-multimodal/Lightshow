@@ -10,6 +10,8 @@ on:
 
 jobs:
   build:
+    env:
+        PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -42,8 +44,6 @@ jobs:
 
     - name: Run tests
       shell: bash -l {0}
-      env:
-      	PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
       run: |
         set -vxeuo pipefail
         pytest -v --cov --cov-report xml lightshow/_tests
