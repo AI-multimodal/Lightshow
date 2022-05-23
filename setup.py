@@ -26,7 +26,7 @@ pip install --upgrade pip
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, "README.md"), encoding="utf-8") as readme_file:
+with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
 with open(path.join(here, "requirements.txt")) as requirements_file:
@@ -46,7 +46,7 @@ with open(path.join(here, "requirements-dev.txt")) as requirements_file:
 
 # pip install -e ".[dev]"
 setup(
-    name="lightshow",
+    name="xanes_bench",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="One-stop-shop for building input files for computational "
@@ -55,13 +55,13 @@ setup(
     author="Brookhaven National Laboratory",
     author_email="mcarbone@bnl.gov, john.vinson@nist.gov, dlu@bnl.gov, "
     "vorwerk@physik.hu-berlin.de, xiaqu@bnl.gov",
-    url="https://github.com/AI-multimodal/lightshow",
+    url="https://github.com/AI-multimodal/xanes_bench",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={},
     include_package_data=True,
     package_data={
-        "lightshow": [
+        "xanes_bench": [
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',
