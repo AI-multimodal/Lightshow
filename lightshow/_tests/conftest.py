@@ -33,3 +33,8 @@ def TiO10():
     for key in d.keys():
         d[key] = Structure.from_dict(d[key])
     return d
+
+
+@pytest.fixture
+def dummy_potcar_file_directory():
+    return str(Path(__file__).parent.resolve() / Path("dummy_potcar_files"))

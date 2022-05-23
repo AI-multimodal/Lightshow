@@ -105,7 +105,7 @@ class Database(MSONable):
     """Contains all materials and metadata for some database."""
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR", api_key=None, verbose=True):
+    def from_files(cls, root, filename="CONTCAR", verbose=True):
         """Searches for files matching the provided ``filename``, and assumes
         those files are structural files in CIF format. The names/ids of these
         files is given by the full directory structure where that file was
@@ -120,9 +120,6 @@ class Database(MSONable):
         filename : str, optional
             The files to search for. Uses ``rglob`` to recursively find any
             files matching ``filename`` within the provided directory.
-        api_key : str, optional
-            Materials Project API key. If None (not provided), looks for the
-            environment variable ``PMG_API_KEY``.
         verbose : bool, optional
             If True, will use tqdm to print a progress bar.
 
@@ -131,7 +128,6 @@ class Database(MSONable):
         Database
         """
 
-        api_key = _get_api_key(api_key)
         structures = {
             str(path.parent): Structure.from_file(path)
             for path in Path(root).rglob(filename)
