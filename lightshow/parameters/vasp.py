@@ -810,6 +810,10 @@ class VASPParameters(MSONable, _BaseParameters):
 
         return nb
 
+    @property
+    def name(self):
+        return self._name
+
     def __init__(
         self,
         incar,
@@ -821,6 +825,7 @@ class VASPParameters(MSONable, _BaseParameters):
         nbands_parameters=dict(),
         max_bands=int(1e16),
         force_spin_unpolarized=False,
+        name="VASP",
     ):
         # Load the INCAR information
         if isinstance(incar, Incar):
@@ -851,6 +856,7 @@ class VASPParameters(MSONable, _BaseParameters):
         # Other parameters
         self._max_bands = max_bands
         self._force_spin_unpolarized = force_spin_unpolarized
+        self._name = name
 
     def write(self, target_directory, **kwargs):
         """Summary

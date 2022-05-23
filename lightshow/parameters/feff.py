@@ -62,6 +62,10 @@ class FEFFParameters(MSONable, _BaseParameters):
         calculation to run. Should likely be either ``"XANES"`` or ``"EXAFS"``.
     """
 
+    @property
+    def name(self):
+        return self._name
+
     def __init__(
         self,
         cards,
@@ -69,12 +73,14 @@ class FEFFParameters(MSONable, _BaseParameters):
         radius=9.0,
         nkpts=1000,
         spectrum="XANES",
+        name="FEFF",
     ):
         self._cards = cards
         self._edge = edge
         self._radius = radius
         self._nkpts = nkpts
         self._spectrum = spectrum
+        self._name = name
 
     def get_FEFFDictSets(self, structure, absorbing_sites):
         """Constructs and returns a list of the
