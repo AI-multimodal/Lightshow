@@ -25,6 +25,8 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
 
+from math import ceil, floor
+
 module_path = os.path.dirname(xanes_bench.__file__)
 
 # Return a guess at the number of conduction bands that a given unit-cell volume needs to 
@@ -159,21 +161,42 @@ def writeQE( unitC, st, folder, qe_fn, pspName, params, NSCFBands, conductionBan
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
-        prevCart = np.dot( bMatrix, prevCoords )
+#        prevCart = np.dot( bMatrix, prevCoords )
+        prevCart = np.dot( prevCoords, bMatrix )
         kpointCount = []
         totKpointCount = 0
+        totDistance = 0.0
         for j in range(1,len(kpath.kpath['path'][i])):
             symbol = kpath.kpath['path'][i][j]
             coords = kpath.kpath['kpoints'][symbol]
-            cart = np.dot( bMatrix, coords )
+            cart = np.dot( coords, bMatrix )
             dist = np.linalg.norm(cart-prevCart)
-            kpointCount.append( int( dist/targetKpointSpacing ) )
-    #        prevCoords = coords
+            totDistance += dist
             prevCart = cart
-            totKpointCount += int( dist/targetKpointSpacing )
+
+        symbol = kpath.kpath['path'][i][0]
+        prevCoords = kpath.kpath['kpoints'][symbol]
+        prevCart = np.dot( prevCoords, bMatrix )
+
+        for j in range(1,len(kpath.kpath['path'][i])):
+            symbol = kpath.kpath['path'][i][j]
+            coords = kpath.kpath['kpoints'][symbol]
+            cart = np.dot( coords, bMatrix )
+            dist = np.linalg.norm(cart-prevCart)
+            prevCart = cart
+
+
+            tempKpoint = 1 + int(round( ( 100.0 - len(kpath.kpath['path'][i]) )* dist / totDistance ))
+            if j == len(kpath.kpath['path'][i]) - 1:
+                tempKpoint = 100 - totKpointCount - 1
+            kpointCount.append( tempKpoint )
+            totKpointCount += tempKpoint
+                
+            print( j, totKpointCount, tempKpoint, dist )
+          
 
         kpointCount.append( int(1) )
-#        print( totKpointCount )
+        print( totKpointCount )
 #        print( len(kpath.kpath['path'][i]) )
 
         for j in range(len(kpath.kpath['path'][i])):
