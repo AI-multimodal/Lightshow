@@ -442,9 +442,16 @@ class Database(MSONable):
                 "structure_sc": supercell,
                 "structure_uc": structure,
                 "sites": inequiv,
-                "bandgap": self._metadata[key]["band_gap"],
-                "diel": self._metadata[key]["diel"],
             }
+            if self._metadata[key]["band_gap"] is not None:
+                kwargs["bandgap"] = self._metadata[key]["band_gap"]
+            else:
+                kwargs["bandgap"] = None
+
+            if self._metadata[key]["diel"] is not None:
+                kwargs["diel"] = self._metadata[key]["diel"]
+            else:
+                kwargs["diel"] = None
 
             # Write the files that we can
             for option in options:
