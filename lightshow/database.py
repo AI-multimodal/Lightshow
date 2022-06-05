@@ -150,6 +150,8 @@ class Database(MSONable):
             "icsd_ids",
             "e_above_hull",
             "formation_energy_per_atom",
+            "band_gap",
+            "diel",
         ],
         verbose=True,
     ):
@@ -440,6 +442,8 @@ class Database(MSONable):
                 "structure_sc": supercell,
                 "structure_uc": structure,
                 "sites": inequiv,
+                "bandgap": self._metadata[key]["band_gap"],
+                "diel": self._metadata[key]["diel"],
             }
 
             # Write the files that we can
