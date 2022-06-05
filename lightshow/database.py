@@ -402,13 +402,14 @@ class Database(MSONable):
                 )
                 continue
 
-            # Construct the supercell which will be used in general for VASP
-            # calculations, but will be helpful in referencing
+            # Construct the supercell which will be used in general for VASP and
+            # XSpectra calculations, but will be helpful in referencing
             supercell = pymatgen_utils.make_supercell(
                 structure, supercell_cutoff
             ).get_sorted_structure()
 
-            # If the supercell is too large, we continue as well.
+            # If the supercell is too large, we continue as well
+            # should only work for VASP and XSpectra
             if len(supercell) > max_supercell_total_atoms:
                 writer_metadata["errors"]["max_supercell_total_atoms"].append(
                     {"name": key, "supercell_size": len(supercell)}
@@ -433,7 +434,13 @@ class Database(MSONable):
                 )
                 continue
 
-            kwargs = {"structure": supercell, "sites": inequiv}
+            # If the for VASP and XSpectra calculations, use supercell;
+            # otherwise, use unit cell structure
+            kwargs = {
+                "structure_sc": supercell,
+                "structure_uc": structure,
+                "sites": inequiv,
+            }
 
             # Write the files that we can
             for option in options:

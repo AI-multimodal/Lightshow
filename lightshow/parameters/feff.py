@@ -158,7 +158,7 @@ class FEFFParameters(MSONable, _BaseParameters):
             object is always ``{"pass": True, "errors": dict()}``.
         """
 
-        structure = kwargs["structure"]
+        structure = kwargs["structure_uc"]
         sites = kwargs["sites"]
 
         target_directory = Path(target_directory)
