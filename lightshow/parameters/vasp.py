@@ -866,7 +866,7 @@ class VASPParameters(MSONable, _BaseParameters):
         target_directory : os.PathLike
             The target directory to which to save the VASP input files.
         **kwargs
-            Must contain the ``structure`` key (the
+            Must contain the ``structure_sc`` key (the
             :class:`pymatgen.core.structure.Structure` of interest) and the
             ``sites`` key (a list of int, where each int corresponds to the
             site index of the site to write).
@@ -894,7 +894,7 @@ class VASPParameters(MSONable, _BaseParameters):
                 "CH_LSPEC in the INCAR, but no sites were provided."
             )
 
-        structure = deepcopy(kwargs["structure"])
+        structure = deepcopy(kwargs["structure_sc"])
 
         # Check the validity of the calculations
         nb = self.estimate_n_bands(structure)
