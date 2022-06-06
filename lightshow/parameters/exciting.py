@@ -21,30 +21,38 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         For example, one might wish to use something like
 
         .. code-block:: python
-        cards = {
-            'groundstate': {
-                "xctype": "GGA_PBE",
-                "nempty": "30",
-                "rgkmax": "9.0",
-                "do": "skip"
+
+            cards = {
+                'groundstate': {
+                    "xctype": "GGA_PBE",
+                    "nempty": "30",
+                    "rgkmax": "9.0",
+                    "do": "skip"
                 },
-            'xs': {
-                "xstype": "BSE",
-                "vkloff": "0.05 0.03 0.13",
-                "nempty": "30",
-                "gqmax": "4.0",
-                "broad": "0.0327069",
-                "tevout": "true",
-                "tappinfo": "true",
-                "energywindow": {"intv": "178.2 180.5",
-                                 "points": "1000"},
-                "screening": {"screentype": "full",
-                              "nempty": "100"},
-                "BSE": {"xas": "true",
+                'xs': {
+                    "xstype": "BSE",
+                    "vkloff": "0.05 0.03 0.13",
+                    "nempty": "30",
+                    "gqmax": "4.0",
+                    "broad": "0.0327069",
+                    "tevout": "true",
+                    "tappinfo": "true",
+                    "energywindow": {
+                        "intv": "178.2 180.5",
+                        "points": "1000"
+                    },
+                    "screening": {
+                        "screentype": "full",
+                        "nempty": "100"
+                    },
+                    "BSE": {
+                        "xas": "true",
                         "xasedge": "K",
                         "bsetype": "singlet",
-                        "nstlxas": "1 20"}
-                },
+                        "nstlxas": "1 20"
+                    }
+                }
+            }
 
     """
 
