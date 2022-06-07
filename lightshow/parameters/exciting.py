@@ -63,11 +63,14 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards={
+            "structure": {
+                "speciespath": "./",
+            },
             "groundstate": {
                 "xctype": "GGA_PBE",
                 "nempty": "30",
                 "rgkmax": "9.0",
-                "do": "skip",
+                "do": "fromscratch",
             },
             "xs": {
                 "xstype": "BSE",
@@ -156,7 +159,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             path = target_directory / Path(f"{site:03}_{specie}")
             path.mkdir(exist_ok=True, parents=True)
 
-            filepath_xas = path / "input_xas.xml"
+            filepath_xas = path / "input.xml"
             self._cards["xs"]["BSE"]["xasatom"] = str(site + 1)
             excitinginput.write_file(
                 "primitive", filepath_xas, bandstr=False, **self._cards
