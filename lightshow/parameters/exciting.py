@@ -63,31 +63,32 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards={
-            "structure": {
-                "speciespath": "./",
-            },
+            "structure": {"speciespath": "./", "autormt": "true"},
             "groundstate": {
                 "xctype": "GGA_PBE",
-                "nempty": "30",
+                "nempty": "200",
                 "rgkmax": "9.0",
                 "do": "fromscratch",
             },
             "xs": {
                 "xstype": "BSE",
                 "vkloff": "0.05 0.03 0.13",
-                "nempty": "30",
+                "nempty": "150",
                 "gqmax": "4.0",
                 "broad": "0.0327069",
                 "tevout": "true",
                 "tappinfo": "true",
                 "energywindow": {"intv": "178.2 180.5", "points": "1000"},
-                "screening": {"screentype": "full", "nempty": "100"},
+                "screening": {"screentype": "full", "nempty": "150"},
                 "BSE": {
                     "xas": "true",
                     "xasedge": "K",
                     "bsetype": "singlet",
                     "nstlxas": "1 20",
+                    "distribute": "true",
+                    "eecs": "1000",
                 },
+                "qpointset": {"qpoint": {"text()": "0.0 0.0 0.0"}},
             },
         },
         kpoints_method="custom",
