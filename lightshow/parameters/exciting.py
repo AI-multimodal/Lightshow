@@ -69,6 +69,10 @@ class EXCITINGParameters(MSONable, _BaseParameters):
                 "nempty": "200",
                 "rgkmax": "9.0",
                 "do": "fromscratch",
+                "gmaxvr": "25",
+                "lmaxmat": "10",
+                "lmaxvr": "10",
+                "lmaxapw": "10",
             },
             "xs": {
                 "xstype": "BSE",
