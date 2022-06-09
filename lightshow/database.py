@@ -468,7 +468,7 @@ class Database(MSONable):
                     writer_metadata["errors"]["writer"].append(
                         {"name": key, **status["errors"]}
                     )
-                if copy_script is not None:
+                if copy_script is not None and "paths" in status.keys():
                     for p in status["paths"]:
                         output = run_command(f"cp {copy_script} {p}")
                         if output["exitcode"] != 0:
