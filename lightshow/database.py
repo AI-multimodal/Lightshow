@@ -442,8 +442,8 @@ class Database(MSONable):
             # if yes, read the bandgap and diel for OCEAN
             # if no, ignore them
             if (
-                "band_gap" in self._metadata[key]
-                and "diel" in self._metadata[key]
+                "band_gap" in self._metadata[key].keys()
+                and "diel" in self._metadata[key].keys()
             ):
                 kwargs = {
                     "structure_sc": supercell,
