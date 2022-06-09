@@ -444,13 +444,21 @@ class Database(MSONable):
 
             # If the for VASP and XSpectra calculations, use supercell;
             # otherwise, use unit cell structure
+            # test if band_gap and diel in the self._metadata[key].keys()
+            # if yes, read the bandgap and diel for OCEAN
+            # if no, ignore them
             kwargs = {
                 "structure_sc": supercell,
                 "structure_uc": structure,
                 "sites": inequiv,
-                "bandgap": self._metadata[key]["band_gap"],
-                "diel": self._metadata[key]["diel"],
             }
+            if self._metadata is not None:
+                if (
+                    "band_gap" in self._metadata[key].keys()
+                    and "diel" in self._metadata[key].keys()
+                ):
+                    kwargs["bandgap"] = self._metadata[key]["band_gap"]
+                    kwargs["diel"] = self._metadata[key]["diel"]
 
             # Write the files that we can
             for option in options:
