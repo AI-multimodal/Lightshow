@@ -155,7 +155,8 @@ class FEFFParameters(MSONable, _BaseParameters):
             A dictionary containing the status and errors key. In the case of
             FEFF, there are no possible errors at this stage other than
             critical ones that would cause program termination, so the returned
-            object is always ``{"pass": True, "errors": dict()}``.
+            object is always
+            ``{"pass": True, "errors": dict(), "paths": [...]}``.
         """
 
         structure = kwargs["structure_uc"]
@@ -170,8 +171,10 @@ class FEFFParameters(MSONable, _BaseParameters):
 
         dict_sets = self.get_FEFFDictSets(structure, sites)
 
+        paths = []
         for dict_set, name in zip(dict_sets, names):
             path = target_directory / Path(name)
             dict_set.write_input(path)
+            paths.append(path)
 
-        return {"pass": True, "errors": dict()}
+        return {"pass": True, "errors": dict(), "paths": paths}
