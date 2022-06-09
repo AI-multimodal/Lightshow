@@ -82,6 +82,8 @@ class OCEANParameters(MSONable, _BaseParameters):
             "cnbse.niter": 1000,
             "haydock_convergence": " 0.001 5 ",
         },
+        bandgap=None,
+        diel=None,
         kpoints_method="custom",
         kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
         defaultConvPerAtom=1e-10,
@@ -89,6 +91,8 @@ class OCEANParameters(MSONable, _BaseParameters):
         name="OCEAN",
     ):
         self._cards = cards
+        self._bandgap = bandgap
+        self._diel = diel
         # Method for determining the kmesh
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
@@ -197,17 +201,23 @@ class OCEANParameters(MSONable, _BaseParameters):
         kmesh = self._getKmesh(structure, cutoff=16.0, max_radii=50.0)
         self._cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         # Determine the diemac
-        if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
-            bandgap = kwargs["bandgap"]
-            diel = kwargs["diel"]
-            if diel is not None:
-                if diel["poly_electronic"] is not None:
-                    self._cards["diemac"] = diel["poly_electronic"]
-            elif bandgap is not None:
-                if bandgap > 0.000001:
-                    self._cards["diemac"] = np.exp(3.5 / bandgap)
-                else:
-                    self._cards["diemac"] = 1000000
+        if self._bandgap is not None or self._diel is not None:
+            if self._diel is not None:
+                self._cards["diemac"] = self._diel
+            elif self._bandgap is not None:
+                self._cards["diemac"] = np.exp(3.5 / self._bandgap)
+        elif self._bandgap is None and self._diel is None:
+            if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
+                bandgap = kwargs["bandgap"]
+                diel = kwargs["diel"]
+                if diel is not None:
+                    if diel["poly_electronic"] is not None:
+                        self._cards["diemac"] = diel["poly_electronic"]
+                elif bandgap is not None:
+                    if bandgap > 0.000001:
+                        self._cards["diemac"] = np.exp(3.5 / bandgap)
+                    else:
+                        self._cards["diemac"] = 1000000
         # Determine the SCF? convergence threshold
         self._cards["toldfe"] = self._defaultConvPerAtom * len(structure)
 
