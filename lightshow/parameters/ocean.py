@@ -182,8 +182,6 @@ class OCEANParameters(MSONable, _BaseParameters):
 
         structure = kwargs["structure_uc"]
         sites = kwargs["sites"]
-        bandgap = kwargs["bandgap"]
-        diel = kwargs["diel"]
 
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
@@ -199,14 +197,17 @@ class OCEANParameters(MSONable, _BaseParameters):
         kmesh = self._getKmesh(structure, cutoff=16.0, max_radii=50.0)
         self._cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         # Determine the diemac
-        if diel is not None:
-            if diel["poly_electronic"] is not None:
-                self._cards["diemac"] = diel["poly_electronic"]
-        elif bandgap is not None:
-            if bandgap > 0.000001:
-                self._cards["diemac"] = np.exp(3.5 / bandgap)
-            else:
-                self._cards["diemac"] = 1000000
+        if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
+            bandgap = kwargs["bandgap"]
+            diel = kwargs["diel"]
+            if diel is not None:
+                if diel["poly_electronic"] is not None:
+                    self._cards["diemac"] = diel["poly_electronic"]
+            elif bandgap is not None:
+                if bandgap > 0.000001:
+                    self._cards["diemac"] = np.exp(3.5 / bandgap)
+                else:
+                    self._cards["diemac"] = 1000000
         # Determine the SCF? convergence threshold
         self._cards["toldfe"] = self._defaultConvPerAtom * len(structure)
 
