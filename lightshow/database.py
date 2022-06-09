@@ -284,7 +284,7 @@ class Database(MSONable):
 
         return self._errors
 
-    def __init__(self, structures, metadata, errors):
+    def __init__(self, structures, metadata=dict(), errors=dict()):
         """Initializer for the Database class. Note it is recommended to use
         the classmethods to initialize this object."""
 
@@ -452,7 +452,7 @@ class Database(MSONable):
                 "structure_uc": structure,
                 "sites": inequiv,
             }
-            if self._metadata is not None:
+            if key in self._metadata.keys():
                 if (
                     "band_gap" in self._metadata[key].keys()
                     and "diel" in self._metadata[key].keys()
