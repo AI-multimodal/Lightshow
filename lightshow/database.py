@@ -6,6 +6,7 @@ utilizing existing data the user may have on their hard drive."""
 from datetime import datetime
 import json
 from pathlib import Path
+from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.core.structure import Structure
@@ -14,6 +15,7 @@ from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ, __version__
 from lightshow import pymatgen_utils
+from lightshow.io_utils import run_command
 
 
 def _fetch_from_MP(mpr, mpid, metadata_keys):
@@ -300,6 +302,7 @@ class Database(MSONable):
         max_supercell_total_atoms=int(1e16),
         max_inequivalent_sites=int(1e16),
         pbar=True,
+        copy_script=None,
     ):
         """The core method of the :class:`.Database` class. This method will
         write all input files specified in the ``options`` parameter to disk.
@@ -362,6 +365,9 @@ class Database(MSONable):
             amorphous materials.
         pbar : bool, optional
             If True, enables the :class:`tqdm` progress bar.
+        copy_script : os.PathLike
+            If not ``None``, will copy the script in the provided path to each
+            of the input file locations.
         """
 
         root = str(Path(root).resolve())  # Get absolute path
@@ -454,6 +460,11 @@ class Database(MSONable):
                     writer_metadata["errors"]["writer"].append(
                         {"name": key, **status["errors"]}
                     )
+                if copy_script is not None:
+                    for p in status["paths"]:
+                        output = run_command(f"cp {copy_script} {p}")
+                        if output["exitcode"] != 0:
+                            warn(f"Unknown error writing {copy_script} to {p}")
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
