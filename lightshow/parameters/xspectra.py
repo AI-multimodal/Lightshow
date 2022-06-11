@@ -313,7 +313,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         inp += [
             "&pseudos",
-            "    filecore = '../../../Core.wfc'",
+            "    filecore = '../../Core.wfc'",
             "    r_paw(1) = 1.79",  # hard-coded to Ti w/ core-hole
             "/",
             "&cut_occ",
