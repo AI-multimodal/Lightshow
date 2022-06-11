@@ -110,7 +110,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 "cell": {},
                 "control": {
                     "restart_mode": "from_scratch",
-                    "wf_collect": ".true/",
                 },
                 "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
                 "ions": {},
@@ -364,12 +363,17 @@ class XSpectraParameters(MSONable, _BaseParameters):
         # Estimate number of kpoints
         if float(self._cards["XS_controls"]["Rmin"]) >= 9:
             # use Gamma point for ground state calculations (es.in and gs.in)
-            kpoints = [1, 1, 1]
+            kpoints_scf = [1, 1, 1]
         else:
-            kpoints = self._getKmesh(structure, cutoff=26.0, max_radii=50.0)
+            kpoints_scf = self._getKmesh(
+                structure, cutoff=26.0, max_radii=50.0
+            )
+
+        kpoints_xas = self._getKmesh(structure, cutoff=26.0, max_radii=50.0)
+
         self._cards["XS"]["kpts"][
             "kpts"
-        ] = f"{kpoints[0]} {kpoints[1]} {kpoints[2]}"
+        ] = f"{kpoints_xas[0]} {kpoints_xas[1]} {kpoints_xas[2]}"
         # Determine the SCF? convergence threshold
         self._cards["QE"]["electrons"][
             "conv_thr"
@@ -401,7 +405,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             control=self._cards["QE"]["control"],
             system=self._cards["QE"]["system"],
             electrons=self._cards["QE"]["electrons"],
-            kpoints_grid=kpoints,
+            kpoints_grid=kpoints_scf,
         )
         gs_in.write_file(path / "gs.in")
         # Get the psp data read for ES calculations
@@ -427,14 +431,14 @@ class XSpectraParameters(MSONable, _BaseParameters):
             path.mkdir(exist_ok=True, parents=True)
 
             structure[site] = element + "+"
-            self._cards["QE"]["control"]["pseudo_dir"] = "../../"
+            self._cards["QE"]["control"]["pseudo_dir"] = "../"
             es_in = PWInput(
                 structure,
                 pseudo=psp,
                 control=self._cards["QE"]["control"],
                 system=self._cards["QE"]["system"],
                 electrons=self._cards["QE"]["electrons"],
-                kpoints_grid=kpoints,
+                kpoints_grid=kpoints_scf,
             )
             es_in.write_file(path / "es.in")
             structure[site] = element
