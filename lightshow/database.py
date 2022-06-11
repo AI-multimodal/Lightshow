@@ -452,13 +452,14 @@ class Database(MSONable):
                 "structure_uc": structure,
                 "sites": inequiv,
             }
-            if key in self._metadata.keys():
-                if (
-                    "band_gap" in self._metadata[key].keys()
-                    and "diel" in self._metadata[key].keys()
-                ):
-                    kwargs["bandgap"] = self._metadata[key]["band_gap"]
-                    kwargs["diel"] = self._metadata[key]["diel"]
+            if self._metadata is not None:
+                if key in self._metadata.keys():
+                    if (
+                        "band_gap" in self._metadata[key].keys()
+                        and "diel" in self._metadata[key].keys()
+                    ):
+                        kwargs["bandgap"] = self._metadata[key]["band_gap"]
+                        kwargs["diel"] = self._metadata[key]["diel"]
 
             # Write the files that we can
             for option in options:
