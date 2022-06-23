@@ -46,32 +46,32 @@ def calculate_similarity_last(mpid, code):
     
     last_spectra_fn = Path(mpid) / code / list(spectra_folder_dict.keys())[num_folders-1]
     if code == 'XS':
-        last_spectra = XSplot(last_spectra_fn, site_list)
+        last_spectra = XSplot(last_spectra_fn, ['0']) #site_list)
     elif code == 'OCEAN':
-        last_spectra = OCEANplot(last_spectra_fn, site_list)
+        last_spectra = OCEANplot(last_spectra_fn, ['0']) #site_list)
     elif code == 'EXCITING':
-        last_spectra = Excitingplot(last_spectra_fn, site_list)
+        last_spectra = Excitingplot(last_spectra_fn, ['0']) #site_list)
 
     while not last_spectra.exists():
         num_folders = num_folders - 1
         last_spectra_fn = Path(mpid) / code / list(spectra_folder_dict.keys())[num_folders-1]
         if code == 'XS':
-            last_spectra = XSplot(last_spectra_fn, site_list)
+            last_spectra = XSplot(last_spectra_fn, ['0'])# site_list)
         elif code == 'OCEAN':
-            last_spectra = OCEANplot(last_spectra_fn, site_list)
+            last_spectra = OCEANplot(last_spectra_fn, ['0'])# site_list)
         elif code == 'EXCITIG':
-            last_spectra = Excitingplot(last_spectra_fn, site_list)
+            last_spectra = Excitingplot(last_spectra_fn, ['0'])# site_list)
     print(f'INFO: Most Converged Spectra is in {last_spectra_fn}')
 
     out = dict()
     for i in spectra_folder_dict:
         this_spectra_fn = Path(mpid) / code / i
         if code == 'XS':
-            this_spectra = XSplot(this_spectra_fn, site_list)
+            this_spectra = XSplot(this_spectra_fn, ['0']) #site_list)
         elif code == 'OCEAN':
-            this_spectra = OCEANplot(this_spectra_fn, site_list)
+            this_spectra = OCEANplot(this_spectra_fn, ['0']) #site_list)
         elif code == 'EXCITING':
-            this_spectra = Excitingplot(this_spectra_fn, site_list)
+            this_spectra = Excitingplot(this_spectra_fn, ['0']) #site_list)
         if this_spectra.exists():
             spearman = comparePlots(0, this_spectra.spectra, last_spectra.spectra)[1]
             out[spectra_folder_dict[i]] = np.log10(1-spearman)
@@ -92,14 +92,14 @@ def calculate_similarity_next(mpid, code):
         second_spectra_fn = Path(mpid) / code / spectra_folder_list[i+1]
         
         if code == 'XS':
-            first_spectra = XSplot(first_spectra_fn, site_list)
-            second_spectra = XSplot(second_spectra_fn, site_list)
+            first_spectra = XSplot(first_spectra_fn, ['0']) #site_list)
+            second_spectra = XSplot(second_spectra_fn, ['0']) #site_list)
         elif code == 'OCEAN':
-            first_spectra = OCEANplot(first_spectra_fn, site_list)
-            second_spectra = OCEANplot(second_spectra_fn, site_list)
+            first_spectra = OCEANplot(first_spectra_fn, ['0']) #site_list)
+            second_spectra = OCEANplot(second_spectra_fn, ['0']) #site_list)
         elif code == 'EXCITING':
-            first_spectra = Excitingplot(first_spectra_fn, site_list)
-            second_spectra = Excitingplot(second_spectra_fn, site_list)
+            first_spectra = Excitingplot(first_spectra_fn, ['0']) #site_list)
+            second_spectra = Excitingplot(second_spectra_fn, ['0']) #site_list)
             
         spearman = comparePlots(0, first_spectra.spectra, second_spectra.spectra)[1]
         out[spectra_folder_dict[spectra_folder_list[i]]] = np.log10(1-spearman)

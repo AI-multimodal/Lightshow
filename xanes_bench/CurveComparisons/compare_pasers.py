@@ -142,17 +142,21 @@ class OCEANplot():
         return self.nspectra[:,1]
 
 class Excitingplot():
-    def __init__(self, folder, absorber=['0'], polar = ['11', '22', '33']):
+    def __init__(self, folder, absorber=['0'], polar = ['11', '22', '33'], ip=False):
         self.path = Path(folder)
         self.absorber = absorber
         self.polar = polar
-
+        self.ip = ip
     @property
     def spectra(self):
         Spectra = None
         for iab in self.absorber:
             for polar in self.polar:
-                path = self.path  / iab / f"EPSILON/EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT" #.format( element, site, p)
+                if not self.ip:
+                    path = self.path  / iab / f"EPSILON/EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT" #.format( element, site, p)
+                else:
+                    path = self.path  / iab / f"EPSILON/EPSILON_BSE-IP_SCR-full_OC{polar}.OUT"
+
                 if Spectra is None:
     #                     Spectra = np.loadtxt(path + "/xanes.dat", comments='#')
                     Spectra = np.loadtxt( path, skiprows=18, usecols=(0,2)  )
@@ -165,7 +169,10 @@ class Excitingplot():
         for iab in self.absorber:
             for polar in self.polar:
                 dipole = "dipole" + polar
-                path = self.path  /  iab  /  f"EPSILON/EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT"
+                if not self.ip:
+                    path = self.path  /  iab  /  f"EPSILON/EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT"
+                else:
+                    path = self.path  / iab / f"EPSILON/EPSILON_BSE-IP_SCR-full_OC{polar}.OUT"
                 if not path.exists():
                     out.append(False)
 #                     print(f'{Path(path / "xanes.dat")} not exists')
