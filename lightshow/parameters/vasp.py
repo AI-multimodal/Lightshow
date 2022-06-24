@@ -10,6 +10,7 @@ from pymatgen.io.vasp.inputs import Incar as pmgIncar
 from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 
+from lightshow import _get_POTCAR_DIRECTORY_from_environ
 from lightshow.parameters._base import _BaseParameters
 
 
@@ -742,13 +743,14 @@ class VASPParameters(MSONable, _BaseParameters):
         Precise name of the classmethod defined in
         :class:`pymatgen.io.vasp.inputs.Kpoints`, or ``"custom"``, which is
         defined in Lightshow's :class:`.Kpoints` module.
-    potcar_directory : os.PathLike
+    potcar_directory : os.PathLike, optional
         The location in which the potential files are stored. These files
         should be stored in a precise directory format, specifically: the
         first level in should contain potential files of the form
         ``Pb_d_GW``, ``Pb_sv_GW``, ``Pd``, etc. For some element, the specific
         choice is determined first by the ``potcar_element_mapping`` and then
-        by the defaults in the :class:`.PotcarConstructor` class.
+        by the defaults in the :class:`.PotcarConstructor` class. If None,
+        checks the environment for ``VASP_POTCAR_DIRECTORY``.
     kpoints_method_kwargs : dict
         Optional arguments to pass to the classmethod used to construct the
         kpoints.
@@ -836,7 +838,7 @@ class VASPParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         incar,
-        potcar_directory,
+        potcar_directory=None,
         kpoints_method="custom",
         kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
         potcar_element_mapping=dict(),
@@ -862,6 +864,14 @@ class VASPParameters(MSONable, _BaseParameters):
         self._kpoints_method_kwargs = kpoints_method_kwargs
 
         # POTCAR information
+        if potcar_directory is None:
+            potcar_directory = _get_POTCAR_DIRECTORY_from_environ()
+        if potcar_directory is None:
+            raise ValueError(
+                "potcar_directory not provided, and VASP_POTCAR_DIRECTORY "
+                "not in the current environment variables"
+            )
+
         self._potcar_directory = potcar_directory
         self._potcar_element_mapping = potcar_element_mapping
         self._potcar_constructor = PotcarConstructor(
