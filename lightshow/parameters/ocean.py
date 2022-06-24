@@ -14,38 +14,19 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     Parameters
     ----------
-    cards : dict
+    input_cards : dict
         A dictionary of of the cards to be control the parameters in the
-        OCEAN calculations. For example, one might wish to use something like
+        OCEAN calculations. Default is empty, which means that users will
+        use most default parameters stored at self._cards. If users want to
+        change some default parameters, for example, one might wish to abinit
+        rather than qe as DFT package, also they want to use the energy range
+        for DFT to be 50 eV, they can something like
 
         .. code-block:: python
 
             cards = {
                 "dft": "qe",
                 "dft_energy_range": 50,
-                "diemac": "5",
-                "ecut": "-1",
-                "ecut.quality": "high",
-                "edges": "-22 1 0",
-                "opf.program": "hamann",
-                "para_prefix": "mpirun -n 8",
-                "pp_database": "ONCVPSP-PBE-PDv0.4-stringent",
-                "screen_energy_range": 150,
-                "cnbse.broaden": 0.89,
-                "core_offset": "225.10",
-                "cnbse.spect_range": "1000 -20 80",
-                "screen.nkpt": "-2.55",
-                "screen.final.dr": "0.02",
-                "screen.grid.rmax": "10",
-                "screen.grid.rmode": "lagrange uniform",
-                "screen.grid.ang": "5 11 11 9 7",
-                "screen.grid.deltar": "0.10 0.15 0.25 0.25 0.25",
-                "screen.grid.shells": " -1 4 6 8 10",
-                "screen.lmax": "2",
-                "cnbse.rad": "5.5",
-                "screen.shells": "3.5 4.0 4.5 5.0 5.5 6.0",
-                "cnbse.niter": 1000,
-                "haydock_convergence": " 0.001 5 "
             }
     kpoints_method : str
         Methods for determining the kmesh. Currently, only "custom" is supported.
@@ -85,7 +66,19 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     def __init__(
         self,
-        cards={
+        input_cards=dict(),
+        bandgap=None,
+        diel=None,
+        nbands_estimator="heg",
+        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
+        kpoints_method="custom",
+        kpoints_method_kwargs={"cutoff": 16.0, "max_radii": 50.0},
+        defaultConvPerAtom=1e-10,
+        edge="K",
+        name="OCEAN",
+    ):
+        # Default cards for ocean
+        self._cards = {
             "dft": "qe",
             "dft_energy_range": 50,
             "diemac": "5",
@@ -111,18 +104,9 @@ class OCEANParameters(MSONable, _BaseParameters):
             "screen.shells": "3.5 4.0 4.5 5.0 5.5 6.0",
             "cnbse.niter": 1000,
             "haydock_convergence": " 0.001 5 ",
-        },
-        bandgap=None,
-        diel=None,
-        nbands_estimator="heg",
-        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 16.0, "max_radii": 50.0},
-        defaultConvPerAtom=1e-10,
-        edge="K",
-        name="OCEAN",
-    ):
-        self._cards = cards
+        }
+        # User modified cards
+        self._input_cards = input_cards
         self._bandgap = bandgap
         self._diel = diel
         # Method for determining number of bands
@@ -134,6 +118,7 @@ class OCEANParameters(MSONable, _BaseParameters):
         self._defaultConvPerAtom = defaultConvPerAtom
         self._edge = edge
         self._name = name
+        print(type(self._cards))  # , type(self._cards["edges"]))
 
     @property
     def _edge_map(self):
@@ -272,7 +257,9 @@ class OCEANParameters(MSONable, _BaseParameters):
                         self._cards["diemac"] = 1000000
         # Determine the SCF? convergence threshold
         self._cards["toldfe"] = self._defaultConvPerAtom * len(structure)
-
+        # Let input_cards overwrite default cards
+        for key, val in self._input_cards.items():
+            self._cards[key] = val
         # OCEAN will calculate every atom within the same specie
         path = target_directory  # / Path(f"{site:03}_{specie}")
         path.mkdir(exist_ok=True, parents=True)
