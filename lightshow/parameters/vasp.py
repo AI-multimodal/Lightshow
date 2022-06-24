@@ -13,60 +13,138 @@ from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 from lightshow.parameters._base import _BaseParameters
 
 
+VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL = {
+    "ALGO": "Normal",
+    "EDIFF": 1e-05,
+    "IBRION": 2,
+    "ISIF": 2,
+    "ISMEAR": 0,
+    "ISPIN": 2,
+    "ISYM": 2,
+    "KPAR": 1,
+    "LAECHG": True,
+    "LCHARG": True,
+    "LORBIT": 11,
+    "LREAL": "Auto",
+    "LWAVE": False,
+    "NCORE": 1,
+    "NELM": 200,
+    "NELMIN": 6,
+    "NSIM": 16,
+    "NSW": 0,
+    "PREC": "Accurate",
+    "SIGMA": 0.05,
+    "SYMPREC": 1e-05,
+}
+
+VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL = {
+    "ALGO": "Normal",
+    "CH_LSPEC": True,
+    "CH_NEDOS": 40000,
+    "CH_SIGMA": 0.05,
+    "CLL": 0,
+    "CLN": 1,
+    "CLNT": 1,
+    "CLZ": 1.0,
+    "EDIFF": 1e-05,
+    "EDIFFG": -0.01,
+    "ICORELEVEL": 2,
+    "ISMEAR": 0,
+    "ISPIN": 2,
+    "KPAR": 1,
+    "LAECHG": True,
+    "LCHARG": False,
+    "LREAL": "Auto",
+    "LWAVE": False,
+    "NCORE": 1,
+    "NELM": 200,
+    "NSIM": 16,
+    "PREC": "Accurate",
+    "SIGMA": 0.05,
+    "SYMPREC": 1e-05,
+}
+
+
+VASP_POTCAR_DEFAULT_ELEMENT_MAPPING = {
+    "Ti": "Ti_sv_GW",
+    "Zn": "Zn_sv_GW",
+    "O": "O_GW",
+    "H": "H_GW",
+    "He": "He_GW",
+    "Li": "Li_sv_GW",
+    "Be": "Be_sv_GW",
+    "B": "B_GW",
+    "C": "C_GW",
+    "N": "N_GW",
+    "F": "F_GW",
+    "Ne": "Ne_GW",
+    "Na": "Na_sv_GW",
+    "Mg": "Mg_sv_GW",
+    "Al": "Al_GW",
+    "Si": "Si_GW",
+    "P": "P_GW",
+    "S": "S_GW",
+    "Cl": "Cl_GW",
+    "Ar": "Ar_GW",
+    "K": "K_sv_GW",
+    "Ca": "Ca_sv_GW",
+    "Sc": "Sc_sv_GW",
+    "V": "V_sv_GW",
+    "Cr": "Cr_sv_GW",
+    "Mn": "Mn_sv_GW",
+    "Fe": "Fe_sv_GW",
+    "Co": "Co_sv_GW",
+    "Ni": "Ni_sv_GW",
+    "Cu": "Cu_sv_GW",
+    "Ga": "Ga_d_GW",
+    "Ge": "Ge_d_GW",
+    "As": "As_GW",
+    "Se": "Se_GW",
+    "Br": "Br_GW",
+    "Kr": "Kr_GW",
+    "Rb": "Rb_sv_GW",
+    "Sr": "Sr_sv_GW",
+    "Y": "Y_sv_GW",
+    "Zr": "Zr_sv_GW",
+    "Nb": "Nb_sv_GW",
+    "Mo": "Mo_sv_GW",
+    "Tc": "Tc_sv_GW",
+    "Ru": "Ru_sv_GW",
+    "Rh": "Rh_sv_GW",
+    "Pd": "Pd_sv_GW",
+    "Ag": "Ag_sv_GW",
+    "Cd": "Cd_sv_GW",
+    "In": "In_d_GW",
+    "Sn": "Sn_d_GW",
+    "Sb": "Sb_d_GW",
+    "Te": "Te_GW",
+    "I": "I_GW",
+    "Xe": "Xe_GW",
+    "Cs": "Cs_sv_GW",
+    "Ba": "Ba_sv_GW",
+    "La": "La_GW",
+    "Ce": "Ce_GW",
+    "Hf": "Hf_sv_GW",
+    "Ta": "Ta_sv_GW",
+    "W": "W_sv_GW",
+    "Re": "Re_sv_GW",
+    "Os": "Os_sv_GW",
+    "Ir": "Ir_sv_GW",
+    "Pt": "Pt_sv_GW",
+    "Au": "Au_sv_GW",
+    "Hg": "Hg_sv_GW",
+    "Tl": "Tl_d_GW",
+    "Pb": "Pb_d_GW",
+    "Bi": "Bi_d_GW",
+    "Po": "Po_d_GW",
+    "At": "At_d_GW",
+    "Rn": "Rn_d_GW",
+}
+
+
 class Incar(pmgIncar):
     """Inherits the Pymatgen Incar class. Allows for the standard manipulation
     of the INCAR file as a dictionary but with a few extra methods."""
-
-    DEFAULT_NEUTRAL = {
-        "ALGO": "Normal",
-        "EDIFF": 1e-05,
-        "IBRION": 2,
-        "ISIF": 2,
-        "ISMEAR": 0,
-        "ISPIN": 2,
-        "ISYM": 2,
-        "KPAR": 1,
-        "LAECHG": True,
-        "LCHARG": True,
-        "LORBIT": 11,
-        "LREAL": "Auto",
-        "LWAVE": False,
-        "NCORE": 1,
-        "NELM": 200,
-        "NELMIN": 6,
-        "NSIM": 16,
-        "NSW": 0,
-        "PREC": "Accurate",
-        "SIGMA": 0.05,
-        "SYMPREC": 1e-05,
-    }
-
-    DEFAULT_COREHOLE = {
-        "ALGO": "Normal",
-        "CH_LSPEC": True,
-        "CH_NEDOS": 40000,
-        "CH_SIGMA": 0.05,
-        "CLL": 0,
-        "CLN": 1,
-        "CLNT": 1,
-        "CLZ": 1.0,
-        "EDIFF": 1e-05,
-        "EDIFFG": -0.01,
-        "ICORELEVEL": 2,
-        "ISMEAR": 0,
-        "ISPIN": 2,
-        "KPAR": 1,
-        "LAECHG": True,
-        "LCHARG": False,
-        "LREAL": "Auto",
-        "LWAVE": False,
-        "NCORE": 1,
-        "NELM": 200,
-        "NSIM": 16,
-        "PREC": "Accurate",
-        "SIGMA": 0.05,
-        "SYMPREC": 1e-05,
-    }
 
     def adj_mag(
         self,
@@ -195,9 +273,9 @@ class Incar(pmgIncar):
         """
 
         if neutral:
-            klass = cls(Incar.DEFAULT_NEUTRAL)
+            klass = cls(VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL)
         else:
-            klass = cls(Incar.DEFAULT_COREHOLE)
+            klass = cls(VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL)
         return klass
 
     def check_params(self):
@@ -308,8 +386,8 @@ class Kpoints(pmgKpoints):
 class PotcarConstructor(MSONable):
     """A helper class used to create the POTCAR input files for VASP
     calculations. The default choices for the types of potentials chosen is
-    detailed in :class:`.PotcarConstructor.DEFAULT_ELEMENT_MAPPING` and is
-    chosen from the recommended potentials for GW/RPA calculations found
+    detailed in :class:`.PotcarConstructor.VASP_POTCAR_DEFAULT_ELEMENT_MAPPING`
+    and is chosen from the recommended potentials for GW/RPA calculations found
     `here <https://www.vasp.at/wiki/index.php/
     Available_PAW_potentials#Recommended_potentials_for_GW.
     2FRPA_calculations>`_.
@@ -327,92 +405,31 @@ class PotcarConstructor(MSONable):
         ``"Ti_sv_GW"``.
     element_mapping : dict
         Overrides specific defaults in the
-        :class:`.PotcarConstructor.DEFAULT_ELEMENT_MAPPING`. Note that only
-        provided values will be overridden, and others will fallback to the
-        defaults.
+        `VASP_POTCAR_DEFAULT_ELEMENT_MAPPING`. Note that only provided values
+        will be overridden, and others will fallback to the defaults (unless
+        ``override_default_element_mapping`` is True).
+    override_default_element_mapping : bool
+        If True, the ``element_mapping`` provided will override the default
+        completely. If False, then only keys that are provided will be used
+        to update the default mapping.
     """
 
-    DEFAULT_ELEMENT_MAPPING = {
-        "Ti": "Ti_sv_GW",
-        "Zn": "Zn_sv_GW",
-        "O": "O_GW",
-        "H": "H_GW",
-        "He": "He_GW",
-        "Li": "Li_sv_GW",
-        "Be": "Be_sv_GW",
-        "B": "B_GW",
-        "C": "C_GW",
-        "N": "N_GW",
-        "F": "F_GW",
-        "Ne": "Ne_GW",
-        "Na": "Na_sv_GW",
-        "Mg": "Mg_sv_GW",
-        "Al": "Al_GW",
-        "Si": "Si_GW",
-        "P": "P_GW",
-        "S": "S_GW",
-        "Cl": "Cl_GW",
-        "Ar": "Ar_GW",
-        "K": "K_sv_GW",
-        "Ca": "Ca_sv_GW",
-        "Sc": "Sc_sv_GW",
-        "V": "V_sv_GW",
-        "Cr": "Cr_sv_GW",
-        "Mn": "Mn_sv_GW",
-        "Fe": "Fe_sv_GW",
-        "Co": "Co_sv_GW",
-        "Ni": "Ni_sv_GW",
-        "Cu": "Cu_sv_GW",
-        "Ga": "Ga_d_GW",
-        "Ge": "Ge_d_GW",
-        "As": "As_GW",
-        "Se": "Se_GW",
-        "Br": "Br_GW",
-        "Kr": "Kr_GW",
-        "Rb": "Rb_sv_GW",
-        "Sr": "Sr_sv_GW",
-        "Y": "Y_sv_GW",
-        "Zr": "Zr_sv_GW",
-        "Nb": "Nb_sv_GW",
-        "Mo": "Mo_sv_GW",
-        "Tc": "Tc_sv_GW",
-        "Ru": "Ru_sv_GW",
-        "Rh": "Rh_sv_GW",
-        "Pd": "Pd_sv_GW",
-        "Ag": "Ag_sv_GW",
-        "Cd": "Cd_sv_GW",
-        "In": "In_d_GW",
-        "Sn": "Sn_d_GW",
-        "Sb": "Sb_d_GW",
-        "Te": "Te_GW",
-        "I": "I_GW",
-        "Xe": "Xe_GW",
-        "Cs": "Cs_sv_GW",
-        "Ba": "Ba_sv_GW",
-        "La": "La_GW",
-        "Ce": "Ce_GW",
-        "Hf": "Hf_sv_GW",
-        "Ta": "Ta_sv_GW",
-        "W": "W_sv_GW",
-        "Re": "Re_sv_GW",
-        "Os": "Os_sv_GW",
-        "Ir": "Ir_sv_GW",
-        "Pt": "Pt_sv_GW",
-        "Au": "Au_sv_GW",
-        "Hg": "Hg_sv_GW",
-        "Tl": "Tl_d_GW",
-        "Pb": "Pb_d_GW",
-        "Bi": "Bi_d_GW",
-        "Po": "Po_d_GW",
-        "At": "At_d_GW",
-        "Rn": "Rn_d_GW",
-    }
-
-    def __init__(self, root, element_mapping=dict()):
+    def __init__(
+        self,
+        root,
+        element_mapping=dict(),
+        override_default_element_mapping=False,
+    ):
         self._root = Path(root).resolve()
+        self._override_default_element_mapping = (
+            override_default_element_mapping
+        )
         assert Path(self._root).exists()
-        self._element_mapping = copy(PotcarConstructor.DEFAULT_ELEMENT_MAPPING)
-        self._element_mapping.update(element_mapping)
+        if self._override_default_element_mapping:
+            self._element_mapping = element_mapping
+        else:
+            self._element_mapping = copy(VASP_POTCAR_DEFAULT_ELEMENT_MAPPING)
+            self._element_mapping.update(element_mapping)
 
     def check_POTCAR_exists(self, list_of_elements):
         """Iterates through a list of element symbols and checks to see that a
@@ -785,6 +802,11 @@ class VASPParameters(MSONable, _BaseParameters):
             ``int`` or ``"heg"``.
         """
 
+        if self._nbands_estimator is None:
+
+            # Will throw a KeyError if NBANDS is not present in the INCAR
+            return self._incar["NBANDS"]
+
         cond2 = isinstance(self._nbands_estimator, int)
         if self._nbands_estimator is None or cond2:
             if self._incar.get("NBANDS") is None:
@@ -792,9 +814,6 @@ class VASPParameters(MSONable, _BaseParameters):
                     "nbands_estimator is None or int and the INCAR does not "
                     "contain  a specified number of bands"
                 )
-
-        if self._nbands_estimator is None:
-            return self._incar["NBANDS"]
 
         if cond2:
             nvalence = self._potcar_constructor.get_n_valence_electrons(
