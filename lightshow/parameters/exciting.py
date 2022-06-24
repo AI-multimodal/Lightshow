@@ -66,7 +66,15 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         Methods for determining the kmesh. Currently, only "custom" is supported.
     kpoints_method_kwargs : dict
         Arguments to pass to the classmethod used to construct the kpoints.
-
+    nbands_estimator : str
+        Methods for determining the kmesh. If 'heg', homogeneous electron gas
+        model is used to estimate the number of condcution band. If the input is
+        a number, it will be used as the number of bands (posive number stands for
+        the number of all bands; negative number stands for the number of conduction
+        bands).
+    nbands_estimator_kwargs: dict
+        Used only when the nbands_estimator == 'heg'. Optional arguments to pass to
+        the classmethod to estimate the number of conduction bands.
     """
 
     @property
@@ -78,6 +86,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         gs_cards={},
         xs_cards={},
         species_path="./",
+        nbands_estimator="heg",
+        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
         kpoints_method="custom",
         kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
         name="EXCITING",
@@ -122,6 +132,9 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         # User input parameters
         self._gs_cards = gs_cards
         self._xs_cards = xs_cards
+        # Method for determining the nbands
+        self._nbands_estimator = nbands_estimator
+        self._nbands_estimator_kwargs = nbands_estimator_kwargs  # unit in Ryd
         # Method for determining the kmesh
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
@@ -163,9 +176,23 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         excitinginput = ExcitingInput(structure)
         # Estimate number of band
-        nbands = self._getCondBands(structure.lattice.volume, 2.25)
-        self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
-        # Estimate number of kpoints
+        if self._nbands_estimator == "heg":
+            eRange = self._nbands_estimator_kwargs["eRange"]
+            nbands = self._getCondBands(structure.lattice.volume, eRange)
+            self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
+        else:
+            try:
+                nbands = int(self._nbands_estimator)
+                if nbands <= 0:
+                    raise ValueError(
+                        "the input of nbands_estimator is not supported"
+                    )
+
+                self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
+            except Exception:
+                raise ValueError(
+                    "the input of nbands_estimator is not supported"
+                )
         # Estimate number of kpoints
         if self._kpoints_method == "custom":
             cutoff = self._kpoints_method_kwargs["cutoff"]
@@ -181,10 +208,21 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         else:
             raise ValueError("method for obtaining kmesh not supported")
         # Update user's setting
-        for key, val in self._gs_cards.items():
-            self._cards["groundstate"][key] = val
+        for (
+            key,
+            val,
+        ) in self._gs_cards.items():  # only have two layers, which if more?
+            if isinstance(val, dict):
+                for sub_key, sub_val in val.items():
+                    self._cards["groundstate"][key][sub_key] = sub_val
+            else:
+                self._cards["groundstate"][key] = val
         for key, val in self._xs_cards.items():
-            self._cards["xs"][key] = val
+            if isinstance(val, dict):
+                for sub_key, sub_val in val.items():
+                    self._cards["xs"][key][sub_key] = sub_val
+            else:
+                self._cards["xs"][key] = val
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
