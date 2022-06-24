@@ -47,6 +47,36 @@ class OCEANParameters(MSONable, _BaseParameters):
                 "cnbse.niter": 1000,
                 "haydock_convergence": " 0.001 5 "
             }
+    kpoints_method : str
+        Methods for determining the kmesh. Currently, only "custom" is supported.
+    kpoints_method_kwargs : dict
+        Arguments to pass to the classmethod used to construct the kpoints.
+    defaultConvPerAtom: float, Default: 1e-10 Ryd/atom
+        Enegy convergence threshold.
+    bandgap: float, Default: None
+        User can provide the band gap of the material they are interested in
+        to determine the `diemac`. If not provided and the strucutre is from
+        pymatgen, the code will use the data (either band gap or diel) stored
+        in the database to get `diemac`; if not provided and the structure
+        is from a file, the default value of `diemac` in the cards will be used.
+        If `diel` is also not None, `diemac` is determined using `diel`
+    diel: float, Default: None
+        User can provide the diel of the material they are interested in
+        to determine the `diemac`. If not provided and the strucutre is from
+        pymatgen, the code will use the the data (either band gap or diel) stored
+        in the database to get `diemac`; if not provided and the structure is
+        from a file, the default value of `diemac` in the cards will be used.
+    edge: str, Default: 'K'
+        Type of edges
+    nbands_estimator : str
+        Methods for determining the kmesh. If 'heg', homogeneous electron gas
+        model is used to estimate the number of condcution band. If the input is
+        a number, it will be used as the number of bands (posive number stands for
+        the number of all bands; negative number stands for the number of conduction
+        bands).
+    nbands_estimator_kwargs: dict
+        Used only when the nbands_estimator == 'heg'. Optional arguments to pass to
+        the classmethod to estimate the number of conduction bands.
     """
 
     @property
@@ -84,8 +114,10 @@ class OCEANParameters(MSONable, _BaseParameters):
         },
         bandgap=None,
         diel=None,
+        nbands_estimator="heg",
+        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
         kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
+        kpoints_method_kwargs={"cutoff": 16.0, "max_radii": 50.0},
         defaultConvPerAtom=1e-10,
         edge="K",
         name="OCEAN",
@@ -93,6 +125,9 @@ class OCEANParameters(MSONable, _BaseParameters):
         self._cards = cards
         self._bandgap = bandgap
         self._diel = diel
+        # Method for determining number of bands
+        self._nbands_estimator = nbands_estimator
+        self._nbands_estimator_kwargs = nbands_estimator_kwargs
         # Method for determining the kmesh
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
@@ -195,11 +230,28 @@ class OCEANParameters(MSONable, _BaseParameters):
         element = Element(species[0])
         self._cards["edges"] = f"-{element.number} {edge} 0"
         # Estimate number of band
-        nbands = self._getCondBands(structure.lattice.volume, 2.25)
-        self._cards["nbands"] = -1 * nbands
+        if self._nbands_estimator == "heg":
+            eRange = self._nbands_estimator_kwargs["eRange"]
+            nbands = self._getCondBands(structure.lattice.volume, eRange)
+            self._cards["nbands"] = -1 * nbands
+        else:
+            try:
+                nbands = int(self._nbands_estimator)
+                self._cards["nbands"] = nbands
+            except Exception:
+                raise ValueError(
+                    "the input of nbands_estimator is not supported"
+                )
         # Estimate number of kpoints
-        kmesh = self._getKmesh(structure, cutoff=16.0, max_radii=50.0)
-        self._cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        if self._kpoints_method == "custom":
+            cutoff = self._kpoints_method_kwargs["cutoff"]
+            max_radii = self._kpoints_method_kwargs["max_radii"]
+            kmesh = self._getKmesh(
+                structure, cutoff=cutoff, max_radii=max_radii
+            )
+            self._cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        else:
+            raise ValueError("method for obtaining kmesh not supported")
         # Determine the diemac
         if self._bandgap is not None or self._diel is not None:
             if self._diel is not None:
