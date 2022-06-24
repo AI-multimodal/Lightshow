@@ -15,44 +15,57 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
     Parameters
     ----------
-    cards : dict
+    gs_cards : dict
         A dictionary of of the cards to be control the paramters in the
-        EXCITING calculations.
+        EXCITING calculations: ground state part. Default is empty, which means
+        it will use all the default setting in this workflow.
         For example, one might wish to use something like
 
         .. code-block:: python
 
-            cards = {
-                'groundstate': {
-                    "xctype": "GGA_PBE",
-                    "nempty": "30",
-                    "rgkmax": "9.0",
-                    "do": "skip"
-                },
-                'xs': {
-                    "xstype": "BSE",
-                    "vkloff": "0.05 0.03 0.13",
-                    "nempty": "30",
-                    "gqmax": "4.0",
-                    "broad": "0.0327069",
-                    "tevout": "true",
-                    "tappinfo": "true",
-                    "energywindow": {
-                        "intv": "178.2 180.5",
-                        "points": "1000"
+            gs_cards = {
+                "xctype": "GGA_PBE",
+                "nempty": "30",
+                "rgkmax": "9.0",
+                "do": "skip"
+                }
+    xs_cards : dict
+        A dictionary of of the cards to be control the paramters in the
+        EXCITING calculations: xs part. Default is empty, which means
+        it will use all the default setting in this workflow.
+        For example, one might wish to use something like
+
+        .. code-block:: python
+
+            xs_cards = {
+                "xstype": "BSE",
+                "vkloff": "0.05 0.03 0.13",
+                "nempty": "30",
+                "gqmax": "4.0",
+                "broad": "0.0327069",
+                "tevout": "true",
+                "tappinfo": "true",
+                "energywindow": {
+                    "intv": "178.2 180.5",
+                    "points": "1000"
                     },
-                    "screening": {
-                        "screentype": "full",
-                        "nempty": "100"
+                "screening": {
+                    "screentype": "full",
+                    "nempty": "100"
                     },
-                    "BSE": {
-                        "xas": "true",
-                        "xasedge": "K",
-                        "bsetype": "singlet",
-                        "nstlxas": "1 20"
+                "BSE": {
+                    "xas": "true",
+                    "xasedge": "K",
+                    "bsetype": "singlet",
+                    "nstlxas": "1 20"
                     }
                 }
-            }
+    species_path : str
+        A string contains the absolute path for species files.
+    kpoints_method : str
+        Methods for determining the kmesh. Currently, only "custom" is supported.
+    kpoints_method_kwargs : dict
+        Arguments to pass to the classmethod used to construct the kpoints.
 
     """
 
@@ -62,7 +75,15 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
     def __init__(
         self,
-        cards={
+        gs_cards={},
+        xs_cards={},
+        species_path="./",
+        kpoints_method="custom",
+        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
+        name="EXCITING",
+    ):
+        # Default cards
+        self._cards = {
             "structure": {"speciespath": "./", "autormt": "true"},
             "groundstate": {
                 "xctype": "GGA_PBE",
@@ -94,12 +115,13 @@ class EXCITINGParameters(MSONable, _BaseParameters):
                 },
                 "qpointset": {"qpoint": {"text()": "0.0 0.0 0.0"}},
             },
-        },
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
-        name="EXCITING",
-    ):
-        self._cards = cards
+        }
+        # Update speciespath
+        self._species_path = species_path
+        self._cards["structure"]["speciespath"] = self._species_path
+        # User input parameters
+        self._gs_cards = gs_cards
+        self._xs_cards = xs_cards
         # Method for determining the kmesh
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
@@ -144,13 +166,25 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         nbands = self._getCondBands(structure.lattice.volume, 2.25)
         self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
         # Estimate number of kpoints
-        kmesh = self._getKmesh(structure, cutoff=16.0, max_radii=50.0)
-        self._cards["groundstate"][
-            "ngridk"
-        ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-        self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-        self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-
+        # Estimate number of kpoints
+        if self._kpoints_method == "custom":
+            cutoff = self._kpoints_method_kwargs["cutoff"]
+            max_radii = self._kpoints_method_kwargs["max_radii"]
+            kmesh = self._getKmesh(
+                structure, cutoff=cutoff, max_radii=max_radii
+            )
+            self._cards["groundstate"][
+                "ngridk"
+            ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+            self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+            self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        else:
+            raise ValueError("method for obtaining kmesh not supported")
+        # Update user's setting
+        for key, val in self._gs_cards.items():
+            self._cards["groundstate"][key] = val
+        for key, val in self._xs_cards.items():
+            self._cards["xs"][key] = val
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
