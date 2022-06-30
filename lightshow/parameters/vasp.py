@@ -11,7 +11,7 @@ from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 
 from lightshow import _get_POTCAR_DIRECTORY_from_environ
-from lightshow.parameters._base import _BaseParameters
+from lightshow.parameters._base import _BaseParameters, _get_k_mesh
 
 
 VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL = {
@@ -348,28 +348,7 @@ class Kpoints(pmgKpoints):
         Kpoints
         """
 
-        klist = dict()
-        rlatt = np.array(supercell.lattice.reciprocal_lattice.abc)
-
-        # TODO: why 10, 0.2?
-        for xx in np.arange(0, 10, 0.2):
-            div = np.floor(xx * rlatt) + 1
-            divlatt = 2.0 * np.pi / rlatt * div
-
-            radi = min(divlatt)
-
-            if radi > max_radii:
-                break
-            else:
-                div = tuple(div.astype(int))
-                if div not in klist:
-                    klist[div] = radi
-
-        for key, value in klist.items():
-            if value > cutoff:
-                k = key
-                break
-
+        k = _get_k_mesh(supercell, cutoff, max_radii)
         return Kpoints(kpts=(k,))
 
     def write(self, target_directory):
@@ -758,6 +737,9 @@ class VASPParameters(MSONable, _BaseParameters):
         A custom element mapping which will override, element-by-element,
         defaults in the :class:`.PotcarConstructor` class.
     nbands_estimator : str
+    copy_script : os.PathLike
+        Full path to a script that should be copied to every script-containing
+        directory.
     """
 
     @property
@@ -830,10 +812,6 @@ class VASPParameters(MSONable, _BaseParameters):
             raise ValueError(f"Unknown nbands method={self._nbands_estimator}")
 
         return nb
-
-    @property
-    def name(self):
-        return self._name
 
     def __init__(
         self,
@@ -952,6 +930,8 @@ class VASPParameters(MSONable, _BaseParameters):
         kpoints = self.get_KPOINTS(structure)
         species = [structure[site].specie.symbol for site in sites]
 
+        paths = []
+
         # Green light for corehole calculations
         if ch_lspec:
             for site, specie in zip(sites, species):
@@ -964,6 +944,7 @@ class VASPParameters(MSONable, _BaseParameters):
                 kpoints.write(path)
                 incar.adj_u(elements)
                 incar.write(path)
+                paths.append(path)
 
         # Else assume this is just a standard neutral potential calculation
         else:
@@ -976,5 +957,6 @@ class VASPParameters(MSONable, _BaseParameters):
             kpoints.write(path)
             incar.adj_u(elements)
             incar.write(path)
+            paths.append(path)
 
-        return {"pass": True, "errors": dict()}
+        return {"pass": True, "errors": dict(), "paths": paths}

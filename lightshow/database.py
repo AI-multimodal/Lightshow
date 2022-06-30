@@ -6,7 +6,7 @@ utilizing existing data the user may have on their hard drive."""
 from datetime import datetime
 import json
 from pathlib import Path
-from warnings import warn
+from shutil import copy2
 
 from monty.json import MSONable
 from pymatgen.core.structure import Structure
@@ -15,7 +15,6 @@ from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ, __version__
 from lightshow import pymatgen_utils
-from lightshow.io_utils import run_command
 
 
 def _fetch_from_MP(mpr, mpid, metadata_keys):
@@ -471,9 +470,7 @@ class Database(MSONable):
                     )
                 if copy_script is not None and "paths" in status.keys():
                     for p in status["paths"]:
-                        output = run_command(f"cp {copy_script} {p}")
-                        if output["exitcode"] != 0:
-                            warn(f"Unknown error writing {copy_script} to {p}")
+                        copy2(copy_script, p)
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
