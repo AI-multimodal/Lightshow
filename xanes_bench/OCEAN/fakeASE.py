@@ -8,14 +8,20 @@ from pymatgen.core import Structure
 #from collections import OrderedDict
 import os
 import sys
-from pymatgen.io.vasp.sets import MPStaticSet
+#from pymatgen.io.vasp.sets import MPStaticSet
 from ase.units import Bohr
+import numpy as np
 
 def write_ocean_in( filename: str, structure: Structure, input_data: dict ):
 
     filename = os.path.expanduser(filename)
     mode = 'w'
     fd = open(filename, mode)
+
+    #Change screen.nkpt -Int to triplet of ints
+    if 'screen.nkpt' in input_data and len(input_data['screen.nkpt'].split()) == 1:
+       input_data['screen.nkpt'] = oceanKptSampling( structure.lattice.matrix, float(input_data['screen.nkpt']) )
+
 
     input_data_str = []
     for key in input_data:
@@ -82,3 +88,21 @@ def write_ocean_in( filename: str, structure: Structure, input_data: dict ):
               '        {cell[2][0]:.14f} {cell[2][1]:.14f} {cell[2][2]:.14f}  }}\n'
                    ''.format(cell=structure.lattice.matrix))
 
+
+
+def oceanKptSampling( cell, kpt ):
+    # We should be dividing each vector in cell by Bohr. But in what follows, 
+    # the volume gets a factor of 1/Bohr^3 and then the cross product for b1, 
+    # b2, and b3 all would have a factor of 1/Bohr^2. Therefore we factor it
+    # out and only divide the volume by Bohr
+
+    v = abs( np.dot(np.cross(cell[0], cell[1]), cell[2] ))/Bohr
+    b1 = 2*np.pi*np.linalg.norm(np.cross(cell[1], cell[2]))/v
+    b2 = 2*np.pi*np.linalg.norm(np.cross(cell[0], cell[2]))/v
+    b3 = 2*np.pi*np.linalg.norm(np.cross(cell[0], cell[1]))/v
+
+    k1 = int( -kpt * b1 ) + 1
+    k2 = int( -kpt * b2 ) + 1
+    k3 = int( -kpt * b3 ) + 1
+
+    return "{:d} {:d} {:d}".format( k1, k2, k3 )
