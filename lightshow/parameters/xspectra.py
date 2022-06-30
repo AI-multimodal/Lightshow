@@ -410,15 +410,22 @@ class XSpectraParameters(MSONable, _BaseParameters):
         gs_in.write_file(path / "gs.in")
         # Get the psp data read for ES calculations
         pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
-        psp2, ecutwfc, ecutrho = self._unpackPsps(
-            ecutwfc,
-            ecutrho,
-            pspDatabaseRoot,
-            DatabaseDir,
-            [self._cards["XS_controls"]["element"]],
-            target_directory,
-            needWfn=True,
-        )
+        try:
+            psp2, ecutwfc, ecutrho = self._unpackPsps(
+                ecutwfc,
+                ecutrho,
+                pspDatabaseRoot,
+                DatabaseDir,
+                [self._cards["XS_controls"]["element"]],
+                target_directory,
+                needWfn=True,
+            )
+        except Exception:
+            # throw a warning here
+            print("take care of the psp for absorber by yourself")
+            psp2 = {element: f"{element}.fch.upf"}
+            ecutwfc = 100
+            ecutrho = 800
         for i in psp2:
             psp[i + "+"] = psp2[i]
         # Determine iabs
