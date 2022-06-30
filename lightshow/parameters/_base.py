@@ -2,13 +2,39 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
+def _get_k_mesh(structure, cutoff=32.0, max_radii=50.0):
+
+    klist = dict()
+    rlatt = np.array(structure.lattice.reciprocal_lattice.abc)
+
+    # TODO: why 10, 0.2?
+    for xx in np.arange(0, 10, 0.2):
+        div = np.floor(xx * rlatt) + 1
+        divlatt = 2.0 * np.pi / rlatt * div
+
+        radi = min(divlatt)
+
+        if radi > max_radii:
+            break
+        else:
+            div = tuple(div.astype(int))
+            if div not in klist:
+                klist[div] = radi
+
+    for key, value in klist.items():
+        if value > cutoff:
+            k = key
+            break
+
+    return k
+
+
 class _BaseParameters(ABC):
     @abstractmethod
     def write(self, target_directory, kwargs):
         ...
 
     @property
-    @abstractmethod
     def name(self):
         return self._name
 
@@ -60,25 +86,4 @@ class _BaseParameters(ABC):
         tuple
         """
 
-        klist = dict()
-        rlatt = np.array(structure.lattice.reciprocal_lattice.abc)
-        # TODO: why 10, 0.2?
-        for xx in np.arange(0, 10, 0.2):
-            div = np.floor(xx * rlatt) + 1
-            divlatt = 2.0 * np.pi / rlatt * div
-
-            radi = min(divlatt)
-
-            if radi > max_radii:
-                break
-            else:
-                div = tuple(div.astype(int))
-                if div not in klist:
-                    klist[div] = radi
-
-        for key, value in klist.items():
-            if value > cutoff:
-                k = key
-                break
-
-        return k
+        return _get_k_mesh(structure, cutoff, max_radii)
