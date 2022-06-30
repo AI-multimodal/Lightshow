@@ -9,3 +9,7 @@ from lightshow.parameters.vasp import (
     VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
     VASP_POTCAR_DEFAULT_ELEMENT_MAPPING,
 )
+
+from lightshow.parameters.ocean import OCEAN_DEFAULT_CARDS
+
+from lightshow.parameters.xspectra import XSPECTRA_DEFAULT_CARDS
