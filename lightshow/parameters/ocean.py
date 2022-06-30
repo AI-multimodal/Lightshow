@@ -125,6 +125,20 @@ class OCEANParameters(MSONable, _BaseParameters):
         """mapping between letter and number"""
         return {"K": 1}
 
+    def _oceanKptSampling(self, cell, kpt):
+        # John's method for getting the explicit screen.nkpt
+        # Should normalize each cell dim by Bohr, or we can just do it the once for volume
+        v = abs(np.dot(np.cross(cell[0], cell[1]), cell[2])) / Bohr
+        b1 = 2 * np.pi * np.linalg.norm(np.cross(cell[1], cell[2])) / v
+        b2 = 2 * np.pi * np.linalg.norm(np.cross(cell[0], cell[2])) / v
+        b3 = 2 * np.pi * np.linalg.norm(np.cross(cell[0], cell[1])) / v
+
+        k1 = int(-kpt * b1) + 1
+        k2 = int(-kpt * b2) + 1
+        k3 = int(-kpt * b3) + 1
+
+        return "{:d} {:d} {:d}".format(k1, k2, k3)
+
     @staticmethod
     def _write_ocean_in(path, structure, input_data: dict):
 
@@ -257,6 +271,15 @@ class OCEANParameters(MSONable, _BaseParameters):
                         self._cards["diemac"] = 1000000
         # Determine the SCF? convergence threshold
         self._cards["toldfe"] = self._defaultConvPerAtom * len(structure)
+        # Change screen.nkpt -Int to triplet of ints
+        if (
+            "screen.nkpt" in self._cards
+            and len(self._cards["screen.nkpt"].split()) == 1
+        ):
+            self._cards["screen.nkpt"] = self._oceanKptSampling(
+                structure.lattice.matrix, float(self._cards["screen.nkpt"])
+            )
+
         # Let input_cards overwrite default cards
         for key, val in self._input_cards.items():
             self._cards[key] = val
