@@ -91,7 +91,11 @@ def write_ocean_in( filename: str, structure: Structure, input_data: dict ):
 
 
 def oceanKptSampling( cell, kpt ):
-    # Should normalize each cell dim by Bohr, or we can just do it the once for volume
+    # We should be dividing each vector in cell by Bohr. But in what follows, 
+    # the volume gets a factor of 1/Bohr^3 and then the cross product for b1, 
+    # b2, and b3 all would have a factor of 1/Bohr^2. Therefore we factor it
+    # out and only divide the volume by Bohr
+
     v = abs( np.dot(np.cross(cell[0], cell[1]), cell[2] ))/Bohr
     b1 = 2*np.pi*np.linalg.norm(np.cross(cell[1], cell[2]))/v
     b2 = 2*np.pi*np.linalg.norm(np.cross(cell[0], cell[2]))/v
