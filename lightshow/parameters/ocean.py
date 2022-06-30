@@ -125,7 +125,8 @@ class OCEANParameters(MSONable, _BaseParameters):
         """mapping between letter and number"""
         return {"K": 1}
 
-    def _oceanKptSampling(self, cell, kpt):
+    @staticmethod
+    def _oceanKptSampling(cell, kpt):
         # John's method for getting the explicit screen.nkpt
         # Should normalize each cell dim by Bohr, or we can just do it the once for volume
         v = abs(np.dot(np.cross(cell[0], cell[1]), cell[2])) / Bohr
