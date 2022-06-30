@@ -85,7 +85,7 @@ def main():
     # valid for unitcell calculations, e.g. OCEAN, EXCITING
 
     ## Add absorbing species and edge to parameters
-    params['species']='Co'
+    params['species']='Ti'
     params['edge']='K'
 
 
