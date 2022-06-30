@@ -246,7 +246,8 @@ def eigRMSD( omega, XSkptDict, OkptDict, Okmap, XSupper=0.0, Oupper=0.0, bUpper=
 # dictionary of the k-point mapping 
 # integer of the number of electrons in the run
 # dictionary of the eneries and weights by k-point 
-def parseQE( filename: str ):
+def parseQE( filepath: str ):
+    filename = os.path.join( filepath, "pwscf.xml" )
     tree = ET.parse( filename )
     root = tree.getroot()
 
@@ -297,7 +298,7 @@ def parseQE( filename: str ):
         eigs = kpt.find('eigenvalues').text.split()
 
         energyNK[kvecString] = dict()
-        energyNK[kvecString]["weight"] = weight
+        energyNK[kvecString]["weight"] = np.float64(weight)/2 #FC
         energyNK[kvecString]["eigenvalues"] = eigs
         for e in np.asarray( eigs, dtype=np.float64 ):
             if e <= eFermi:
@@ -319,12 +320,30 @@ def parseQE( filename: str ):
 
 
     # Now make symmetry matrices 
-    nrot = int(root.find('output').find('symmetries').find('nrot').text)
-    i = 0
-    sym = np.zeros((nrot,3,3))
-    for s in root.find('output').find('symmetries').findall('symmetry'):
-        sym[i] = np.array( list(map(float,s.find('rotation').text.split())),dtype=int).reshape((3,3),order='F')
-        i += 1
+# FC
+#    nrot = int(root.find('output').find('symmetries').find('nrot').text)
+#    i = 0
+#    sym = np.zeros((nrot,3,3))
+#    for s in root.find('output').find('symmetries').findall('symmetry'):
+#        sym[i] = np.array( list(map(float,s.find('rotation').text.split())),dtype=int).reshape((3,3),order='F')
+#        i += 1
+    filename = os.path.join( filepath, "nscf.out" ) 
+    with open(filename) as f:
+        nscf = f.readlines()
+    index = []
+    for text in nscf:
+        if "Sym. Ops., with inversion, found" in text:
+            nrot = int(text.split()[0])
+        if "isym" in text:
+            index.append(nscf.index(text))
+    symm_ = [nscf[ind+2:ind+5] for ind in index]
+    sym = []
+    for item_lst in symm_:
+        tmp = []
+        for item in item_lst:
+            tmp.append(np.asanyarray(item.split("(  ")[1].split(")")[0].split(), dtype='float'))
+        sym.append(np.array(tmp))
+
 
     # make kmap dictionary
     kmap = mapFullKpoints( kmesh, kshift, sym )
@@ -342,8 +361,11 @@ def parseEXCITING( filepath: str ):
     kdata_ = np.genfromtxt(os.path.join( filepath, "KPOINTS.OUT" ),
             skip_header=1)
     kvec_ = np.zeros((kdata_.shape[0],4))
-    kvec_[:,:] = kdata_[:,[1,2,3,4]]
-#    kvec_[:,:] = kdata_[:,[3,2,1,4]]
+    if kdata_.shape[1] > 6:
+        kvec_[:,:] = kdata_[:,[1,2,3,7]] # FC
+    else:
+        kvec_[:,:] = kdata_[:,[1,2,3,4]] 
+    #kvec_[:,:] = kdata_[:,[3,2,1,4]]
     #kvec_[:,:] = kdata_[:,1:5]
     
     ExkptDict = dict()
@@ -407,7 +429,7 @@ def main():
     for p in program:
         if( p == 'O' or p == 'o' ):
             fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, 'OCEAN', 
-                                    'groundState', "nscf", "pwscf.xml" )
+                                    'groundState', "nscf" )
             kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
             AllData.append( dict( { "Name" : "OCEAN", "nElectron" : nelectron, 
                                     "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips, 
@@ -415,7 +437,7 @@ def main():
 
         elif( p == 'X' or p == 'x' ):
             fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, 'XS', 
-                                    'groundState', "nscf", "pwscf.xml" )
+                                    'groundState', "nscf" )
             kmesh, kshift, kmap, nelectron, kptDict, eFermi, clips = parseQE( fileName )
             AllData.append( dict( { "Name" : "XSPECTRA", "nElectron" : nelectron, 
                                     "kptDict" : kptDict, "eFermi" : eFermi, "clips" : clips, 
