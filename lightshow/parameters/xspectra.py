@@ -13,6 +13,65 @@ from lightshow.parameters._base import _BaseParameters
 import lightshow
 
 
+XSPECTRA_DEFAULT_CARDS = {
+    "QE": {
+        "cell": {},
+        "control": {
+            "restart_mode": "from_scratch",
+        },
+        "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
+        "ions": {},
+        "system": {
+            "degauss": 0.002,
+            "ecutrho": 320,
+            "ecutwfc": 40,
+            "nspin": 1,
+            "occupations": "smearing",
+            "smearing": "gauss",
+        },
+    },
+    "XS": {
+        "cut_occ": {"cut_desmooth": 0.3},
+        "input_xspectra": {
+            "edge": "K",
+            "outdir": "../",
+            "prefix": "pwscf",
+            "!wf_collect": ".true.",
+            "xcheck_conv": 200,
+            "xerror": 0.01,
+            "xniter": 5000,
+            "xcoordcrys": ".false.",
+        },
+        "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
+        "plot": {
+            "cut_occ_states": ".true.",
+            "terminator": ".true.",
+            "xemax": 70,
+            "xemin": -15.0,
+            "xnepoint": 400,
+        },
+        "plotFalse": {
+            "gamma_energy(1)": 7,
+            "gamma_energy(2)": 23,
+            "gamma_mode": "variable",
+            "gamma_value(1)": 0.89,
+            "gamma_value(2)": 2.1,
+        },
+        "plotTrue": {"gamma_mode": "constant", "xgamma": 0.05},
+    },
+    "XS_controls": {
+        "element": "Ti",
+        "edge": "K",
+        "kden": "-1",
+        "psp": {"Ti+": "Ti.fch.upf", "Co+": "Co.fch.upf"},
+        "Rmin": "9.0",
+        "scf_kden": "-1",
+        "core_psp_json": "FCH1",
+        "psp_json": "SSSP_precision",
+    },
+}
+
+
 class XSpectraParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
     for an XSpectra calculation. !! TODO
@@ -103,65 +162,13 @@ class XSpectraParameters(MSONable, _BaseParameters):
     def name(self):
         return self._name
 
+    @property
+    def cards(self):
+        return self._cards
+
     def __init__(
         self,
-        cards={
-            "QE": {
-                "cell": {},
-                "control": {
-                    "restart_mode": "from_scratch",
-                },
-                "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
-                "ions": {},
-                "system": {
-                    "degauss": 0.002,
-                    "ecutrho": 320,
-                    "ecutwfc": 40,
-                    "nspin": 1,
-                    "occupations": "smearing",
-                    "smearing": "gauss",
-                },
-            },
-            "XS": {
-                "cut_occ": {"cut_desmooth": 0.3},
-                "input_xspectra": {
-                    "edge": "K",
-                    "outdir": "../",
-                    "prefix": "pwscf",
-                    "!wf_collect": ".true.",
-                    "xcheck_conv": 200,
-                    "xerror": 0.01,
-                    "xniter": 5000,
-                    "xcoordcrys": ".false.",
-                },
-                "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
-                "plot": {
-                    "cut_occ_states": ".true.",
-                    "terminator": ".true.",
-                    "xemax": 70,
-                    "xemin": -15.0,
-                    "xnepoint": 400,
-                },
-                "plotFalse": {
-                    "gamma_energy(1)": 7,
-                    "gamma_energy(2)": 23,
-                    "gamma_mode": "variable",
-                    "gamma_value(1)": 0.89,
-                    "gamma_value(2)": 2.1,
-                },
-                "plotTrue": {"gamma_mode": "constant", "xgamma": 0.05},
-            },
-            "XS_controls": {
-                "element": "Ti",
-                "edge": "K",
-                "kden": "-1",
-                "psp": {"Ti+": "Ti.fch.upf", "Co+": "Co.fch.upf"},
-                "Rmin": "9.0",
-                "scf_kden": "-1",
-                "core_psp_json": "FCH1",
-                "psp_json": "SSSP_precision",
-            },
-        },
+        cards=XSPECTRA_DEFAULT_CARDS,
         kpoints_method="custom",
         kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
         defaultConvPerAtom=1e-10,

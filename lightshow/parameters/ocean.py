@@ -1,3 +1,4 @@
+from copy import copy
 from pathlib import Path
 import numpy as np
 
@@ -6,6 +7,35 @@ from pymatgen.core import Element
 from ase.units import Bohr
 
 from lightshow.parameters._base import _BaseParameters
+
+
+OCEAN_DEFAULT_CARDS = {
+    "dft": "qe",
+    "dft_energy_range": 50,
+    "diemac": "5",
+    "ecut": "-1",
+    "ecut.quality": "high",
+    "edges": "-22 1 0",
+    "opf.program": "hamann",
+    "para_prefix": "mpirun -n 8",
+    "pp_database": "ONCVPSP-PBE-PDv0.4-stringent",
+    "screen_energy_range": 150,
+    "cnbse.broaden": 0.89,
+    "core_offset": "225.10",
+    "cnbse.spect_range": "1000 -20 80",
+    "screen.nkpt": "-2.55",
+    "screen.final.dr": "0.02",
+    "screen.grid.rmax": "10",
+    "screen.grid.rmode": "lagrange uniform",
+    "screen.grid.ang": "5 11 11 9 7",
+    "screen.grid.deltar": "0.10 0.15 0.25 0.25 0.25",
+    "screen.grid.shells": " -1 4 6 8 10",
+    "screen.lmax": "2",
+    "cnbse.rad": "5.5",
+    "screen.shells": "3.5 4.0 4.5 5.0 5.5 6.0",
+    "cnbse.niter": 1000,
+    "haydock_convergence": " 0.001 5 ",
+}
 
 
 class OCEANParameters(MSONable, _BaseParameters):
@@ -64,9 +94,13 @@ class OCEANParameters(MSONable, _BaseParameters):
     def name(self):
         return self._name
 
+    @property
+    def cards(self):
+        return self._cards
+
     def __init__(
         self,
-        input_cards=dict(),
+        cards=OCEAN_DEFAULT_CARDS,
         bandgap=None,
         diel=None,
         nbands_estimator="heg",
@@ -77,36 +111,11 @@ class OCEANParameters(MSONable, _BaseParameters):
         edge="K",
         name="OCEAN",
     ):
+
         # Default cards for ocean
-        self._cards = {
-            "dft": "qe",
-            "dft_energy_range": 50,
-            "diemac": "5",
-            "ecut": "-1",
-            "ecut.quality": "high",
-            "edges": "-22 1 0",
-            "opf.program": "hamann",
-            "para_prefix": "mpirun -n 8",
-            "pp_database": "ONCVPSP-PBE-PDv0.4-stringent",
-            "screen_energy_range": 150,
-            "cnbse.broaden": 0.89,
-            "core_offset": "225.10",
-            "cnbse.spect_range": "1000 -20 80",
-            "screen.nkpt": "-2.55",
-            "screen.final.dr": "0.02",
-            "screen.grid.rmax": "10",
-            "screen.grid.rmode": "lagrange uniform",
-            "screen.grid.ang": "5 11 11 9 7",
-            "screen.grid.deltar": "0.10 0.15 0.25 0.25 0.25",
-            "screen.grid.shells": " -1 4 6 8 10",
-            "screen.lmax": "2",
-            "cnbse.rad": "5.5",
-            "screen.shells": "3.5 4.0 4.5 5.0 5.5 6.0",
-            "cnbse.niter": 1000,
-            "haydock_convergence": " 0.001 5 ",
-        }
+        self._cards = cards
+
         # User modified cards
-        self._input_cards = input_cards
         self._bandgap = bandgap
         self._diel = diel
         # Method for determining number of bands
@@ -228,16 +237,19 @@ class OCEANParameters(MSONable, _BaseParameters):
         species = [structure[site].specie.symbol for site in sites]
         edge = self._edge_map[self._edge]
         element = Element(species[0])
-        self._cards["edges"] = f"-{element.number} {edge} 0"
+
+        cards = copy(self._cards)
+
+        cards["edges"] = f"-{element.number} {edge} 0"
         # Estimate number of band
         if self._nbands_estimator == "heg":
             eRange = self._nbands_estimator_kwargs["eRange"]
             nbands = self._getCondBands(structure.lattice.volume, eRange)
-            self._cards["nbands"] = -1 * nbands
+            cards["nbands"] = -1 * nbands
         else:
             try:
                 nbands = int(self._nbands_estimator)
-                self._cards["nbands"] = nbands
+                cards["nbands"] = nbands
             except Exception:
                 raise ValueError(
                     "the input of nbands_estimator is not supported"
@@ -249,46 +261,40 @@ class OCEANParameters(MSONable, _BaseParameters):
             kmesh = self._getKmesh(
                 structure, cutoff=cutoff, max_radii=max_radii
             )
-            self._cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+            cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         else:
             raise ValueError("method for obtaining kmesh not supported")
         # Determine the diemac
         if self._bandgap is not None or self._diel is not None:
             if self._diel is not None:
-                self._cards["diemac"] = self._diel
+                cards["diemac"] = self._diel
             elif self._bandgap is not None:
-                self._cards["diemac"] = np.exp(3.5 / self._bandgap)
+                cards["diemac"] = np.exp(3.5 / self._bandgap)
         elif self._bandgap is None and self._diel is None:
             if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
                 bandgap = kwargs["bandgap"]
                 diel = kwargs["diel"]
                 if diel is not None:
                     if diel["poly_electronic"] is not None:
-                        self._cards["diemac"] = diel["poly_electronic"]
+                        cards["diemac"] = diel["poly_electronic"]
                 elif bandgap is not None:
                     if bandgap > 0.000001:
-                        self._cards["diemac"] = np.exp(3.5 / bandgap)
+                        cards["diemac"] = np.exp(3.5 / bandgap)
                     else:
-                        self._cards["diemac"] = 1000000
+                        cards["diemac"] = 1000000
         # Determine the SCF? convergence threshold
-        self._cards["toldfe"] = self._defaultConvPerAtom * len(structure)
+        cards["toldfe"] = self._defaultConvPerAtom * len(structure)
         # Change screen.nkpt -Int to triplet of ints
-        if (
-            "screen.nkpt" in self._cards
-            and len(self._cards["screen.nkpt"].split()) == 1
-        ):
-            self._cards["screen.nkpt"] = self._oceanKptSampling(
-                structure.lattice.matrix, float(self._cards["screen.nkpt"])
+        if "screen.nkpt" in cards and len(cards["screen.nkpt"].split()) == 1:
+            cards["screen.nkpt"] = self._oceanKptSampling(
+                structure.lattice.matrix, float(cards["screen.nkpt"])
             )
 
-        # Let input_cards overwrite default cards
-        for key, val in self._input_cards.items():
-            self._cards[key] = val
         # OCEAN will calculate every atom within the same specie
         path = target_directory  # / Path(f"{site:03}_{specie}")
         path.mkdir(exist_ok=True, parents=True)
         filepath_xas = path / "ocean.in"
-        self._write_ocean_in(filepath_xas, structure, self._cards)
+        self._write_ocean_in(filepath_xas, structure, cards)
 
         # Deal with the dipole case only
         # notice I put the photonSymm in the folder, which is created by John
