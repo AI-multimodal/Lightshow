@@ -1,3 +1,4 @@
+# Fanchen Meng, 2022
 # This is a simple tool to find the rmsd E(n,k) between two QE runs
 """
 #TODO 
@@ -398,7 +399,7 @@ def parseEXCITING( filepath: str ):
 
 def main():
 
-    mpid = "mp-" + input("Input the mp number: ")
+    mpid = input("Input the mp number: ")
     program = input("[O]cean, [X]spectra, and/or [E]xciting? ")
 
     AllData = []

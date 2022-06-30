@@ -1,21 +1,35 @@
+# Fanchen Meng, 2022
 """ Prints list of k-point grids 
 """
-
-from ase.atoms import Atoms
+from pathlib import Path
+from pymatgen.core import Structure
 from ase.units import Bohr
 from math import pi
 import numpy as np
 
-def printKgrid( unitC: Atoms, folder: str ):
+def printKgrid( unitC: Structure, folder: Path ):
+    ''' write a list of kmesh with corresponding Bohr radii into file
 
-    fd = open (str(folder / 'k.txt'), 'w') 
+        Parameters
+        ----------
+        unitC : pymatgen.core.Structure, mandatory
+            input structure 
+        folder : pathlib.Path, mandatory
+            path to which the 'k.txt' file is written
+
+        Return
+        ------
+        None
+    '''
+    fd = open (folder / 'k.txt', 'w') 
 #    recip = atoms.cell.reciprocal().lengths()
 
-    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+    #vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
     
-    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ), 
-              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ), 
-              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    #recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ), 
+    #          np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ), 
+    #          np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    recip = [np.linalg.norm(unitC.lattice.reciprocal_lattice.matrix[i]/2/pi) for i in range(3)]
 
     klen = 1.0 / recip[0]
     for i in range(3):
@@ -49,13 +63,14 @@ def printKgrid( unitC: Atoms, folder: str ):
     fd.close()
 
 
-def returnKgridList( unitC: Atoms, maxLen=53.0 ):
+def returnKgridList( unitC: Structure, maxLen=53.0 ):
     kglist = []
 
-    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
-    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    #vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+    #recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    recip = [np.linalg.norm(unitC.lattice.reciprocal_lattice.matrix[i]/2/pi) for i in range(3)]
 
     klen = 1.0 / recip[0]
     for i in range(3):
@@ -86,14 +101,14 @@ def returnKgridList( unitC: Atoms, maxLen=53.0 ):
         kpt[3] = klen
         kglist.append( kpt.copy() )
 
-    for i in kglist:
-        print(i)
+#    for i in kglist:
+#        print(i)
 
     return kglist
 
-def readKgrid( folder: str ):
+def readKgrid( folder: Path ):
     klist={}
-    with open (str(folder / 'k.txt'), 'r') as fd:
+    with open (folder / 'k.txt', 'r') as fd:
         for line in fd.readlines():
             kx,ky,kz= line.split()[0:3]
             if not kx.isnumeric():
@@ -102,13 +117,14 @@ def readKgrid( folder: str ):
                 klist[(int(kx),int(ky),int(kz))]=float(line.split()[-1])
     return klist
 
-def returnKDen( unitC: Atoms, kpoint ):
+def returnKDen( unitC: Structure, kpoint ):
 
-    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+    #vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
 
-    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    #recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    recip = [np.linalg.norm(unitC.lattice.reciprocal_lattice.matrix[i]/2/pi) for i in range(3)]
 
     klen = kpoint[0] / recip[0]
     for i in range(3):
@@ -119,13 +135,13 @@ def returnKDen( unitC: Atoms, kpoint ):
     return klen
 
 
-def returnKpoint( unitC: Atoms, klen ):
-    vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
+def returnKpoint( unitC: Structure, klen ):
+    #vol = np.dot( np.cross(  unitC.cell[0],  unitC.cell[1] ), unitC.cell[2] )
 
-    recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
-              np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
-
+    #recip = [ np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[1] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[2],  unitC.cell[0] )/vol ),
+    #          np.linalg.norm( np.cross(  unitC.cell[0],  unitC.cell[1] )/vol ) ]
+    recip = [np.linalg.norm(unitC.lattice.reciprocal_lattice.matrix[i]/2/pi) for i in range(3)]
     kpoint = []
     for i in range(3):
         kpoint.append( int( klen * recip[i] ) + 1 )

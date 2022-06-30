@@ -1,15 +1,13 @@
+# F Meng 2022
 # J Vinson 2020
 # C Vorwerk 2020
 """
 Make the exciting input file and the photon files
 """
 
-from ase.atoms import Atoms
-from ase.io import write
-import spglib
-import pathlib
-import os
-from os import environ as env
+from pymatgen.core import Structure
+#import spglib
+from pathlib import Path
 import sys
 
 import pymatgen as pm
@@ -21,24 +19,35 @@ import json
 
 import xanes_bench
 
+module_path = Path(xanes_bench.EXCITING.__path__[0])
 
+def makeExcitingXAS( mpid, structure: Structure, params: dict ):
+    ''' construct Exciting input files
 
-def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
-    
+        Parameters  
+        ----------
+        mpid : string, mandatory
+            materials id from Materials Project
+        structure : pymatgen.core.Structure, mandatory
+            structure file
+        params : dict, mandatory
+            TODO
+
+        Returns
+        -------
+        None
+        * save input files to the corresponding directories
+    '''
     # read default xas parameters from JSON file
-    param_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "EXCITING",
-            "exciting_xas.json")
+    param_fn = module_path / "exciting_xas.json"
     with open (param_fn, 'r') as fd:
         excitingxasJSON= json.load(fd)
     
-    # generate pymatgen structure from ASE atoms
-    struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
-    
     # generate ExcitingInput object from pymatgen structure
-    excitinginput = ExcitingInput(struct)
+    excitinginput = ExcitingInput(structure)
    
     # generate reduced and symmetrized structure
-    finder = SpacegroupAnalyzer(struct)
+    finder = SpacegroupAnalyzer(structure)
     struct_red = finder.get_primitive_standard_structure(international_monoclinic = True)
     struct_symm = finder.get_symmetrized_structure()
 
@@ -53,16 +62,16 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
 
     # set BSE bands
     if params['conductionBands'] is not None:
-        excitingxasJSON['xs']['BSE']['nstlxas'] = "1 {:d}".format( params['conductionBands'] )
+        excitingxasJSON['xs']['BSE']['nstlxas'] = f"1 {params['conductionBands']}"
 
     # At the moment setting all k-point grids to be the same
     if params['scf.kpoints'] is not None:
         excitingxasJSON['groundstate']['ngridk'] = \
-            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+            f"{params['scf.kpoints'][0]} {params['scf.kpoints'][1]} {params['scf.kpoints'][2]}"
         excitingxasJSON['xs']['ngridk'] = \
-            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+            f"{params['scf.kpoints'][0]} {params['scf.kpoints'][1]} {params['scf.kpoints'][2]}"
         excitingxasJSON['xs']['ngridq'] = \
-            "{:d} {:d} {:d}".format( params['scf.kpoints'][0], params['scf.kpoints'][1], params['scf.kpoints'][2] )
+            f"{params['scf.kpoints'][0]} {params['scf.kpoints'][1]} {params['scf.kpoints'][2]}"
     
     # determine xasspecies parameter
     i=0
@@ -72,28 +81,31 @@ def makeExcitingXAS( mpid, atoms: Atoms, params: dict ):
             excitingxasJSON['xs']['BSE']['xasspecies']=str(i)
     
 
-
-    # generate filepath
-    folder = pathlib.Path(env['PWD']) / "data" / "mp_structures" / mpid / "EXCITING" / "Spectra"
-    folder.mkdir(parents=True, exist_ok=True)
+        json_dir = params['json_dir']
+        # generate filepath
+        folder = Path.cwd() / json_dir / "mp_structures" / mpid / "EXCITING" / \
+                 Path(f"Spectra-{params['scf.kpoints'][0]}-{params['scf.kpoints'][1]}-{params['scf.kpoints'][2]}") 
+        folder.mkdir(parents=True, exist_ok=True)
     
-    # write input file for XAS calculation
-    for i in ineq_atoms:
-    
-        filepath_xas=str(folder / 'input_xas')+str(i+1)+'.xml'
-        excitingxasJSON['xs']['BSE']['xasatom']=str(i+1)
+        # write input file for XAS calculation
+        for j in ineq_atoms:
+            
+            folder_xas = folder / str(j)
+            folder_xas.mkdir(parents=True, exist_ok=True)
+            filepath_xas=str(folder / str(j) /'input_xas.xml')
+            excitingxasJSON['xs']['BSE']['xasatom']=str(j+1)
 
-        try:
-            excitinginput.write_file('primitive', filepath_xas, 
-                                     bandstr=False, **excitingxasJSON)
-        except:
-            raise Exception("FAILED while trying to write input.xml")
+            try:
+                excitinginput.write_file('primitive', filepath_xas, 
+                                         bandstr=False, **excitingxasJSON)
+            except:
+                raise Exception("FAILED while trying to write input.xml")
 
-def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
-    
+def makeExcitingGRST( mpid, struct: Structure, kpoints: list, nempty: int, filepath):
+    '''TODO
+    '''
     # read default grst parameters from JSON file
-    param_fn = os.path.join(os.path.dirname(xanes_bench.__file__), "EXCITING",
-            "exciting.json")
+    param_fn = module_path / "exciting.json"
     with open (param_fn, 'r') as fd:
         excitingJSON = json.load(fd)
     # set kpoints
@@ -101,8 +113,6 @@ def makeExcitingGRST( mpid, atoms: Atoms, kpoints: list, nempty: int, filepath):
     excitingJSON['groundstate']['nempty']=str(nempty)
     excitingJSON['structure']={}
     excitingJSON['structure']['autormt']="true"
-    # generate pymatgen structure from ASE atoms
-    struct = pm.io.ase.AseAtomsAdaptor.get_structure(atoms)
     
     # generate ExcitingInput object from pymatgen structure
     excitinginput = ExcitingInput(struct)

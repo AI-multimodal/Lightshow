@@ -40,8 +40,8 @@
         "plot": {
             "cut_occ_states": ".true.",
             "terminator": ".true.",
-            "xemax": 60,
-            "xemin": -5.0,
+            "xemax": 70,
+            "xemin": -15.0,
             "xnepoint": 400
         },
         "plotFalse": {
@@ -61,7 +61,8 @@
         "edge": "K",
         "kden": "-1",
         "psp": {
-            "Ti1": "Ti.fch.upf"
+            "Ti+": "Ti.fch.upf",
+	    "Co+": "Co.fch.upf"
         },
         "Rmin": "9.0",
         "scf_kden": "-1",

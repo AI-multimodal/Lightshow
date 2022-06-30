@@ -4,18 +4,16 @@
 
 ## Quickstart
 1. Put your materials project API key in the file mp.key ( https://materialsproject.org/dashboard )
-2. Overwrite the defaults ase/io/espresso.py file with the one in Xspectra
-  - Either: copy it into the installed location of ase ( site-packages/ase/io/epresso.py )
-  - Or: copy all of ase locally, and write over ./ase/io/espresso.py
-3. Run "python fetchSingle.py 390" (will run anatase)
+2. Run "python fetchSingle.py mp-390" (will run anatase)
 
 
 ## Limitations/To-do list: (not exhaustive)
 1. Fix up symmetry dipole/quad options
-2. Separate xspectra to its own python file
-3. JSON files with convergence options for xspectra/ocean (remove from script)
-4. Unify core-hole broadening (ocean uses the FEFF look-up table)
+2. JSON files with convergence options for xspectra/ocean (remove from script)
+3. Unify core-hole broadening (ocean uses the FEFF look-up table)
 
+# Installation Prerequisites
+* For XSpectra, need to use latest version of pymatgen. [See here for more info](https://github.com/materialsproject/pymatgen/pull/2178). 
 
 # Install
 ```console
@@ -23,8 +21,8 @@ conda create --name xas_ben python=3
 conda activate xas_ben
 git clone git@github.com:xhqu1981/xanes_bench.git
 cd xanes_bench
+pip install -r requirements.txt
 python setup.py develop
-python apply_patch.py --force
 ```
 # Test systems
 | MP ID | Name |

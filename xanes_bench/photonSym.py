@@ -1,9 +1,12 @@
+# Fanchen Meng, 2022
 # John Vinson, 2020
 """
 Determines set of photon polarization/q-direction along with symmetry unique atoms
 """
-from ase.atoms import Atoms
-import spglib
+#from ase.atoms import Atoms
+from pymatgen.core import Structure
+from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
+
 import pprint
 import numpy as np
 
@@ -59,18 +62,29 @@ def BuildOh( n, oh, norm ):
 
 
 #def photonSym( mode: str, atoms: Atoms, uniqueSites: dict, photons: list ):
-def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
+def photonSymm( atoms: Structure, uniqueSites: dict, photons: list, order=4 ):
     # for now mode is assumed to be quad
 
 #    uniqueSites = {}
 #    photons = []
 
-    symm= spglib.get_symmetry((atoms.get_cell(),
-                           atoms.get_scaled_positions(),
-                           atoms.get_atomic_numbers()),
-                           symprec=0.1, angle_tolerance=15)
+#    symm= spglib.get_symmetry((atoms.lattice.matrix,
+#                               atoms.frac_coords,
+#                               np.array(atoms.atomic_numbers)),
+#                               symprec=0.1, angle_tolerance=15)
 
-    equiv = symm['equivalent_atoms']
+    struct_sga = SpacegroupAnalyzer(atoms)
+    symm_opt = struct_sga.get_symmetry_operations()
+    rotations = np.array([ ii.rotation_matrix for ii in symm_opt]) # for symm['rotations]
+
+    struct_symm = struct_sga.get_symmetrized_structure()
+    equi_index = struct_symm.equivalent_indices
+    equiv = []
+    for ii in equi_index:
+        for jj in ii:
+            equiv.append(ii[0])
+    equiv = np.array(equiv)
+#    equiv = symm['equivalent_atoms']
 
     for i in equiv:
         if i in uniqueSites:
@@ -95,7 +109,7 @@ def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
     finalDipoleList = []
     weight = 0
 
-    symm['rotations'] = np.reshape( np.append(symm['rotations'], [[-1,0,0],[0,-1,0],[0,0,-1]] ), (-1,3,3) )
+    rotations = np.reshape( np.append(rotations, [[-1,0,0],[0,-1,0],[0,0,-1]] ), (-1,3,3) )
 
 #    for rot in symm['rotations']:
 #        print( rot)
@@ -114,7 +128,7 @@ def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
             testSym = test[0:3]
 #            print( "------------" )
 #            print( testSym, trimSym )
-            for rot in symm['rotations']:
+            for rot in rotations:
 #                print( rot)
 #                rotSym = rot * trimSym 
                 rotSym = rot.dot( trimSym )
@@ -157,7 +171,7 @@ def photonSymm( atoms: Atoms, uniqueSites: dict, photons: list, order=4 ):
             found = False
             for i, test in enumerate( tempQuadList ):
                 testSym = test[0:3]
-                for rot in symm['rotations']:
+                for rot in rotations:
                     rotSym = rot.dot( trimSym )
                     if( np.all(rotSym == testSym )):
                         found = True
