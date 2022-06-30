@@ -147,15 +147,18 @@ class Excitingplot():
         self.absorber = absorber
         self.polar = polar
         self.ip = ip
+
     @property
     def spectra(self):
         Spectra = None
         for iab in self.absorber:
             for polar in self.polar:
+
                 if not self.ip:
                     path = self.path  / iab / f"EPSILON/EPSILON_BSE-singlet-TDA-BAR_SCR-full_OC{polar}.OUT" #.format( element, site, p)
                 else:
                     path = self.path  / iab / f"EPSILON/EPSILON_BSE-IP_SCR-full_OC{polar}.OUT"
+
 
                 if Spectra is None:
     #                     Spectra = np.loadtxt(path + "/xanes.dat", comments='#')
