@@ -1,4 +1,4 @@
-# This is a tool to take the data out of QE xml and make data for band structure plots
+# This is a tool to take the data out of EX xml and make data for band structure plots
 
 #TODO 
 # 1. Need to figure out labeling high-symmetry points
@@ -14,11 +14,11 @@ from os.path import exists
 Ha_c2018 = np.float64( 27.211386245988 )
 
 
-def parseQE( filename: str, outfile ):
+def parseEX( filename: str, outfile ):
     tree = ET.parse( filename )
     root = tree.getroot()
 
-    # We will want to convert from the QE format to "crystal" format"
+    # We will want to convert from the EX format to "crystal" format"
     first = True
 
     distance = []
@@ -70,7 +70,7 @@ def main():
         print( "bandstructure.xml not found!" )
         exit()
 
-    parseQE( f, outfile )
+    parseEX( f, outfile )
 
 
 if __name__ == '__main__':
