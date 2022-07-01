@@ -26,6 +26,8 @@ from pymatgen.symmetry.bandstructure import HighSymmKpath
 from pymatgen.io.vasp.sets import MPStaticSet
 import numpy as np
 
+from pkg_resources import get_distribution
+
 module_path = Path(xanes_bench.__path__[0])
 
 def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
@@ -49,6 +51,10 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
         -------
         TODO
     '''
+
+    # Hack to circumvent nonsense breaking pymatgen change
+    oldPMG = ( int(get_distribution('pymatgen').version[0:4]) < 2022 )
+
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
@@ -154,7 +160,10 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
 
     # Loop over the separate paths
     for i in range(len(kpath.kpath['path'])):
-        KList = [str(len(kpath.kpath['path'][i])) + '\n']
+        if oldPMG:
+            KList = [str(len(kpath.kpath['path'][i])) + '\n']
+        else:
+            KList = []
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
@@ -175,7 +184,10 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
         for j in range(len(kpath.kpath['path'][i])):
             symbol = kpath.kpath['path'][i][j]
             coords = kpath.kpath['kpoints'][symbol]
-            KList.append("%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j]))
+            if oldPMG:
+                KList.append("%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j]))
+            else:
+                KList.append( [coords[0],coords[1],coords[2],kpointCount[j]] )
 
        # with open ( str(folder / "nscf_band" ) + ".%i.in" % (i+1), 'w' ) as f:
        #     f.write( NSCFtemp )
