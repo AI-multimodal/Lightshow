@@ -26,6 +26,8 @@ from pymatgen.symmetry.bandstructure import HighSymmKpath
 from pymatgen.io.vasp.sets import MPStaticSet
 import numpy as np
 
+from pkg_resources import get_distribution
+
 module_path = Path(xanes_bench.__path__[0])
 
 def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoints ):
@@ -49,6 +51,10 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
         -------
         TODO
     '''
+
+    # Hack to circumvent nonsense breaking pymatgen change
+    oldPMG = ( int(get_distribution('pymatgen').version[0:4]) < 2022 )
+
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
@@ -154,28 +160,57 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
 
     # Loop over the separate paths
     for i in range(len(kpath.kpath['path'])):
-        KList = [str(len(kpath.kpath['path'][i])) + '\n']
+        if oldPMG:
+            KList = [str(len(kpath.kpath['path'][i])) + '\n']
+        else:
+            KList = []
         # Loop within a path
         symbol = kpath.kpath['path'][i][0]
         prevCoords = kpath.kpath['kpoints'][symbol]
-        prevCart = np.dot( bMatrix, prevCoords )
+#        prevCart = np.dot( bMatrix, prevCoords )
+        prevCart = np.dot( prevCoords, bMatrix )
         kpointCount = []
         totKpointCount = 0
+        totDistance = 0.0
         for j in range(1,len(kpath.kpath['path'][i])):
             symbol = kpath.kpath['path'][i][j]
             coords = kpath.kpath['kpoints'][symbol]
-            cart = np.dot( bMatrix, coords )
+            cart = np.dot( coords, bMatrix )
             dist = np.linalg.norm(cart-prevCart)
-            kpointCount.append( int( dist/targetKpointSpacing ) )
+            totDistance += dist
             prevCart = cart
-            totKpointCount += int( dist/targetKpointSpacing )
+
+        symbol = kpath.kpath['path'][i][0]
+        prevCoords = kpath.kpath['kpoints'][symbol]
+        prevCart = np.dot( prevCoords, bMatrix )
+
+        for j in range(1,len(kpath.kpath['path'][i])):
+            symbol = kpath.kpath['path'][i][j]
+            coords = kpath.kpath['kpoints'][symbol]
+            cart = np.dot( coords, bMatrix )
+            dist = np.linalg.norm(cart-prevCart)
+            prevCart = cart
+
+
+            tempKpoint = 1 + int(round( ( 100.0 - len(kpath.kpath['path'][i]) )* dist / totDistance ))
+            if j == len(kpath.kpath['path'][i]) - 1:
+                tempKpoint = 100 - totKpointCount - 1
+            kpointCount.append( tempKpoint )
+            totKpointCount += tempKpoint
+                
+            print( j, totKpointCount, tempKpoint, dist )
+          
 
         kpointCount.append( int(1) )
+        print( totKpointCount )
 
         for j in range(len(kpath.kpath['path'][i])):
             symbol = kpath.kpath['path'][i][j]
             coords = kpath.kpath['kpoints'][symbol]
-            KList.append("%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j]))
+            if oldPMG:
+                KList.append("%16.12f %16.12f %16.12f %i\n" % (coords[0],coords[1],coords[2],kpointCount[j]))
+            else:
+                KList.append( [coords[0],coords[1],coords[2],kpointCount[j]] )
 
        # with open ( str(folder / "nscf_band" ) + ".%i.in" % (i+1), 'w' ) as f:
        #     f.write( NSCFtemp )
