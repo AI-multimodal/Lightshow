@@ -14,6 +14,7 @@ from os import path
 from scipy.optimize import minimize_scalar
 
 from xanes_bench.EXCITING.parseExciting import readEigval
+from xanes_bench.VASP.parseVASP import *
 
 
 # Hartree to eV based on 2018 CODATA
@@ -418,6 +419,58 @@ def parseEXCITING( filepath: str ):
     nelectron = occBands_exciting * 2
     return nelectron, ExkptDict, eFermi, bandClips
 
+def parseVASP(filepath):
+    fname = os.path.join( filepath, "IBZKPT" )
+    kvec, kvec_list, weight = readIBZ(fname)
+
+    ExkptDict = dict()
+    for kvecString in kvec.keys():
+        ExkptDict[kvecString] = dict()
+        ExkptDict[kvecString]["point"] = kvec[kvecString]
+        ExkptDict[kvecString]["weight"] = weight[kvecString]
+    # shift such that the kpoints lie in [-0.5:0.5] interval
+    for entry in ExkptDict.keys():
+        for i in range(3):
+            if ExkptDict[entry]['point'][i] >= 1.0:
+                ExkptDict[entry]['point'][i]=ExkptDict[entry]['point'][i]-1.0
+            if ExkptDict[entry]['point'][i] <  0.0:
+                ExkptDict[entry]['point'][i]=ExkptDict[entry]['point'][i]+1.0
+#        print(ExkptDict[entry]['point'])
+
+    # Load up Fermi level
+    fname = os.path.join( filepath, "OUTCAR" )
+    eFermi = readFermi(fname)
+    valMin = np.finfo(np.float64 ).max
+    valMax = np.finfo(np.float64 ).min
+    condMin = np.finfo(np.float64 ).max
+    condMax = np.finfo(np.float64 ).min
+
+    # now read the EIGVAL.OUT file
+    fname=os.path.join( filepath, "EIGENVAL")
+    eigval_, occBands_exciting, unoccBands_exciting=readEIGEN(fname, kvec_list)
+    print( "Occupied: ", occBands_exciting, "Total bands: ",
+            occBands_exciting+unoccBands_exciting)
+
+    for key in ExkptDict:
+        ExkptDict[key]["eigenvalues"]=eigval_[key]
+
+        for e in np.asarray( eigval_[key], dtype=np.float64 ):
+            if e <= eFermi:
+                if e > valMax:
+                    valMax = e
+                if e < valMin:
+                    valMin = e
+            else:
+                if e > condMax:
+                    condMax = e
+                if e < condMin:
+                    condMin = e
+
+    bandClips = [ valMin, valMax, condMin, condMax ]
+
+
+    nelectron = occBands_exciting * 2
+    return nelectron, ExkptDict, eFermi, bandClips
 
 def main():
 
@@ -447,6 +500,12 @@ def main():
             fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "EXCITING", "groundState" )
             nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
             AllData.append( dict( { "Name" : "EXCITING", "nElectron" : nelectron, "kptDict" : kptDict, 
+                                    "eFermi" : eFermi, "clips" : clips } ))
+
+        elif( p == 'V' or p == 'v' ):
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "EXCITING", "groundState" )
+            nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
+            AllData.append( dict( { "Name" : "VASP", "nElectron" : nelectron, "kptDict" : kptDict,
                                     "eFermi" : eFermi, "clips" : clips } ))
 
         elif( p == 'C' or p == 'c' ):
