@@ -54,7 +54,7 @@ def writeQE(st, folder, qe_fn, pspName, params, NSCFBands, conductionBands, kpoi
 
     # Hack to circumvent nonsense breaking pymatgen change
     oldPMG = ( int(get_distribution('pymatgen').version[0:4]) < 2022 )
-
+    oldPMG = True
     with open (qe_fn, 'r') as fd:
         qeJSON = json.load(fd)
 
