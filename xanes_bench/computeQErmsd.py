@@ -503,7 +503,7 @@ def main():
                                     "eFermi" : eFermi, "clips" : clips } ))
 
         elif( p == 'V' or p == 'v' ):
-            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "EXCITING", "groundState" )
+            fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "VASP", "groundState" )
             nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
             AllData.append( dict( { "Name" : "VASP", "nElectron" : nelectron, "kptDict" : kptDict,
                                     "eFermi" : eFermi, "clips" : clips } ))
