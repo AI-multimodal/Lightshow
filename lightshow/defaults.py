@@ -13,3 +13,5 @@ from lightshow.parameters.vasp import (
 from lightshow.parameters.ocean import OCEAN_DEFAULT_CARDS
 
 from lightshow.parameters.xspectra import XSPECTRA_DEFAULT_CARDS
+
+from lightshow.parameters.exciting import EXCITING_DEFAULT_CARDS
