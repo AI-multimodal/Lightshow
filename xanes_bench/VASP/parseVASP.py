@@ -22,12 +22,18 @@ def readIBZ(filename):
             kx = float(line.split()[0])
             ky = float(line.split()[1])
             kz = float(line.split()[2])
-            if (kx + kx) <1e-10:
+            if abs(kx + kx) <1e-10:
                 kx=0.0
-            if (ky + ky) <1e-10:
+            if abs(ky + ky) <1e-10:
                 ky=0.0
-            if (kz + kz) <1e-10:
+            if abs(kz + kz) <1e-10:
                 kz=0.0
+            if kx < 0:
+                kx = kx + 1
+            if ky < 0:
+                ky = ky + 1
+            if kz < 0:
+                kz = kz + 1
             kvec = '{:16.8f} {:16.8f} {:16.8f}'.format(kx, ky, kz)
             kvec_list.append(kvec)
             kvec_dict[kvec] = np.array([kx, ky, kz])
@@ -53,12 +59,19 @@ def readEIGEN(filename, kvec_list):
             kx = float(line.split()[0])
             ky = float(line.split()[1])
             kz = float(line.split()[2])
-            if (kx + kx) <1e-10:
+            if abs(kx + kx) <1e-10:
                 kx=0.0
-            if (ky + ky) <1e-10:
+            if abs(ky + ky) <1e-10:
                 ky=0.0
-            if (kz + kz) <1e-10:
+            if abs(kz + kz) <1e-10:
                 kz=0.0
+            if kx < 0:
+                kx = kx + 1
+            if ky < 0:
+                ky = ky + 1
+            if kz < 0:
+                kz = kz + 1
+
             # kvec = '{:16.8f} {:16.8f} {:16.8f}'.format(kx, ky, kz)
             kvec = kvec_list[i]
             # print()
