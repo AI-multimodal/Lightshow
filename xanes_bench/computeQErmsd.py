@@ -439,7 +439,7 @@ def parseVASP(filepath):
 
     # Load up Fermi level
     fname = os.path.join( filepath, "OUTCAR" )
-    eFermi = readFermi(fname)
+    eFermi = readFermi(fname)/Ha_c2018
     valMin = np.finfo(np.float64 ).max
     valMax = np.finfo(np.float64 ).min
     condMin = np.finfo(np.float64 ).max
@@ -447,11 +447,12 @@ def parseVASP(filepath):
 
     # now read the EIGVAL.OUT file
     fname=os.path.join( filepath, "EIGENVAL")
-    eigval_, occBands_exciting, unoccBands_exciting=readEIGEN(fname, kvec_list)
-    print( "Occupied: ", occBands_exciting, "Total bands: ",
-            occBands_exciting+unoccBands_exciting)
-
+    eigval_, occBands_vasp, unoccBands_vasp=readEIGEN(fname, kvec_list)
+    print( "Occupied: ", occBands_vasp, "Total bands: ",
+            occBands_vasp+unoccBands_vasp)
+    
     for key in ExkptDict:
+        eigval_[key] = eigval_[key]/Ha_c2018
         ExkptDict[key]["eigenvalues"]=eigval_[key]
 
         for e in np.asarray( eigval_[key], dtype=np.float64 ):
@@ -467,9 +468,9 @@ def parseVASP(filepath):
                     condMin = e
 
     bandClips = [ valMin, valMax, condMin, condMax ]
+    print(bandClips)
 
-
-    nelectron = occBands_exciting * 2
+    nelectron = occBands_vasp * 2
     return nelectron, ExkptDict, eFermi, bandClips
 
 def main():
@@ -504,7 +505,7 @@ def main():
 
         elif( p == 'V' or p == 'v' ):
             fileName = os.path.join( env['PWD'], "save", "mp_structures", mpid, "VASP", "groundState" )
-            nelectron, kptDict, eFermi, clips = parseEXCITING( fileName )
+            nelectron, kptDict, eFermi, clips = parseVASP( fileName )
             AllData.append( dict( { "Name" : "VASP", "nElectron" : nelectron, "kptDict" : kptDict,
                                     "eFermi" : eFermi, "clips" : clips } ))
 
