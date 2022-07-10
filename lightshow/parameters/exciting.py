@@ -1,4 +1,5 @@
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from monty.json import MSONable
 from pymatgen.io.exciting import ExcitingInput
@@ -115,6 +116,16 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self,
         cards,
         species_path="./",
+        plan=[
+            "xsgeneigvec",
+            "writepmatxs",
+            "scrgeneigvec",
+            "scrwritepmat",
+            "screen",
+            "scrcoulint",
+            "exccoulint",
+            "bse",
+        ],
         nbands_estimator="heg",
         nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
         kpoints_method="custom",
@@ -126,6 +137,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         # Update speciespath
         self._species_path = species_path
         self._cards["structure"]["speciespath"] = self._species_path
+        # Update plan
+        self._plan = plan
         # Method for determining the nbands
         self._nbands_estimator = nbands_estimator
         self._nbands_estimator_kwargs = nbands_estimator_kwargs  # unit in Ryd
@@ -216,8 +229,22 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
             filepath_xas = path / "input.xml"
             self._cards["xs"]["BSE"]["xasatom"] = str(site + 1)
-            excitinginput.write_file(
-                "primitive", filepath_xas, bandstr=False, **self._cards
+            # add the plans using the tree
+            root = excitinginput.write_etree(
+                "primitive", bandstr=False, **self._cards
             )
+            tree = ET.ElementTree(root)
+            xs_loc = root.find("xs")
+            plan = ET.Element("plan")
+            xs_loc.insert(-1, plan)
+            ploc = xs_loc.find("plan")
+            for task in self._plan:
+                _ = ET.SubElement(ploc, "doonly", task=task)
+
+            excitinginput._indent(root)
+            tree.write(filepath_xas)
+        #            excitinginput.write_file(
+        #                "primitive", filepath_xas, bandstr=False #, **self._cards
+        #            )
 
         return {"pass": True, "errors": dict()}
