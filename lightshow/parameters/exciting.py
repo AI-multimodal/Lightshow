@@ -114,7 +114,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
     def __init__(
         self,
-        cards,
+        cards=EXCITING_DEFAULT_CARDS,
         species_path="./",
         plan=[
             "xsgeneigvec",
