@@ -114,7 +114,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
     def __init__(
         self,
-        cards,
+        cards=EXCITING_DEFAULT_CARDS,
         species_path="./",
         plan=[
             "xsgeneigvec",
@@ -133,7 +133,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         name="EXCITING",
     ):
         # Default cards
-        self._cards = EXCITING_DEFAULT_CARDS
+        self._cards = cards
         # Update speciespath
         self._species_path = species_path
         self._cards["structure"]["speciespath"] = self._species_path
