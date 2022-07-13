@@ -74,6 +74,4 @@ def get_symmetrically_inequivalent_sites(structure, atom_type):
     where_target = np.where(atoms == atom_type)[0]
 
     # Get the absorbing atom indexes
-    # TODO: I think this list comprehension can be improved
-    # Something feels wrong about it
-    return [xx[0] for ii, xx in enumerate(equi) if ii in where_target]
+    return [equi[ii][0] for ii in where_target]
