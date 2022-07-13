@@ -7,6 +7,18 @@ from pymatgen.io.feff.sets import MPXANESSet, MPEXAFSSet, FEFFDictSet
 from lightshow.parameters._base import _BaseParameters
 
 
+FEFF_DEFAULT_CARDS = {
+    "S02": "0",
+    "COREHOLE": "RPA",
+    "CONTROL": "1 1 1 1 1 1",
+    "XANES": "4 0.04 0.1",
+    "SCF": "7.0 0 100 0.2 3",
+    "FMS": "9.0 0",
+    "EXCHANGE": "0 0.0 0.0 2",
+    "RPATH": "-1"
+}
+
+
 class FEFFParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
     for a FEFF calculation. This class is a lightweight wrapper for the
@@ -64,7 +76,7 @@ class FEFFParameters(MSONable, _BaseParameters):
 
     def __init__(
         self,
-        cards,
+        cards=FEFF_DEFAULT_CARDS,
         edge="K",
         radius=9.0,
         nkpts=1000,
