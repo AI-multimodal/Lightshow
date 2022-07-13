@@ -427,7 +427,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 target_directory,
                 needWfn=True,
             )
-        except Exception:
+        except KeyError:
             # throw a warning here
             print("take care of the psp for absorber by yourself")
             psp2 = {element: f"{element}.fch.upf"}
