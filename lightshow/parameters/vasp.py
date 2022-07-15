@@ -617,10 +617,14 @@ class Poscar(pmgPoscar):
         return len(self.structure)
 
     def write_single_site(
-        self, target_directory, site_index=None, check_atom_type=None
+        self,
+        target_directory,
+        site_index=None,
+        check_atom_type=None,
+        significant_figures=8
     ):
         """Writes the VASP POSCAR file for the specified ``site_index``.
-
+        
         Parameters
         ----------
         target_directory : os.PathLike
@@ -638,7 +642,9 @@ class Poscar(pmgPoscar):
         check_atom_type : str, optional
             If not None, asserts that the found atom type in the POSCAR lines
             is the same as the provided atom type.
-
+        significant_figures : int, optional
+            The number of significant digits to write.
+        
         Returns
         -------
         list
@@ -653,11 +659,13 @@ class Poscar(pmgPoscar):
         # In the case of e.g. the neutral potential calculation, the base class
         # method write_file can be used
         if site_index is None:
-            self.write_file(path)
+            self.write_file(path, significant_figures=significant_figures)
             return self.site_symbols
 
         # Get the default lines for the POSCAR file
-        lines = self.get_string().split("\n")
+        lines = self.get_string(
+            significant_figures=significant_figures
+        ).split("\n")
 
         # We need to make some modifications depending on the type of
         # calculation this is. Lines indexed by 5 and 6 are the ones that
