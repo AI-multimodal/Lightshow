@@ -99,13 +99,22 @@ class OCEANParameters(MSONable, _BaseParameters):
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
         self._defaultConvPerAtom = defaultConvPerAtom
-        self._edge = edge
+
+        # Handle the edge parsing here.
+        if edge not in self._edge_map.keys():
+            raise ValueError(
+                f"Provided edge {edge} is not a valid choice for OCEAN "
+                "calculations. Edges should be chosen from the list: "
+                f"{list(self._edge_map.keys())}"
+            )
+        self._edge = self._edge_map[edge]
         self._name = name
-        print(type(self._cards))  # , type(self._cards["edges"]))
 
     @property
     def _edge_map(self):
-        """mapping between letter and number"""
+        """Mapping between letter (indicating the edge) and number (input to
+        OCEAN) defining the XAS edge."""
+
         return {
             "K": "1 0",
             "L": "2 1",
@@ -233,14 +242,14 @@ class OCEANParameters(MSONable, _BaseParameters):
 
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
+
         # Obtain absorbing atom
         species = [structure[site].specie.symbol for site in sites]
-        edge = self._edge_map[self._edge]
         element = Element(species[0])
 
         cards = copy(self._cards)
 
-        cards["edges"] = f"-{element.number} {edge}"
+        cards["edges"] = f"-{element.number} {self._edge}"
         # Estimate number of band
         if self._nbands_estimator == "heg":
             eRange = self._nbands_estimator_kwargs["eRange"]
