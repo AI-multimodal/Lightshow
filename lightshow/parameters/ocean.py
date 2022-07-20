@@ -247,10 +247,13 @@ class OCEANParameters(MSONable, _BaseParameters):
             nbands = self._getCondBands(structure.lattice.volume, eRange)
             cards["nbands"] = -1 * nbands
         else:
+            # if the _nbands_estimator != "heg", we expect the user to
+            # probvide a number. Ocean accepts both positive and negative
+            # values for nbands.
             try:
                 nbands = int(self._nbands_estimator)
                 cards["nbands"] = nbands
-            except Exception:
+            except SyntaxError:
                 raise ValueError(
                     "the input of nbands_estimator is not supported"
                 )
