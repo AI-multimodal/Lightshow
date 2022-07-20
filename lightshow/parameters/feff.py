@@ -1,5 +1,6 @@
 from copy import copy
 from pathlib import Path
+from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.feff.sets import MPXANESSet, MPEXAFSSet, FEFFDictSet
@@ -83,12 +84,29 @@ class FEFFParameters(MSONable, _BaseParameters):
         spectrum="XANES",
         name="FEFF",
     ):
+        # Try to see if "edge" is in the provided card keys
+        if "EDGE" in cards.keys():
+            warn(f"Provided edge in cars will be overwritten by kwarg {edge}")
+            cards.pop("EDGE")
+
         self._cards = cards
-        self._edge = edge
         self._radius = radius
         self._nkpts = nkpts
         self._spectrum = spectrum
         self._name = name
+
+        if edge == "L":
+            warn(
+                "Specified edge is 'L' and will be changed to L3 to be "
+                "FEFF-compatible"
+            )
+            self._edge = "L3"
+        elif edge not in ["K", "L1", "L2", "L3"]:
+            warn(
+                f"Provided edge {edge} is not one of the standard choices K, "
+                "L1, L2, L3 and it is unknown if FEFF supports it"
+            )
+            self._edge = edge
 
     def get_FEFFDictSets(self, structure, absorbing_sites):
         """Constructs and returns a list of the
