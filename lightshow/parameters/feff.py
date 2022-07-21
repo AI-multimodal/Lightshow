@@ -94,19 +94,19 @@ class FEFFParameters(MSONable, _BaseParameters):
         self._nkpts = nkpts
         self._spectrum = spectrum
         self._name = name
+        self._edge = edge
 
-        if edge == "L":
+        if self._edge == "L":
             warn(
                 "Specified edge is 'L' and will be changed to L3 to be "
                 "FEFF-compatible"
             )
             self._edge = "L3"
-        elif edge not in ["K", "L1", "L2", "L3"]:
+        elif self._edge not in ["K", "L1", "L2", "L3"]:
             warn(
-                f"Provided edge {edge} is not one of the standard choices K, "
-                "L1, L2, L3 and it is unknown if FEFF supports it"
+                f"Provided edge {self._edge} is not one of the standard "
+                "choices K, L1, L2, L3 and it is unknown if FEFF supports it"
             )
-            self._edge = edge
 
     def get_FEFFDictSets(self, structure, absorbing_sites):
         """Constructs and returns a list of the
