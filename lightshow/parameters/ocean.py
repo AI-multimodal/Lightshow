@@ -7,6 +7,8 @@ from pymatgen.core import Element
 from ase.units import Bohr
 
 from lightshow.parameters._base import _BaseParameters
+from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow.common.nbands import UnitCellVolumeEstimate
 
 
 OCEAN_DEFAULT_CARDS = {}
@@ -18,7 +20,7 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     Parameters
     ----------
-    input_cards : dict
+    cards : dict
         A dictionary of of the cards to be control the parameters in the
         OCEAN calculations. Default is empty, which means that users will
         use most default parameters stored at self._cards. If users want to
@@ -32,36 +34,37 @@ class OCEANParameters(MSONable, _BaseParameters):
                 "dft": "qe",
                 "dft_energy_range": 50,
             }
-    kpoints_method : str
-        Methods for determining the kmesh. Currently, only "custom" is supported.
-    kpoints_method_kwargs : dict
-        Arguments to pass to the classmethod used to construct the kpoints.
-    defaultConvPerAtom: float, Default: 1e-10 Ryd/atom
+    kpoints : lightshow.common.kpoints._BaseKpointsMethod
+        The method for constructing he kpoints file from the structure. Should
+        be a class with a ``__call__`` method defined. This method should take
+        the structure as input and return a tuple corresponding to the kpoints
+        density along each axis.
+    nbands : lightshow.common.nbands._BaseNbandsMethod
+        The method for determining the number of valence bands from the
+        structure. Should be a class with a ``__call__`` method defined. This
+        method should take the structure as input and return an integer: the
+        number of valence bands to use in the calculation.
+    defaultConvPerAtom: float, optional
         Enegy convergence threshold.
-    bandgap: float, Default: None
+    bandgap: float, optional
         User can provide the band gap of the material they are interested in
-        to determine the `diemac`. If not provided and the strucutre is from
+        to determine the ``diemac``. If not provided and the strucutre is from
         pymatgen, the code will use the data (either band gap or diel) stored
-        in the database to get `diemac`; if not provided and the structure
-        is from a file, the default value of `diemac` in the cards will be used.
-        If `diel` is also not None, `diemac` is determined using `diel`
-    diel: float, Default: None
+        in the database to get ``diemac``; if not provided and the structure
+        is from a file, the default value of ``diemac`` in the cards will be
+        used. If ``diel`` is also not None, ``diemac`` is determined using
+        ``diel``.
+    diel: float, optional
         User can provide the diel of the material they are interested in
-        to determine the `diemac`. If not provided and the strucutre is from
-        pymatgen, the code will use the the data (either band gap or diel) stored
-        in the database to get `diemac`; if not provided and the structure is
-        from a file, the default value of `diemac` in the cards will be used.
-    edge: str, Default: 'K'
-        Type of edges
-    nbands_estimator : str
-        Methods for determining the kmesh. If 'heg', homogeneous electron gas
-        model is used to estimate the number of condcution band. If the input is
-        a number, it will be used as the number of bands (posive number stands for
-        the number of all bands; negative number stands for the number of conduction
-        bands).
-    nbands_estimator_kwargs: dict
-        Used only when the nbands_estimator == 'heg'. Optional arguments to pass to
-        the classmethod to estimate the number of conduction bands.
+        to determine the ``diemac``. If not provided and the strucutre is from
+        pymatgen, the code will use the the data (either band gap or diel)
+        stored in the database to get ``diemac``; if not provided and the
+        structure is from a file, the default value of `diemac` in the cards
+        will be used.
+    edge: str, optional
+        The edge of the XAS to run in the calculation.
+    name : str
+        The name of the calculation. Should likely always be ``"OCEAN"``.
     """
 
     @property
@@ -75,12 +78,10 @@ class OCEANParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards=OCEAN_DEFAULT_CARDS,
+        kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        nbands=UnitCellVolumeEstimate(e_range=40.0),
         bandgap=None,
         diel=None,
-        nbands_estimator="heg",
-        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 16.0, "max_radii": 50.0},
         defaultConvPerAtom=1e-10,
         edge="K",
         name="OCEAN",
@@ -92,12 +93,13 @@ class OCEANParameters(MSONable, _BaseParameters):
         # User modified cards
         self._bandgap = bandgap
         self._diel = diel
+
         # Method for determining number of bands
-        self._nbands_estimator = nbands_estimator
-        self._nbands_estimator_kwargs = nbands_estimator_kwargs
+        self._nbands = nbands
+
         # Method for determining the kmesh
-        self._kpoints_method = kpoints_method
-        self._kpoints_method_kwargs = kpoints_method_kwargs
+        self._kpoints = kpoints
+
         self._defaultConvPerAtom = defaultConvPerAtom
 
         # Handle the edge parsing here.
@@ -250,32 +252,12 @@ class OCEANParameters(MSONable, _BaseParameters):
         cards = copy(self._cards)
 
         cards["edges"] = f"-{element.number} {self._edge}"
-        # Estimate number of band
-        if self._nbands_estimator == "heg":
-            eRange = self._nbands_estimator_kwargs["eRange"]
-            nbands = self._getCondBands(structure.lattice.volume, eRange)
-            cards["nbands"] = -1 * nbands
-        else:
-            # if the _nbands_estimator != "heg", we expect the user to
-            # probvide a number. Ocean accepts both positive and negative
-            # values for nbands.
-            try:
-                nbands = int(self._nbands_estimator)
-                cards["nbands"] = nbands
-            except SyntaxError:
-                raise ValueError(
-                    "the input of nbands_estimator is not supported"
-                )
-        # Estimate number of kpoints
-        if self._kpoints_method == "custom":
-            cutoff = self._kpoints_method_kwargs["cutoff"]
-            max_radii = self._kpoints_method_kwargs["max_radii"]
-            kmesh = self._getKmesh(
-                structure, cutoff=cutoff, max_radii=max_radii
-            )
-            cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-        else:
-            raise ValueError("method for obtaining kmesh not supported")
+        cards["nbands"] = self._nbands(structure)
+
+        # Standardized methods for getting the kpoints
+        kmesh = self._kpoints(structure)
+        cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+
         # Determine the diemac
         if self._bandgap is not None or self._diel is not None:
             if self._diel is not None:
