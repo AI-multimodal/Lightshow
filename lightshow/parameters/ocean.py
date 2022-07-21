@@ -9,33 +9,7 @@ from ase.units import Bohr
 from lightshow.parameters._base import _BaseParameters
 
 
-OCEAN_DEFAULT_CARDS = {
-    "dft": "qe",
-    "dft_energy_range": 50,
-    "diemac": "5",
-    "ecut": "-1",
-    "ecut.quality": "high",
-    "edges": "-22 1 0",
-    "opf.program": "hamann",
-    "para_prefix": "mpirun -n 8",
-    "pp_database": "ONCVPSP-PBE-PDv0.4-stringent",
-    "screen_energy_range": 150,
-    "cnbse.broaden": 0.89,
-    "core_offset": "225.10",
-    "cnbse.spect_range": "1000 -20 80",
-    "screen.nkpt": "-2.55",
-    "screen.final.dr": "0.02",
-    "screen.grid.rmax": "10",
-    "screen.grid.rmode": "lagrange uniform",
-    "screen.grid.ang": "5 11 11 9 7",
-    "screen.grid.deltar": "0.10 0.15 0.25 0.25 0.25",
-    "screen.grid.shells": " -1 4 6 8 10",
-    "screen.lmax": "2",
-    "cnbse.rad": "5.5",
-    "screen.shells": "3.5 4.0 4.5 5.0 5.5 6.0",
-    "cnbse.niter": 1000,
-    "haydock_convergence": " 0.001 5 ",
-}
+OCEAN_DEFAULT_CARDS = {}
 
 
 class OCEANParameters(MSONable, _BaseParameters):
@@ -125,14 +99,49 @@ class OCEANParameters(MSONable, _BaseParameters):
         self._kpoints_method = kpoints_method
         self._kpoints_method_kwargs = kpoints_method_kwargs
         self._defaultConvPerAtom = defaultConvPerAtom
-        self._edge = edge
+
+        # Handle the edge parsing here.
+        if edge not in self._edge_map.keys():
+            raise ValueError(
+                f"Provided edge {edge} is not a valid choice for OCEAN "
+                "calculations. Edges should be chosen from the list: "
+                f"{list(self._edge_map.keys())}"
+            )
+        self._edge = self._edge_map[edge]
         self._name = name
-        print(type(self._cards))  # , type(self._cards["edges"]))
 
     @property
     def _edge_map(self):
-        """mapping between letter and number"""
-        return {"K": 1}
+        """Mapping between letter (indicating the edge) and number (input to
+        OCEAN) defining the XAS edge."""
+
+        return {
+            "K": "1 0",
+            "L": "2 1",
+            "L1": "2 0",
+            "L2": "2 1",
+            "L3": "2 1",
+            "L23": "2 1",
+            "M": "3 2",
+            "M1": "3 0",
+            "M2": "3 1",
+            "M3": "3 1",
+            "M23": "3 1",
+            "M4": "3 2",
+            "M5": "3 2",
+            "M45": "3 2",
+            "N": "4 3",
+            "N1": "4 0",
+            "N2": "4 1",
+            "N3": "4 1",
+            "N23": "4 1",
+            "N4": "4 2",
+            "N5": "4 2",
+            "N45": "4 2",
+            "N6": "4 3",
+            "N7": "4 3",
+            "N67": "4 3",
+        }
 
     @staticmethod
     def _oceanKptSampling(cell, kpt):
@@ -233,14 +242,14 @@ class OCEANParameters(MSONable, _BaseParameters):
 
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
+
         # Obtain absorbing atom
         species = [structure[site].specie.symbol for site in sites]
-        edge = self._edge_map[self._edge]
         element = Element(species[0])
 
         cards = copy(self._cards)
 
-        cards["edges"] = f"-{element.number} {edge} 0"
+        cards["edges"] = f"-{element.number} {self._edge}"
         # Estimate number of band
         if self._nbands_estimator == "heg":
             eRange = self._nbands_estimator_kwargs["eRange"]
