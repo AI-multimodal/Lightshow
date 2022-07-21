@@ -79,7 +79,7 @@ class OCEANParameters(MSONable, _BaseParameters):
         self,
         cards=OCEAN_DEFAULT_CARDS,
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
-        nbands=UnitCellVolumeEstimate(e_range=40.0),
+        nbands=UnitCellVolumeEstimate(e_range=30.0),
         bandgap=None,
         diel=None,
         defaultConvPerAtom=1e-10,
