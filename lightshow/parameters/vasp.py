@@ -11,7 +11,9 @@ from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 
 from lightshow import _get_POTCAR_DIRECTORY_from_environ
-from lightshow.parameters._base import _BaseParameters, _get_k_mesh
+from lightshow.parameters._base import _BaseParameters
+from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow.common.nbands import UnitCellVolumeEstimate
 
 
 VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL = {
@@ -309,47 +311,7 @@ class Incar(pmgIncar):
 
 
 class Kpoints(pmgKpoints):
-    """Method for constructing the Kpoints objects.
-
-    .. note::
-
-        There are many more custom ways to instantiate the Kpoints objects than
-        just the :class:`Kpoints.custom` method listed below. The full list
-        can be found in the `Pymatgen documentation <https://pymatgen.org/
-        pymatgen.io.vasp.inputs.html#pymatgen.io.vasp.inputs.Kpoints>`_.
-    """
-
-    @staticmethod
-    def custom(supercell, cutoff=32.0, max_radii=50.0):
-        """Customizes the KPOINTS file. For a kmesh sampling, e.g. [m, n, p],
-        of a crystal "cell" is equivalent to generating a supercell with
-        [m, n, p] the crystal cell. The corresponding radius is the largest
-        radius of the sphere that can fit into this supercell. The radius can
-        also be regarded as the inverse kmesh density. Along each reciprocal
-        lattice, the kmesh densities are not guaranteed to be the same. The
-        smallest kmesh density is chosen. This function uses the effective
-        radius as a controlling factor to
-        determining the kemsh.
-
-        Parameters
-        ----------
-        supercell : pymatgen.core.structure.Structure
-            Previously generated supercell (or standard unit cell).
-        cutoff : float, optional
-            Cutoff radius for constructing the kmesh. It will loop a look-up
-            table for the effective radius (controlled by max_radii). The kmesh
-            with radius right above the cutoff will be chosen. Default is 32
-            Angstroms (60 Bohr).
-        max_radii : float, optional
-            Maximum radius used for constructing the lookup table.
-
-        Returns
-        -------
-        Kpoints
-        """
-
-        k = _get_k_mesh(supercell, cutoff, max_radii)
-        return Kpoints(kpts=(k,))
+    """The Pymatgen Kpoints object but with a redefined write method."""
 
     def write(self, target_directory):
         """Writes the KPOINTS file to the target directory.
@@ -530,54 +492,6 @@ class PotcarConstructor(MSONable):
         elements = [str(s.specie) for s in structure]
         return int(sum([self.get_n_valence_electrons(ii) for ii in elements]))
 
-    # TODO: Fanchen: can you fix the equation in this docstring? Doesn't look
-    # correct, or at least it's not clear
-    def get_total_bands_via_heg(self, structure, eRange):
-        """Gets an approximation for the total number of bands to use in the
-        calculation based on the free electron gas model, such that a range of
-        ``eRange`` is covered in the spectrum. The method assumes all electrons
-        are free electrons, including those in the valence bands. The total
-        number of electrons will then be calculated as
-        :math:`N = N_\\mathrm{v} + N_\\mathrm{c}`, where :math:`N_\\mathrm{v}`
-        is the total number of valence electrons and
-        :math:`N_\\mathrm{c}` is the number of conduction band electrons above
-        the Fermi energy as specified by the provided energy range. The final
-        expression (in atomic units) is
-
-        .. math::
-
-            E_\\mathrm{range}/c_1 = c_2 / (V/N_vc * 3/ (4 pi))^2/3
-            - c_2 / (V/N_v * 3 / (4 pi))^2/3 N_v
-
-        where :math:`c_1 = 27.2114` and :math:`c_2 = 1.841`,
-        is summed over all valence electrons obtained from POTCAR.
-
-        Parameters
-        ----------
-        structure : pymatgen.core.structure.Structure
-        eRange : float
-            The approximate energy range desired in the spectrum, starting at
-            the Fermi energy.
-
-        Returns
-        -------
-        int
-            Approximation for the number of bands to use in computing the XANES
-            spectrum as computed using the (3D) homogeneous electron gas
-            approximation.
-        """
-
-        ANG2BOHR = 1.88873
-        volume_bohr = structure.volume * ANG2BOHR**3
-        Nv = self.get_total_valence_electrons(structure)
-
-        tmp1 = eRange / 27.2114 + 1.841 / (
-            volume_bohr / Nv * 3.0 / 4.0 / np.pi
-        ) ** (2 / 3)
-        tmp2 = (1.841 / tmp1) ** (2 / 3) / 3.0 * 4.0 * np.pi
-        Nvc = volume_bohr / tmp2 * 0.65
-        return int(np.ceil(Nvc))
-
     def write(self, target_directory, elements):
         """Writes the POTCAR file to the path provided by stacking the
         potentials for the provided elements.
@@ -717,7 +631,7 @@ class VASPParameters(MSONable, _BaseParameters):
     """A one-stop-shop for modifying the VASP parameters for some calculation.
     Due to the relative complexity of setting up a VASP calculation (as opposed
     to e.g. FEFF), the :class:`.VASPParameters` object...
-
+    
     Parameters
     ----------
     incar : dict or :class:`.Incar`
@@ -726,10 +640,6 @@ class VASPParameters(MSONable, _BaseParameters):
         :class:`.Incar` directly. The number of bands does not have to be
         directly specified, as it can be estimated based on the structural
         information as long as ``nbands_estimator`` is not ``None``.
-    kpoints_method : str
-        Precise name of the classmethod defined in
-        :class:`pymatgen.io.vasp.inputs.Kpoints`, or ``"custom"``, which is
-        defined in Lightshow's :class:`.Kpoints` module.
     potcar_directory : os.PathLike, optional
         The location in which the potential files are stored. These files
         should be stored in a precise directory format, specifically: the
@@ -738,99 +648,37 @@ class VASPParameters(MSONable, _BaseParameters):
         choice is determined first by the ``potcar_element_mapping`` and then
         by the defaults in the :class:`.PotcarConstructor` class. If None,
         checks the environment for ``VASP_POTCAR_DIRECTORY``.
-    kpoints_method_kwargs : dict
-        Optional arguments to pass to the classmethod used to construct the
-        kpoints.
+    kpoints : lightshow.common.kpoints._BaseKpointsMethod
+        The method for constructing he kpoints file from the structure. Should
+        be a class with a ``__call__`` method defined. This method should take
+        the structure as input and return a tuple corresponding to the kpoints
+        density along each axis.
+    nbands : lightshow.common.nbands._BaseNbandsMethod
+        The method for determining the number of valence bands from the
+        structure. Should be a class with a ``__call__`` method defined. This
+        method should take the structure as input and return an integer: the
+        number of valence bands to use in the calculation.
     potcar_element_mapping : dict
         A custom element mapping which will override, element-by-element,
         defaults in the :class:`.PotcarConstructor` class.
-    nbands_estimator : str
-    copy_script : os.PathLike
-        Full path to a script that should be copied to every script-containing
-        directory.
+    max_bands : int
+        The maximum number of bands to use in a calculation. This is a failsafe
+        in case the ``nbands`` method produces a result with more bands than
+        can be feasibly run on your computer.
+    force_spin_unpolarized : bool
+        TODO
+    name : str
+        The name of the calculation. Should likely always be ``"VASP"``.
     """
-
-    @property
-    def incar(self):
-        return self._incar
-
-    def get_KPOINTS(self, structure):
-        """Calls the static methods defined on Kpoints (and it's corresponding
-        base class) using the set arguments.
-
-        Parameters
-        ----------
-        structure : pymatgen.core.structure.Structure
-
-        Returns
-        -------
-        pymatgen.io.vasp.inputs.Kpoints
-        """
-
-        f = getattr(Kpoints, self._kpoints_method)
-        return f(structure, **self._kpoints_method_kwargs)
-
-    def estimate_n_bands(self, structure):
-        """Uses the ``nbands_estimator`` information provided at instantiation
-        to estimate the number of bands to use for a calculation.
-
-        Parameters
-        ----------
-        structure : pymatgen.core.structure.Structure
-
-        Returns
-        -------
-        int
-
-        Raises
-        ------
-        KeyError
-            If ``nbands_estimator`` is None, and there is no ``NBANDS`` key
-            provided in the INCAR. Will also throw a KeyError if the correct
-            parameter information (for the specified method) is not contained
-            in ``nbands_parameters``.
-        ValueError
-            If the specified ``nbands_method`` is not one of ``None``,
-            ``int`` or ``"heg"``.
-        """
-
-        if self._nbands_estimator is None:
-
-            # Will throw a KeyError if NBANDS is not present in the INCAR
-            return self._incar["NBANDS"]
-
-        cond2 = isinstance(self._nbands_estimator, int)
-        if self._nbands_estimator is None or cond2:
-            if self._incar.get("NBANDS") is None:
-                raise KeyError(
-                    "nbands_estimator is None or int and the INCAR does not "
-                    "contain  a specified number of bands"
-                )
-
-        if cond2:
-            nvalence = self._potcar_constructor.get_n_valence_electrons(
-                structure
-            )
-            nb = nvalence * self._nbands_estimator
-        elif self._nbands_estimator == "heg":
-            nb = self._potcar_constructor.get_total_bands_via_heg(
-                structure, self._nbands_parameters["erange"]
-            )
-        else:
-            raise ValueError(f"Unknown nbands method={self._nbands_estimator}")
-
-        return nb
 
     def __init__(
         self,
         incar,
         potcar_directory=None,
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
+        kpoints=GenericEstimatorKpoints(cutoff=32.0, max_radii=50.0),
+        nbands=UnitCellVolumeEstimate(e_range=40.0),
         potcar_element_mapping=dict(),
-        nbands_estimator=None,
-        nbands_parameters=dict(),
-        max_bands=int(1e16),
+        max_bands=-1,
         force_spin_unpolarized=False,
         name="VASP",
     ):
@@ -846,8 +694,7 @@ class VASPParameters(MSONable, _BaseParameters):
             )
 
         # Method for generating the KPOINTS file
-        self._kpoints_method = kpoints_method
-        self._kpoints_method_kwargs = kpoints_method_kwargs
+        self._kpoints = kpoints
 
         # POTCAR information
         if potcar_directory is None:
@@ -865,11 +712,13 @@ class VASPParameters(MSONable, _BaseParameters):
         )
 
         # Estimator method for the number of bands
-        self._nbands_estimator = nbands_estimator
-        self._nbands_parameters = nbands_parameters
+        self._nbands = nbands
 
         # Other parameters
-        self._max_bands = max_bands
+        if max_bands == -1:
+            self._max_bands = int(1e16)
+        else:
+            self._max_bands = max_bands
         self._force_spin_unpolarized = force_spin_unpolarized
         self._name = name
 
@@ -912,7 +761,7 @@ class VASPParameters(MSONable, _BaseParameters):
         structure = deepcopy(kwargs["structure_sc"])
 
         # Check the validity of the calculations
-        nb = self.estimate_n_bands(structure)
+        nb = self._nbands(structure)
         if nb > self._max_bands:
             errors["n_bands"] = nb
 
@@ -921,7 +770,7 @@ class VASPParameters(MSONable, _BaseParameters):
         if potcar_check is not None:
             errors["potentials_do_not_exist"] = potcar_check
 
-        incar["NBANDS"] = self.estimate_n_bands(structure)
+        incar["NBANDS"] = nb
         if self._force_spin_unpolarized:
             incar["ISPIN"] = 1
             try:
@@ -935,7 +784,8 @@ class VASPParameters(MSONable, _BaseParameters):
         if len(errors) > 0:
             return {"pass": False, "errors": errors}
 
-        kpoints = self.get_KPOINTS(structure)
+        k = self._kpoints(structure)
+        kpoints = Kpoints(kpts=(k,))
         species = [structure[site].specie.symbol for site in sites]
 
         paths = []
