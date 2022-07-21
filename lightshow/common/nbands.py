@@ -46,7 +46,7 @@ class UnitCellVolumeEstimate(MSONable, _BaseNbandsMethod):
     def __call__(self, structure):
         return int(round(
             0.256 * structure.lattice.volume * (
-                self._e_range / 13.6056980659 ** (3.0 / 2.0)
+                (self._e_range / 13.6056980659) ** (3.0 / 2.0)
             )
         ))
 
