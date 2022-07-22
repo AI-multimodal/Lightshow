@@ -95,19 +95,16 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
     species_path : str
         A string contains the absolute path for species files.
-    kpoints_method : str
-        Methods for determining the kmesh. Currently, only "custom" is supported.
-    kpoints_method_kwargs : dict
-        Arguments to pass to the classmethod used to construct the kpoints.
-    nbands_estimator : str
-        Methods for determining the kmesh. If 'heg', homogeneous electron gas
-        model is used to estimate the number of condcution band. If the input is
-        a number, it will be used as the number of bands (posive number stands for
-        the number of all bands; negative number stands for the number of conduction
-        bands).
-    nbands_estimator_kwargs: dict
-        Used only when the nbands_estimator == 'heg'. Optional arguments to pass to
-        the classmethod to estimate the number of conduction bands.
+    kpoints : lightshow.common.kpoints._BaseKpointsMethod
+        The method for constructing he kpoints file from the structure. Should
+        be a class with a ``__call__`` method defined. This method should take
+        the structure as input and return a tuple corresponding to the kpoints
+        density along each axis.
+    nbands : lightshow.common.nbands._BaseNbandsMethod
+        The method for determining the number of valence bands from the
+        structure. Should be a class with a ``__call__`` method defined. This
+        method should take the structure as input and return an integer: the
+        number of valence bands to use in the calculation.
     """
 
     @property

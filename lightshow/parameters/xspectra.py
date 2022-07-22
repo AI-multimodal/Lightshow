@@ -157,6 +157,17 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     "psp_json": "SSSP_precision"
                 }
             }
+    kpoints : lightshow.common.kpoints._BaseKpointsMethod
+        The method for constructing he kpoints file from the structure. Should
+        be a class with a ``__call__`` method defined. This method should take
+        the structure as input and return a tuple corresponding to the kpoints
+        density along each axis.
+    nbands : lightshow.common.nbands._BaseNbandsMethod
+        The method for determining the number of valence bands from the
+        structure. Should be a class with a ``__call__`` method defined. This
+        method should take the structure as input and return an integer: the
+        number of valence bands to use in the calculation.
+
     """
 
     @property
