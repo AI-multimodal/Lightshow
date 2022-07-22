@@ -5,6 +5,8 @@ from monty.json import MSONable
 from pymatgen.io.exciting import ExcitingInput
 
 from lightshow.parameters._base import _BaseParameters
+from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow.common.nbands import UnitCellVolumeEstimate
 
 EXCITING_DEFAULT_CARDS = {
     "structure": {"speciespath": "./", "autormt": "true"},
@@ -126,10 +128,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             "exccoulint",
             "bse",
         ],
-        nbands_estimator="heg",
-        nbands_estimator_kwargs={"eRange": 2.25},  # unit in Ryd
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
+        kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        nbands=UnitCellVolumeEstimate(e_range=30.0),
         name="EXCITING",
     ):
         # Default cards
@@ -139,12 +139,13 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._cards["structure"]["speciespath"] = self._species_path
         # Update plan
         self._plan = plan
-        # Method for determining the nbands
-        self._nbands_estimator = nbands_estimator
-        self._nbands_estimator_kwargs = nbands_estimator_kwargs  # unit in Ryd
+        # Method for determining number of bands
+        self._nbands = nbands
+
         # Method for determining the kmesh
-        self._kpoints_method = kpoints_method
-        self._kpoints_method_kwargs = kpoints_method_kwargs
+        self._kpoints = kpoints
+
+        # Method for determining the kmesh
         self._name = name
 
     def write(self, target_directory, **kwargs):
@@ -183,37 +184,15 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         excitinginput = ExcitingInput(structure)
         # Estimate number of band
-        if self._nbands_estimator == "heg":
-            eRange = self._nbands_estimator_kwargs["eRange"]
-            nbands = self._getCondBands(structure.lattice.volume, eRange)
-            self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
-        else:
-            try:
-                nbands = int(self._nbands_estimator)
-                if nbands <= 0:
-                    raise ValueError(
-                        "the input of nbands_estimator is not supported"
-                    )
-
-                self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
-            except Exception:
-                raise ValueError(
-                    "the input of nbands_estimator is not supported"
-                )
+        nbands = self._nbands(structure)
+        self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
         # Estimate number of kpoints
-        if self._kpoints_method == "custom":
-            cutoff = self._kpoints_method_kwargs["cutoff"]
-            max_radii = self._kpoints_method_kwargs["max_radii"]
-            kmesh = self._getKmesh(
-                structure, cutoff=cutoff, max_radii=max_radii
-            )
-            self._cards["groundstate"][
-                "ngridk"
-            ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-            self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-            self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
-        else:
-            raise ValueError("method for obtaining kmesh not supported")
+        kmesh = self._kpoints(structure)
+        self._cards["groundstate"][
+            "ngridk"
+        ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
