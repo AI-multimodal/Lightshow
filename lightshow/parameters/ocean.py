@@ -4,7 +4,6 @@ import numpy as np
 
 from monty.json import MSONable
 from pymatgen.core import Element
-from ase.units import Bohr
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
@@ -12,6 +11,7 @@ from lightshow.common.nbands import UnitCellVolumeEstimate
 
 
 OCEAN_DEFAULT_CARDS = {}
+Bohr = 0.5291772105638411
 
 
 class OCEANParameters(MSONable, _BaseParameters):
