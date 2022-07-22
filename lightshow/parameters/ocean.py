@@ -252,7 +252,9 @@ class OCEANParameters(MSONable, _BaseParameters):
         cards = copy(self._cards)
 
         cards["edges"] = f"-{element.number} {self._edge}"
-        cards["nbands"] = self._nbands(structure)
+        # ocean use a negative value to represent the number of
+        # conduction bands
+        cards["nbands"] = -1 * self._nbands(structure)
 
         # Standardized methods for getting the kpoints
         kmesh = self._kpoints(structure)
