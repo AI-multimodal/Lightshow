@@ -67,6 +67,81 @@ VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL = {
     "SYMPREC": 1e-05,
 }
 
+VASP_VALENCE_MAPPING = {
+    "Ti": 12,
+    "Zn": 20,
+    "O": 6,
+    "H": 1,
+    "He": 2,
+    "Li": 3,
+    "Be": 4,
+    "B": 3,
+    "C": 4,
+    "N": 5,
+    "F": 7,
+    "Ne": 8,
+    "Na": 9,
+    "Mg": 10,
+    "Al": 3,
+    "Si": 4,
+    "P": 5,
+    "S": 6,
+    "Cl": 7,
+    "Ar": 8,
+    "K": 9,
+    "Ca": 10,
+    "Sc": 11,
+    "V": 13,
+    "Cr": 14,
+    "Mn": 15,
+    "Fe": 16,
+    "Co": 17,
+    "Ni": 18,
+    "Cu": 19,
+    "Ga": 21,
+    "Ge": 22,
+    "As": 23,
+    "Se": 24,
+    "Br": 25,
+    "Kr": 8,
+    "Rb": 9,
+    "Sr": 10,
+    "Y": 11,
+    "Zr": 12,
+    "Nb": 13,
+    "Mo": 14,
+    "Tc": 15,
+    "Ru": 16,
+    "Rh": 17,
+    "Pd": 18,
+    "Ag": 19,
+    "Cd": 20,
+    "In": 13,
+    "Sn": 14,
+    "Sb": 15,
+    "Te": 6,
+    "I": 7,
+    "Xe": 8,
+    "Cs": 9,
+    "Ba": 10,
+    "La": 11,
+    "Ce": 12,
+    "Hf": 12,
+    "Ta": 13,
+    "W": 14,
+    "Re": 15,
+    "Os": 16,
+    "Ir": 17,
+    "Pt": 18,
+    "Au": 19,
+    "Hg": 20,
+    "Tl": 15,
+    "Pb": 16,
+    "Bi": 17,
+    "Po": 18,
+    "At": 17,
+    "Rn": 18,
+}
 
 VASP_POTCAR_DEFAULT_ELEMENT_MAPPING = {
     "Ti": "Ti_sv_GW",
@@ -535,10 +610,10 @@ class Poscar(pmgPoscar):
         target_directory,
         site_index=None,
         check_atom_type=None,
-        significant_figures=8
+        significant_figures=8,
     ):
         """Writes the VASP POSCAR file for the specified ``site_index``.
-        
+
         Parameters
         ----------
         target_directory : os.PathLike
@@ -558,7 +633,7 @@ class Poscar(pmgPoscar):
             is the same as the provided atom type.
         significant_figures : int, optional
             The number of significant digits to write.
-        
+
         Returns
         -------
         list
@@ -577,9 +652,9 @@ class Poscar(pmgPoscar):
             return self.site_symbols
 
         # Get the default lines for the POSCAR file
-        lines = self.get_string(
-            significant_figures=significant_figures
-        ).split("\n")
+        lines = self.get_string(significant_figures=significant_figures).split(
+            "\n"
+        )
 
         # We need to make some modifications depending on the type of
         # calculation this is. Lines indexed by 5 and 6 are the ones that
@@ -631,7 +706,7 @@ class VASPParameters(MSONable, _BaseParameters):
     """A one-stop-shop for modifying the VASP parameters for some calculation.
     Due to the relative complexity of setting up a VASP calculation (as opposed
     to e.g. FEFF), the :class:`.VASPParameters` object...
-    
+
     Parameters
     ----------
     incar : dict or :class:`.Incar`
@@ -722,6 +797,26 @@ class VASPParameters(MSONable, _BaseParameters):
         self._force_spin_unpolarized = force_spin_unpolarized
         self._name = name
 
+    def _vbands(self, structure):
+        """get the number of the valence bands using the VASP_VALENCE_MAPPING
+
+        Parameters
+        ----------
+        structure
+
+        Returns
+        -------
+        int
+        """
+
+        valence = 0
+        for atom in structure:
+            try:
+                valence += VASP_VALENCE_MAPPING[atom.species_string]
+            except KeyError:
+                print(f"{atom.species_string} not a valid element")
+        return valence
+
     def write(self, target_directory, **kwargs):
         """Summary
 
@@ -761,7 +856,9 @@ class VASPParameters(MSONable, _BaseParameters):
         structure = deepcopy(kwargs["structure_sc"])
 
         # Check the validity of the calculations
-        nb = self._nbands(structure)
+        cb = self._nbands(structure)
+        vb = self._vbands(structure)
+        nb = cb + vb
         if nb > self._max_bands:
             errors["n_bands"] = nb
 
