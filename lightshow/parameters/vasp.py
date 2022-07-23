@@ -715,6 +715,8 @@ class VASPParameters(MSONable, _BaseParameters):
         :class:`.Incar` directly. The number of bands does not have to be
         directly specified, as it can be estimated based on the structural
         information as long as ``nbands_estimator`` is not ``None``.
+    edge : str
+        The edge of the spectroscopy calculation.
     potcar_directory : os.PathLike, optional
         The location in which the potential files are stored. These files
         should be stored in a precise directory format, specifically: the
@@ -749,6 +751,7 @@ class VASPParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         incar,
+        edge=None,
         potcar_directory=None,
         kpoints=GenericEstimatorKpoints(cutoff=32.0, max_radii=50.0),
         nbands=UnitCellVolumeEstimate(e_range=40.0),
@@ -757,6 +760,15 @@ class VASPParameters(MSONable, _BaseParameters):
         force_spin_unpolarized=False,
         name="VASP",
     ):
+
+        if edge is not None:
+            warnings.warn(
+                f"edge={edge} was specified. Currently this method is not "
+                "implemented, and the edge should be specified by setting "
+                "the CLN and CLL parameters in the incar. See "
+                "https://www.vasp.at/wiki/index.php/XANES_in_Diamond#INCAR"
+            )
+
         # Load the INCAR information
         if isinstance(incar, Incar):
             self._incar = incar
