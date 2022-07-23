@@ -433,11 +433,14 @@ class PotcarConstructor(MSONable):
 
     def __init__(
         self,
-        root,
+        root=None,
         element_mapping=dict(),
         override_default_element_mapping=False,
     ):
-        self._root = Path(root).resolve()
+        if root is None:
+            self._root = None
+        else:
+            self._root = Path(root).resolve()
         self._override_default_element_mapping = (
             override_default_element_mapping
         )
@@ -579,6 +582,9 @@ class PotcarConstructor(MSONable):
             A list of str: the elements to use in the POTCAR file, in the
             correct order.
         """
+
+        if self._root is None:
+            return
 
         path = Path(target_directory) / Path("POTCAR")
 
@@ -787,9 +793,10 @@ class VASPParameters(MSONable, _BaseParameters):
         if potcar_directory is None:
             potcar_directory = _get_POTCAR_DIRECTORY_from_environ()
         if potcar_directory is None:
-            raise ValueError(
+            warnings.warn(
                 "potcar_directory not provided, and VASP_POTCAR_DIRECTORY "
-                "not in the current environment variables"
+                "not in the current environment variables. POTCAR files will "
+                "not be written."
             )
 
         self._potcar_directory = potcar_directory
