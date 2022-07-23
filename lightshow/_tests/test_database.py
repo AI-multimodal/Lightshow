@@ -1,8 +1,11 @@
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import numpy as np
 from pymatgen.core.structure import IStructure
+from pymatgen.ext.matproj import MPRestError
+from warnings import warn
 
 from lightshow.database import Database
 from lightshow.parameters.feff import FEFFParameters
@@ -112,7 +115,20 @@ def _validate_VASP_FEFF_calculations_match(root, decimals=4, r=6.0):
 class TestDatabase:
     @staticmethod
     def test_from_materials_project(mp_Structure_mp390, mp_Structure_mvc11115):
-        dat = Database.from_materials_project(["mp-390", "mvc-11115"])
+        try:
+            dat = Database.from_materials_project(
+                ["mp-390", "mvc-11115"], suppress_MPRestError=False
+            )
+        except MPRestError:
+            warn(
+                "MPRestError during pulling data- using locally stored "
+                "Database for the test"
+            )
+            path = Path.cwd() / Path("lightshow") / Path("_tests")
+            path = path / Path("database_obj_test.json")
+            with open(path, "r") as infile:
+                loaded_json = json.load(infile)
+            dat = Database.from_dict(loaded_json)
         assert set(dat.structures.keys()) == {"mp-390", "mvc-11115"}
         assert dat.structures["mp-390"] == mp_Structure_mp390
         assert dat.structures["mvc-11115"] == mp_Structure_mvc11115
