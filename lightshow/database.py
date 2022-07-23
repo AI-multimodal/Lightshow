@@ -83,11 +83,16 @@ def _from_mpids_list(
     errors = []
     with MPRester(api_key) as mpr:
         for mpid in tqdm(mpids, disable=not verbose):
-            try:
+            if suppress_MPRestError:
+                try:
+                    structure, metadata = _fetch_from_MP(
+                        mpr, mpid, metadata_keys
+                    )
+                except MPRestError:
+                    errors.append(mpid)
+                    continue
+            else:
                 structure, metadata = _fetch_from_MP(mpr, mpid, metadata_keys)
-            except MPRestError:
-                errors.append(mpid)
-                continue
             structures[mpid] = structure
             metadatas[mpid] = metadata
 
@@ -155,6 +160,7 @@ class Database(MSONable):
             "diel",
         ],
         verbose=True,
+        suppress_MPRestError=True,
     ):
         """Constructs the :class:`.Database` object by pulling structures and
         metadata directly from the Materials Project. The following query types
@@ -237,7 +243,13 @@ class Database(MSONable):
             raise ValueError(f"Unknown query {query_type}")
 
         # Get all of the data as a dictionary
-        data = _from_mpids_list(mpids, api_key, metadata_keys, verbose=verbose)
+        data = _from_mpids_list(
+            mpids,
+            api_key,
+            metadata_keys,
+            verbose=verbose,
+            suppress_MPRestError=suppress_MPRestError,
+        )
 
         # Instantiate the class and return
         errors = {"MPRestError": data["errors"]}
