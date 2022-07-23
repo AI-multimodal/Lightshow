@@ -14,11 +14,33 @@ authors:
   - name: Fanchen Meng
     equal-contrib: true
     affiliation: 2
+  - name: Christian Vorwerk
+    affiliation: 3
+  - name: Benedikt Maurer
+    affiliation: 4
+  - name: Fabian Peschel
+    affiliation: 4
+  - name: Xiaohui Qu
+    affiliation: 2
+  - name: Eli Stavitski
+    affiliation: 5
+  - name: John Vinson
+    affiliation: 6
+  - name: Deyu Lu
+    affiliation: 2
 affiliations:
  - name: Computational Science Initiative, Brookhaven National Laboratory, Upton, New York 11973, USA
    index: 1
  - name: Center for Functional Nanomaterials, Brookhaven National Laboratory, Upton, New York 11973, USA
    index: 2
+ - name: Pritzker School of Molecular Engineering, University of Chicago, Chicago, IL 60637, USA
+   index: 3
+ - name: Physics Department and IRIS Adlershof, Humboldt-Universitaet zu Berlin, D-12489 Berlin, Germany
+   index: 4
+ - name: National Synchrotron Light Source II, Brookhaven National Laboratory, Upton, New York 11973, USA
+   index: 5
+ - name: Material Measurement Laboratory, National Institute of Standards and Technology, Gaithersburg, Maryland 20899, USA
+   index: 6
 date: TODO
 bibliography: paper.bib
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -63,7 +85,7 @@ Despite the growing demand in first-principles XAS spectroscopy, carrying out pr
 
 ![Caption for example figure.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
 
-We summarize the structure of `Lightshow` application programming interface (API) in Fig. \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design philosophy is built around two principal objects, the `Database` class, and objects that inherit the `_BaseParameters` class. At a high-level, the `Database` class interfaces primarily with Pymatgen and the Materials Project `@Jain2013`, allowing the user to easily utilize the Pymatgen API and pull large numbers of materials structures quickly. Functionality is also available for instantiating a `Database` via loading e.g. `POSCAR`-style structure files from disk. Once a database has been created, code-specific simulation parameters inheriting the `_BaseParameters` base class interface with various methods in Pymatgen as well as in-house built software for systematically writing input files for multiple XAS simulation programs, including FEFF `@rehr2010parameter`, XSpectra `[@taillefumier2002x; @gougoussis2009first; bunuau2013projector]`, OCEAN `[@vinson2011bethe; @ocean-3]`, Exciting (ref) and VASP (ref). We highlight the `_tests` sub-directory, in which we maintain a suite of unit tests for individual functions and methods, as well as integration tests for the entire workflow.
+We summarize the structure of `Lightshow` application programming interface (API) in Fig. \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design philosophy is built around two principal objects, the `Database` class, and objects that inherit the `_BaseParameters` class. At a high-level, the `Database` class interfaces primarily with Pymatgen and the Materials Project [@Jain2013], allowing the user to easily utilize the Pymatgen API and pull large numbers of materials structures quickly. Functionality is also available for instantiating a `Database` via loading e.g. `POSCAR`-style structure files from disk. Once a database has been created, code-specific simulation parameters inheriting the `_BaseParameters` base class interface with various methods in Pymatgen as well as in-house built software for systematically writing input files for multiple XAS simulation programs, including FEFF [@rehr2010parameter], XSpectra [@taillefumier2002x; @gougoussis2009first; bunuau2013projector], OCEAN [@vinson2011bethe; @ocean-3], Exciting (ref) and VASP (ref). We highlight the `_tests` sub-directory, in which we maintain a suite of unit tests for individual functions and methods, as well as integration tests for the entire workflow.
 
 
 
