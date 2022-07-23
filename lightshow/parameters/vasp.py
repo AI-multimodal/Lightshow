@@ -774,6 +774,7 @@ class VASPParameters(MSONable, _BaseParameters):
                 "the CLN and CLL parameters in the incar. See "
                 "https://www.vasp.at/wiki/index.php/XANES_in_Diamond#INCAR"
             )
+        self._edge = edge
 
         # Load the INCAR information
         if isinstance(incar, Incar):
