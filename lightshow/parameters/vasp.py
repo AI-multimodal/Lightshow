@@ -817,25 +817,29 @@ class VASPParameters(MSONable, _BaseParameters):
         self._force_spin_unpolarized = force_spin_unpolarized
         self._name = name
 
-    def _vbands(self, structure):
-        """get the number of the valence bands using the VASP_VALENCE_MAPPING
+    @staticmethod
+    def _vbands(structure):
+        """Get the number of the valence bands using the
+        ``VASP_VALENCE_MAPPING``.
 
         Parameters
         ----------
-        structure
+        pymatgen.core.structure.Structure
 
         Returns
         -------
         int
+
+        Raises
+        ------
+        KeyError
+            If a particular species string is not found in the
+            ``VASP_VALENCE_MAPPING``.
         """
 
-        valence = 0
-        for atom in structure:
-            try:
-                valence += VASP_VALENCE_MAPPING[atom.species_string]
-            except KeyError:
-                print(f"{atom.species_string} not a valid element")
-        return valence
+        return sum(
+            [VASP_VALENCE_MAPPING[atom.species_string] for atom in structure]
+        )
 
     def write(self, target_directory, **kwargs):
         """Summary
