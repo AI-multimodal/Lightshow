@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-Spectroscopy simulations are a critical tool for interpretation, the development of new theoretical understanding and fast screening of new molecules and materials. Systematically setting up input files for different simulation codes and multiple materials can be a time-consuming task with a relatively high barrier-to-entry, given the complexities and nuances of each individual simulation package. `Lightshow` solves this problem by providing a uniform abstraction for writing computational x-ray spectroscopy input files for multiple popular codes, including FEFF, VASP, OCEAN, EXCITING and Xspectra.
+Spectroscopy simulations are a critical tool for interpretation, the development of new theoretical understanding and fast screening of new molecules and materials. Systematically setting up input files for different simulation codes and multiple materials can be a time-consuming task with a relatively high barrier-to-entry, given the complexities and nuances of each individual simulation package. `Lightshow` solves this problem by providing a uniform abstraction for writing computational x-ray spectroscopy input files for multiple popular codes, including FEFF, VASP, OCEAN, EXCITING and Xspectra. Its fully extendable framework will also allow for the community to easily make future additions, and add new simulation code.
 
 # Statement of need
 
@@ -59,7 +59,7 @@ Spectroscopy is an important experimental characterization technique that probes
 
 Despite the growing demand in first-principles XAS spectroscopy, carrying out practical calculations correctly is far from trivial, and requires a great deal of expertise in electronic structure theory, creating a formidable barrier for non-expert researchers. Most of the practical challenges boil down to the right choice of a set of input parameters, which depends on the level of theory, details of the implementation of the simulation software and the atomic structure of the system. A general purpose software package for generating XAS simulation input files for multiple codes does not exist. `Lightshow` is developed to fill this gap. It provides not only sets of default input parameters based on a careful multi-code XAS benchmark project (ref), but also exposes the entire suite of possible parameter choices for expert users to tune. Our goal is to provide an easy-to-use tool to the XAS community (for both newcomers and experts) for routine XAS simulation and analysis.
 
-# Software description
+# Brief software description
 
 ![Caption for example figure.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
 
