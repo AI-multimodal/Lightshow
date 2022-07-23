@@ -10,6 +10,7 @@ from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
+from lightshow.common.kpoints import GenericEstimatorKpoints
 import lightshow
 
 
@@ -156,6 +157,17 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     "psp_json": "SSSP_precision"
                 }
             }
+    kpoints : lightshow.common.kpoints._BaseKpointsMethod
+        The method for constructing he kpoints file from the structure. Should
+        be a class with a ``__call__`` method defined. This method should take
+        the structure as input and return a tuple corresponding to the kpoints
+        density along each axis.
+    nbands : lightshow.common.nbands._BaseNbandsMethod
+        The method for determining the number of valence bands from the
+        structure. Should be a class with a ``__call__`` method defined. This
+        method should take the structure as input and return an integer: the
+        number of valence bands to use in the calculation.
+
     """
 
     @property
@@ -169,16 +181,14 @@ class XSpectraParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards=XSPECTRA_DEFAULT_CARDS,
-        kpoints_method="custom",
-        kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
+        kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
         defaultConvPerAtom=1e-10,
         edge="K",
         name="XSpectra",
     ):
         self._cards = cards
         # Method for determining the kmesh
-        self._kpoints_method = kpoints_method
-        self._kpoints_method_kwargs = kpoints_method_kwargs
+        self._kpoints = kpoints
         self._defaultConvPerAtom = defaultConvPerAtom
         self._edge = edge
         self._name = name
@@ -372,11 +382,9 @@ class XSpectraParameters(MSONable, _BaseParameters):
             # use Gamma point for ground state calculations (es.in and gs.in)
             kpoints_scf = [1, 1, 1]
         else:
-            kpoints_scf = self._getKmesh(
-                structure, cutoff=26.0, max_radii=50.0
-            )
+            kpoints_scf = self._kpoints(structure)
 
-        kpoints_xas = self._getKmesh(structure, cutoff=26.0, max_radii=50.0)
+        kpoints_xas = self._kpoints(structure)
 
         self._cards["XS"]["kpts"][
             "kpts"

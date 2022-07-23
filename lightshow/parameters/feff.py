@@ -65,14 +65,16 @@ class FEFFParameters(MSONable, _BaseParameters):
         FEFF uses clusters for its calculations. The ``radius`` parameter
         determines how large to make the cluster. It is calculated from the
         absorbing atom center in units of Angstroms.
-    nkpts : int
-        The number of k-points used in the Brillouin zone. Only used if
-        FEFF is run in reciprocal space mode.
     spectrum : str
         The type of spectroscopy to be run. This is used to set the default
         cards through Pymatgen. These defaults can be overridden by setting
         the ``cards`` argument when instantiating the class. The type of
         calculation to run. Should likely be either ``"XANES"`` or ``"EXAFS"``.
+    **feff_dict_set_kwargs
+        Keyword arguments to pass directly to the FEFFDictSet object before
+        writing the input files. For example, ``nkpts`` can be used to specify
+        the number of k-points used in the Brillouin zone. It is only used if
+        FEFF is run in reciprocal space mode.
     """
 
     def __init__(
@@ -80,9 +82,9 @@ class FEFFParameters(MSONable, _BaseParameters):
         cards=FEFF_DEFAULT_CARDS,
         edge="K",
         radius=9.0,
-        nkpts=1000,
         spectrum="XANES",
         name="FEFF",
+        **feff_dict_set_kwargs
     ):
         # Try to see if "edge" is in the provided card keys
         if "EDGE" in cards.keys():
@@ -91,10 +93,10 @@ class FEFFParameters(MSONable, _BaseParameters):
 
         self._cards = cards
         self._radius = radius
-        self._nkpts = nkpts
         self._spectrum = spectrum
         self._name = name
         self._edge = edge
+        self._feff_dict_set_kwargs = feff_dict_set_kwargs
 
         if self._edge == "L":
             warn(
@@ -153,8 +155,8 @@ class FEFFParameters(MSONable, _BaseParameters):
                 config_dict=default_cards,
                 edge=self._edge,
                 radius=self._radius,
-                nkpts=self._nkpts,
                 user_tag_settings=user_tag_settings,
+                **self._feff_dict_set_kwargs
             )
             for site in absorbing_sites
         ]
