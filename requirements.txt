@@ -2,3 +2,4 @@ monty
 tqdm
 numpy
 pymatgen
+ase
