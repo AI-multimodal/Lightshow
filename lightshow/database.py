@@ -133,7 +133,7 @@ class Database(MSONable):
             str(path.parent): Structure.from_file(path)
             for path in Path(root).rglob(filename)
         }
-        return cls(structures, None, dict())
+        return cls(structures, dict(), dict())
 
     @classmethod
     def from_materials_project(

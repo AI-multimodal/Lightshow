@@ -9,7 +9,7 @@
    :hidden:
 
    installation
-   usage
+   quickstart
    modules
    authors
    license
@@ -21,10 +21,3 @@ Overview
 .. include:: ../../README.rst
    :start-after: inclusion-marker-LIGHTSHOW-begin
    :end-before: inclusion-marker-LIGHTSHOW-end
-
-.. include:: ../../README.rst
-   :start-after: inclusion-marker-LIGHTSHOW-funding-begin
-   :end-before: inclusion-marker-LIGHTSHOW-funding-end
-
-
-
