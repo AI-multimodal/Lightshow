@@ -176,13 +176,7 @@ class TestDatabase:
             vasp_params_corehole = VASPParameters(
                 incar=Incar.from_default(neutral=False),
                 potcar_directory=dummy_potcar_file_directory,
-                kpoints_method="custom",
-                kpoints_method_kwargs={"cutoff": 32.0, "max_radii": 50.0},
-                nbands_estimator="heg",
-                nbands_parameters={"erange": 40.0},
-                max_bands=1e16,
                 force_spin_unpolarized=False,
-                name="VASP",
             )
             dat.write(
                 target,
