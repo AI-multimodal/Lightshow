@@ -7,9 +7,8 @@ from pymatgen.core.structure import IStructure
 from pymatgen.ext.matproj import MPRestError
 from warnings import warn
 
-from lightshow.database import Database
-from lightshow.parameters.feff import FEFFParameters
-from lightshow.parameters.vasp import VASPParameters, Incar
+from lightshow import Database, FEFFParameters, VASPParameters, OCEANParameters
+from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
 
 
 def _validate_single_VASP_FEFF_calculation(
@@ -190,14 +189,15 @@ class TestDatabase:
                 name="FEFF",
             )
             vasp_params_corehole = VASPParameters(
-                incar=Incar.from_default(neutral=False),
+                incar=VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
                 potcar_directory=dummy_potcar_file_directory,
                 force_spin_unpolarized=False,
             )
+            ocean_params = OCEANParameters(edge="K")
             dat.write(
                 target,
                 absorbing_atom="Ti",
-                options=[feff_parameters, vasp_params_corehole],
+                options=[feff_parameters, vasp_params_corehole, ocean_params],
             )
 
             _validate_VASP_FEFF_calculations_match(root)
