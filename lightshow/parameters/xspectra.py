@@ -3,8 +3,8 @@ import os
 import json
 import bz2
 import base64
-import hashlib
 from collections import OrderedDict
+from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
@@ -210,8 +210,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
             pspDatabase = json.load(pspDatabaseFile)
         minSymbols = set(symbols)
         for symbol in minSymbols:
-            print(symbol)
-            print(pspDatabase[symbol]["filename"])
+            # print(symbol)
+            # print(pspDatabase[symbol]["filename"])
             psp[symbol] = pspDatabase[symbol]["filename"]
             if ecutwfc < pspDatabase[symbol]["cutoff"]:
                 ecutwfc = pspDatabase[symbol]["cutoff"]
@@ -229,8 +229,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
         for symbol in minSymbols:
             fileName = psp[symbol]
             pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
-            print("Expected hash:  " + pspDatabase[symbol]["md5"])
-            print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
+            # print("Expected hash:  " + pspDatabase[symbol]["md5"])
+            # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
             with open(folder / fileName, "w") as f:
                 f.write(pspString.decode("utf-8"))
 
@@ -246,8 +246,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     return False
                 fileName = pspDatabase[symbol]["wfc"]
                 pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
-                print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
-                print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
+                # print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
+                # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
                 with open(folder / "Core.wfc", "w") as f:
                     f.write(pspString.decode("utf-8"))
 
@@ -373,7 +373,9 @@ class XSpectraParameters(MSONable, _BaseParameters):
         target_directory.mkdir(exist_ok=True, parents=True)
         symbols = [spec.symbol for spec in structure.species]
         # Obtain absorbing atom
-        species = [structure[index_mapping[site]].specie.symbol for site in sites]
+        species = [
+            structure[index_mapping[site]].specie.symbol for site in sites
+        ]
         element = species[0]
         self._cards["XS_controls"]["element"] = element
         self._cards["XS_controls"]["edge"] = self._edge
@@ -438,7 +440,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             )
         except KeyError:
             # throw a warning here
-            print("take care of the psp for absorber by yourself")
+            warn("take care of the core-hole psp for absorber by yourself")
             psp2 = {element: f"{element}.fch.upf"}
             ecutwfc = 100
             ecutrho = 800
