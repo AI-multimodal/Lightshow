@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from pymatgen.core.structure import Structure
-from pymatgen.ext.matproj import MPRester
 
 
 API_KEY = environ.get("PMG_API_KEY", None)
@@ -13,16 +12,20 @@ API_KEY = environ.get("PMG_API_KEY", None)
 
 @pytest.fixture
 def mp_Structure_mp390():
-    with MPRester(API_KEY) as mpr:
-        metadata = mpr.get_doc("mp-390")
-    return Structure.from_dict(metadata["structure"])
+    path = Path.cwd() / Path("lightshow") / Path("_tests")
+    path = path / Path("mp-390.json")
+    with open(path, "r") as infile:
+        loaded_json = json.load(infile)
+    return Structure.from_dict(loaded_json)
 
 
 @pytest.fixture
 def mp_Structure_mvc11115():
-    with MPRester(API_KEY) as mpr:
-        metadata = mpr.get_doc("mvc-11115")
-    return Structure.from_dict(metadata["structure"])
+    path = Path.cwd() / Path("lightshow") / Path("_tests")
+    path = path / Path("mvc-11115.json")
+    with open(path, "r") as infile:
+        loaded_json = json.load(infile)
+    return Structure.from_dict(loaded_json)
 
 
 @pytest.fixture
