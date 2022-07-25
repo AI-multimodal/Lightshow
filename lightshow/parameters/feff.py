@@ -16,7 +16,7 @@ FEFF_DEFAULT_CARDS = {
     "SCF": "7.0 0 100 0.2 3",
     "FMS": "9.0 0",
     "EXCHANGE": "0 0.0 0.0 2",
-    "RPATH": "-1"
+    "RPATH": "-1",
 }
 
 
@@ -84,7 +84,7 @@ class FEFFParameters(MSONable, _BaseParameters):
         radius=9.0,
         spectrum="XANES",
         name="FEFF",
-        **feff_dict_set_kwargs
+        **feff_dict_set_kwargs,
     ):
         # Try to see if "edge" is in the provided card keys
         if "EDGE" in cards.keys():
@@ -104,6 +104,11 @@ class FEFFParameters(MSONable, _BaseParameters):
                 "FEFF-compatible"
             )
             self._edge = "L3"
+        elif "M" in self._edge:
+            warn(
+                "According to the FEFF9 documentaiton, M-edges are not well "
+                "tested; proceed with caution!"
+            )
         elif self._edge not in ["K", "L1", "L2", "L3"]:
             warn(
                 f"Provided edge {self._edge} is not one of the standard "
@@ -156,7 +161,7 @@ class FEFFParameters(MSONable, _BaseParameters):
                 edge=self._edge,
                 radius=self._radius,
                 user_tag_settings=user_tag_settings,
-                **self._feff_dict_set_kwargs
+                **self._feff_dict_set_kwargs,
             )
             for site in absorbing_sites
         ]
