@@ -870,6 +870,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         incar = deepcopy(self._incar)
         sites = kwargs.get("sites")
+        index_mapping = kwargs.get("index_mapping")
         ch_lspec = incar.get("CH_LSPEC", False)
         if sites is None and ch_lspec:
             raise ValueError(
@@ -907,7 +908,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         k = self._kpoints(structure)
         kpoints = Kpoints(kpts=(k,))
-        species = [structure[site].specie.symbol for site in sites]
+        species = [structure[index_mapping[site]].specie.symbol for site in sites]
 
         paths = []
 
@@ -917,7 +918,7 @@ class VASPParameters(MSONable, _BaseParameters):
                 path = target_directory / Path(f"{site:03}_{specie}")
                 path.mkdir(exist_ok=True, parents=True)
                 elements = poscar.write_single_site(
-                    path, site_index=site, check_atom_type=specie
+                    path, site_index=index_mapping[site], check_atom_type=specie
                 )
                 self._potcar_constructor.write(path, elements)
                 kpoints.write(path)
