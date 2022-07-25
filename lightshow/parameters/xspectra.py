@@ -367,12 +367,13 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         structure = kwargs["structure_sc"]
         sites = kwargs["sites"]
+        index_mapping = kwargs["index_mapping"]
 
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
         symbols = [spec.symbol for spec in structure.species]
         # Obtain absorbing atom
-        species = [structure[site].specie.symbol for site in sites]
+        species = [structure[index_mapping[site]].specie.symbol for site in sites]
         element = species[0]
         self._cards["XS_controls"]["element"] = element
         self._cards["XS_controls"]["edge"] = self._edge
@@ -452,7 +453,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             path = target_directory / Path(f"{site:03}_{specie}")
             path.mkdir(exist_ok=True, parents=True)
 
-            structure[site] = element + "+"
+            structure[index_mapping[site]] = element + "+"
             self._cards["QE"]["control"]["pseudo_dir"] = "../"
             es_in = PWInput(
                 structure,
@@ -463,7 +464,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 kpoints_grid=kpoints_scf,
             )
             es_in.write_file(path / "es.in")
-            structure[site] = element
+            structure[index_mapping[site]] = element
 
             # Deal with the dipole case only
             # notice I put the photonSymm in the folder, which is created by John
