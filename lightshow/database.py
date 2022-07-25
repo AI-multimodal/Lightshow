@@ -454,13 +454,10 @@ class Database(MSONable):
                 else None
             )
 
-            # index mapping
-            index_mapping = dict()
-            try:
-                for k, v in zip(inequiv, inequiv_sc):
-                    index_mapping[k] = v
-            except TypeError:
-                pass
+            if inequiv_sc is not None and inequiv is not None:
+                index_mapping = {k: v for k, v in zip(inequiv, inequiv_sc)}
+            else:
+                index_mapping = None
 
             # Check the number of inequivalent sites against the maximum
             # allowed
