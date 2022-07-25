@@ -433,6 +433,23 @@ class Database(MSONable):
                 else None
             )
 
+            # Need the indices for the supercell to construct the mapping
+            inequiv_sc = (
+                pymatgen_utils.get_symmetrically_inequivalent_sites(
+                    supercell, absorbing_atom
+                )
+                if absorbing_atom is not None
+                else None
+            )
+
+            # index mapping
+            index_mapping = dict()
+            try:
+                for k, v in zip(inequiv, inequiv_sc):
+                    index_mapping[k] = v
+            except TypeError:
+                pass
+
             # Check the number of inequivalent sites against the maximum
             # allowed
             if len(inequiv) > max_inequivalent_sites:
@@ -450,6 +467,7 @@ class Database(MSONable):
                 "structure_sc": supercell,
                 "structure_uc": structure,
                 "sites": inequiv,
+                "index_mapping": index_mapping,
             }
             if self._metadata is not None:
                 if key in self._metadata.keys():
