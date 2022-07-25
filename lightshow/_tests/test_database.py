@@ -196,7 +196,7 @@ class TestDatabase:
             ocean_params = OCEANParameters(edge="K")
             dat.write(
                 target,
-                absorbing_atom="Ti",
+                absorbing_atoms=["Ti", "O"],
                 options=[feff_parameters, vasp_params_corehole, ocean_params],
             )
 
