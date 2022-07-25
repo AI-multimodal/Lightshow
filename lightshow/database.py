@@ -307,7 +307,7 @@ class Database(MSONable):
     def write(
         self,
         root,
-        absorbing_atom=None,
+        absorbing_atoms=None,
         options=[],
         max_primitive_total_atoms=int(1e16),
         supercell_cutoff=9.0,
@@ -350,8 +350,8 @@ class Database(MSONable):
         ----------
         root : os.PathLike
             The target root directory to save all of the input files.
-        absorbing_atom : str, optional
-            The absorbing atom type symbol, e.g. ``"Ti"``. Note that if None,
+        absorbing_atoms : str or list, optional
+            The absorbing atom type symbol(s), e.g. ``"Ti"``. Note that if None,
             any calculations in which the absorbing atom is required (e.g. all
             spectroscopy) will be skipped. Only calculations that do not
             require absorbing atoms to be specified (e.g. neutral potential
@@ -406,6 +406,9 @@ class Database(MSONable):
         root.mkdir(exist_ok=True, parents=True)
         writer_metadata_path = root / Path("writer_metadata.json")
 
+        if not isinstance(absorbing_atoms, list):
+            absorbing_atoms = [absorbing_atoms]
+
         for key in tqdm(self._structures.keys(), disable=not pbar):
 
             structure = self._structures[key]
@@ -436,76 +439,78 @@ class Database(MSONable):
                 )
                 continue
 
-            # If inequiv is None, that means that the absorbing_atom was not
-            # specified
-            inequiv = (
-                pymatgen_utils.get_symmetrically_inequivalent_sites(
-                    structure, absorbing_atom
-                )
-                if absorbing_atom is not None
-                else None
-            )
+            for absorbing_atom in absorbing_atoms:
 
-            if len(inequiv) == 0 and absorbing_atom is not None:
-                warn(
-                    f"No absorbing atoms of type {absorbing_atom} in "
-                    f"structure corresponding to {key}"
-                )
-                continue
-
-            # Need the indices for the supercell to construct the mapping
-            inequiv_sc = (
-                pymatgen_utils.get_symmetrically_inequivalent_sites(
-                    supercell, absorbing_atom
-                )
-                if absorbing_atom is not None
-                else None
-            )
-
-            if inequiv_sc is not None and inequiv is not None:
-                index_mapping = {k: v for k, v in zip(inequiv, inequiv_sc)}
-            else:
-                index_mapping = None
-
-            # Check the number of inequivalent sites against the maximum
-            # allowed
-            if len(inequiv) > max_inequivalent_sites:
-                writer_metadata["errors"]["max_inequivalent_sites"].append(
-                    {"key": key, "n_ineqivalent_sites": len(inequiv)}
-                )
-                continue
-
-            # If the for VASP and XSpectra calculations, use supercell;
-            # otherwise, use unit cell structure
-            # test if band_gap and diel in the self._metadata[key].keys()
-            # if yes, read the bandgap and diel for OCEAN
-            # if no, ignore them
-            kwargs = {
-                "structure_sc": supercell,
-                "structure_uc": structure,
-                "sites": inequiv,
-                "index_mapping": index_mapping,
-            }
-            if self._metadata is not None:
-                if key in self._metadata.keys():
-                    if (
-                        "band_gap" in self._metadata[key].keys()
-                        and "diel" in self._metadata[key].keys()
-                    ):
-                        kwargs["bandgap"] = self._metadata[key]["band_gap"]
-                        kwargs["diel"] = self._metadata[key]["diel"]
-
-            # Write the files that we can
-            for option in options:
-                path = root / Path(key) / Path(option.name)
-                status = option.write(path, **kwargs)
-                if not status["pass"]:
-                    writer_metadata["errors"]["writer"].append(
-                        {"name": key, **status["errors"]}
+                # If inequiv is None, that means that the absorbing_atom was not
+                # specified
+                inequiv = (
+                    pymatgen_utils.get_symmetrically_inequivalent_sites(
+                        structure, absorbing_atom
                     )
-                if copy_script is not None and "paths" in status.keys():
-                    for p in status["paths"]:
-                        copy2(copy_script, p)
+                    if absorbing_atom is not None
+                    else None
+                )
+
+                if len(inequiv) == 0 and absorbing_atom is not None:
+                    warn(
+                        f"No absorbing atoms of type {absorbing_atom} in "
+                        f"structure corresponding to {key}"
+                    )
+                    continue
+
+                # Need the indices for the supercell to construct the mapping
+                inequiv_sc = (
+                    pymatgen_utils.get_symmetrically_inequivalent_sites(
+                        supercell, absorbing_atom
+                    )
+                    if absorbing_atom is not None
+                    else None
+                )
+
+                if inequiv_sc is not None and inequiv is not None:
+                    index_mapping = {k: v for k, v in zip(inequiv, inequiv_sc)}
+                else:
+                    index_mapping = None
+
+                # Check the number of inequivalent sites against the maximum
+                # allowed
+                if len(inequiv) > max_inequivalent_sites:
+                    writer_metadata["errors"]["max_inequivalent_sites"].append(
+                        {"key": key, "n_ineqivalent_sites": len(inequiv)}
+                    )
+                    continue
+
+                # If the for VASP and XSpectra calculations, use supercell;
+                # otherwise, use unit cell structure
+                # test if band_gap and diel in the self._metadata[key].keys()
+                # if yes, read the bandgap and diel for OCEAN
+                # if no, ignore them
+                kwargs = {
+                    "structure_sc": supercell,
+                    "structure_uc": structure,
+                    "sites": inequiv,
+                    "index_mapping": index_mapping,
+                }
+                if self._metadata is not None:
+                    if key in self._metadata.keys():
+                        if (
+                            "band_gap" in self._metadata[key].keys()
+                            and "diel" in self._metadata[key].keys()
+                        ):
+                            kwargs["bandgap"] = self._metadata[key]["band_gap"]
+                            kwargs["diel"] = self._metadata[key]["diel"]
+
+                # Write the files that we can
+                for option in options:
+                    path = root / Path(key) / Path(option.name)
+                    status = option.write(path, **kwargs)
+                    if not status["pass"]:
+                        writer_metadata["errors"]["writer"].append(
+                            {"name": key, **status["errors"]}
+                        )
+                    if copy_script is not None and "paths" in status.keys():
+                        for p in status["paths"]:
+                            copy2(copy_script, p)
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
