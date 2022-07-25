@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 from shutil import copy2
+from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.core.structure import Structure
@@ -444,6 +445,13 @@ class Database(MSONable):
                 if absorbing_atom is not None
                 else None
             )
+
+            if len(inequiv) == 0 and absorbing_atom is not None:
+                warn(
+                    f"No absorbing atoms of type {absorbing_atom} in "
+                    f"structure corresponding to {key}"
+                )
+                continue
 
             # Need the indices for the supercell to construct the mapping
             inequiv_sc = (
