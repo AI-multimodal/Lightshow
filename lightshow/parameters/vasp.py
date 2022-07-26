@@ -767,6 +767,18 @@ class VASPParameters(MSONable, _BaseParameters):
         name="VASP",
     ):
 
+        if incar["NBANDS"] is None and nbands is None:
+            raise ValueError(
+                "One of incar['NBANDS'] or the nbands argument must be "
+                "provided"
+            )
+
+        if incar["NBANDS"] is not None and nbands is not None:
+            warnings.warn(
+                "Constant incar['NBANDS'] will override provided nbands "
+                "method."
+            )
+
         if edge is not None:
             warnings.warn(
                 f"edge={edge} was specified. Currently this method is not "
@@ -880,19 +892,21 @@ class VASPParameters(MSONable, _BaseParameters):
 
         structure = deepcopy(kwargs["structure_sc"])
 
-        # Check the validity of the calculations
-        cb = self._nbands(structure)
-        vb = self._vbands(structure)
-        nb = cb + vb
-        if nb > self._max_bands:
-            errors["n_bands"] = nb
+        # Set the number of bands if the number of bands is not explicitly
+        # provided
+        if incar["NBANDS"] is None:
+            cb = self._nbands(structure)
+            vb = self._vbands(structure)
+            nb = cb + vb
+            if nb > self._max_bands:
+                errors["n_bands"] = nb
+            incar["NBANDS"] = nb
 
         poscar = Poscar(structure)
         potcar_check = self._potcar_constructor.check_POSCAR_valid(poscar)
         if potcar_check is not None:
             errors["potentials_do_not_exist"] = potcar_check
 
-        incar["NBANDS"] = nb
         if self._force_spin_unpolarized:
             incar["ISPIN"] = 1
             try:
@@ -908,7 +922,9 @@ class VASPParameters(MSONable, _BaseParameters):
 
         k = self._kpoints(structure)
         kpoints = Kpoints(kpts=(k,))
-        species = [structure[index_mapping[site]].specie.symbol for site in sites]
+        species = [
+            structure[index_mapping[site]].specie.symbol for site in sites
+        ]
 
         paths = []
 
@@ -918,7 +934,9 @@ class VASPParameters(MSONable, _BaseParameters):
                 path = target_directory / Path(f"{site:03}_{specie}")
                 path.mkdir(exist_ok=True, parents=True)
                 elements = poscar.write_single_site(
-                    path, site_index=index_mapping[site], check_atom_type=specie
+                    path,
+                    site_index=index_mapping[site],
+                    check_atom_type=specie,
                 )
                 self._potcar_constructor.write(path, elements)
                 kpoints.write(path)
