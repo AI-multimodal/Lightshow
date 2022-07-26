@@ -11,7 +11,7 @@ from shutil import copy2
 from warnings import warn
 
 from monty.json import MSONable
-from pymatgen.core.structure import Structure
+from pymatgen.core.structure import Structure, IMolecule
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
@@ -135,6 +135,41 @@ class Database(MSONable):
         for old_key, new_key in zip(old_keys, new_keys):
             self._structures[new_key] = self._structures.pop(old_key)
             self._metadata[new_key] = self._metadata.pop(old_key)
+
+    @classmethod
+    def from_files_molecule(
+        cls, root, filename="molecule.xyz", lattice=[20, 20, 20]
+    ):
+        """Searches for files matching the provided ``filename``, and assumes
+        those files are structural files in xyz format. The names/ids of these
+        files is given by the full directory structure where that file was
+        found. For example, if ``root == "my_dir"``, ``filename == "CONTCAR"``
+        and we have a single structure file in ``my_dir/test/CONTCAR``, then
+        the resulting structures will be ``{"my_dir/test": struct}``.
+
+        Parameters
+        ----------
+        root : str
+            The directory in which to begin the search.
+        filename : str, optional
+            The files to search for. Uses ``rglob`` to recursively find any
+            files matching ``filename`` within the provided directory.
+        lattice : list of floats, optional
+            Lattice parameter used to construct the crystal lattice.
+
+        Returns
+        -------
+        Database
+        """
+
+        a, b, c = lattice
+        structures = {
+            str(path.parent): IMolecule.from_file(path).get_boxed_structure(
+                a, b, c
+            )
+            for path in Path(root).rglob(filename)
+        }
+        return cls(structures, dict(), dict())
 
     @classmethod
     def from_files(cls, root, filename="CONTCAR"):
