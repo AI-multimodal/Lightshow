@@ -138,7 +138,12 @@ class Database(MSONable):
 
     @classmethod
     def from_files_molecule(
-        cls, root, filename="molecule.xyz", lattice=[20, 20, 20]
+        cls,
+        root,
+        filename="molecule.xyz",
+        lattice=[20, 20, 20],
+        debug=None,
+        verbose=True,
     ):
         """Searches for files matching the provided ``filename``, and assumes
         those files are structural files in xyz format. The names/ids of these
@@ -163,16 +168,22 @@ class Database(MSONable):
         """
 
         a, b, c = lattice
-        structures = {
-            str(path.stem): Molecule.from_file(path).get_boxed_structure(
+        structures = dict()
+        for ii, path in enumerate(
+            tqdm(Path(root).rglob(filename)), not verbose
+        ):
+            key = str(Path(path.parent) / path.stem)
+            structures[key] = Molecule.from_file(path).get_boxed_structure(
                 a, b, c
             )
-            for path in Path(root).rglob(filename)
-        }
-        return cls(structures, dict(), dict())
+            if debug is not None:
+                if ii > debug:
+                    break
+        metadata = {key: dict() for key in structures.keys()}
+        return cls(structures, metadata, dict())
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR"):
+    def from_files(cls, root, filename="CONTCAR", debug=None, verbose=True):
         """Searches for files matching the provided ``filename``, which can
         include wildcards, and assumes those files are structural files in CIF
         format. The names/ids of these files is given by the full directory
@@ -205,10 +216,15 @@ class Database(MSONable):
         Database
         """
 
-        structures = {
-            str(path.stem): Structure.from_file(path)
-            for path in Path(root).rglob(filename)
-        }
+        structures = dict()
+        for ii, path in enumerate(
+            tqdm(Path(root).rglob(filename)), not verbose
+        ):
+            key = str(Path(path.parent) / path.stem)
+            structures[key] = Structure.from_file(path)
+            if debug is not None:
+                if ii > debug:
+                    break
         metadata = {key: dict() for key in structures.keys()}
         return cls(structures, metadata, dict())
 
