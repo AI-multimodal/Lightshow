@@ -895,7 +895,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         # Set the number of bands if the number of bands is not explicitly
         # provided
-        if incar["NBANDS"] is None:
+        if incar.get("NBANDS") is None:
             cb = self._nbands(structure)
             vb = self._vbands(structure)
             nb = cb + vb
