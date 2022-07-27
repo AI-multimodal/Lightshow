@@ -137,7 +137,7 @@ class Database(MSONable):
             self._metadata[new_key] = self._metadata.pop(old_key)
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR", verbose=True):
+    def from_files(cls, root, filename="CONTCAR"):
         """Searches for files matching the provided ``filename``, which can
         include wildcards, and assumes those files are structural files in CIF
         format. The names/ids of these files is given by the full directory
@@ -164,8 +164,6 @@ class Database(MSONable):
         filename : str, optional
             The files to search for. Uses ``rglob`` to recursively find any
             files matching ``filename`` within the provided directory.
-        verbose : bool, optional
-            If True, will use tqdm to print a progress bar.
 
         Returns
         -------
