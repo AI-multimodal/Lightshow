@@ -11,7 +11,7 @@ from shutil import copy2
 from warnings import warn
 
 from monty.json import MSONable
-from pymatgen.core.structure import Structure, IMolecule
+from pymatgen.core.structure import Structure, Molecule
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
@@ -164,7 +164,7 @@ class Database(MSONable):
 
         a, b, c = lattice
         structures = {
-            str(path.parent): IMolecule.from_file(path).get_boxed_structure(
+            str(path.stem): Molecule.from_file(path).get_boxed_structure(
                 a, b, c
             )
             for path in Path(root).rglob(filename)
