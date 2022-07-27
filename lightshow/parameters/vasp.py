@@ -767,17 +767,18 @@ class VASPParameters(MSONable, _BaseParameters):
         name="VASP",
     ):
 
-        if incar["NBANDS"] is None and nbands is None:
-            raise ValueError(
-                "One of incar['NBANDS'] or the nbands argument must be "
-                "provided"
-            )
+        if "NBANDS" in incar.keys():
+            if incar["NBANDS"] is None and nbands is None:
+                raise ValueError(
+                    "One of incar['NBANDS'] or the nbands argument must be "
+                    "provided"
+                )
 
-        if incar["NBANDS"] is not None and nbands is not None:
-            warnings.warn(
-                "Constant incar['NBANDS'] will override provided nbands "
-                "method."
-            )
+            if incar["NBANDS"] is not None and nbands is not None:
+                warnings.warn(
+                    "Constant incar['NBANDS'] will override provided nbands "
+                    "method."
+                )
 
         if edge is not None:
             warnings.warn(
