@@ -174,7 +174,7 @@ class Database(MSONable):
             str(path.stem): Structure.from_file(path)
             for path in Path(root).rglob(filename)
         }
-        metadata = {key: None for key in structures.keys()}
+        metadata = {key: dict() for key in structures.keys()}
         return cls(structures, metadata, dict())
 
     @classmethod
