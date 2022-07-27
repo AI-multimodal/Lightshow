@@ -685,7 +685,10 @@ class Poscar(pmgPoscar):
         line_6_asint = [int(xx) for xx in self.natoms]
         line_6_asint[atom_type_loc] -= 1
         new_line_6_asint = [1, *line_6_asint]
+        where_neq_0 = np.where(np.array(new_line_6_asint) != 0)[0].tolist()
+        new_line_5 = [new_line_5[ii] for ii in where_neq_0]
         new_line_6 = [str(xx) for xx in new_line_6_asint]
+        new_line_6 = [new_line_6[ii] for ii in where_neq_0]
 
         # Use the new lines 5 and 6
         lines[5] = " ".join(new_line_5)
@@ -895,7 +898,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         # Set the number of bands if the number of bands is not explicitly
         # provided
-        if incar["NBANDS"] is None:
+        if incar.get("NBANDS") is None:
             cb = self._nbands(structure)
             vb = self._vbands(structure)
             nb = cb + vb
