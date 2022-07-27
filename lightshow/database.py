@@ -5,6 +5,7 @@ utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 from shutil import copy2
 from warnings import warn
@@ -16,6 +17,19 @@ from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ, __version__
 from lightshow import pymatgen_utils
+
+
+def _delete_common_strings(list_of_strings):
+
+    commonprefix = os.path.commonprefix(list_of_strings)
+    new_p = [x[len(commonprefix) :] for x in list_of_strings]
+
+    # Reverse every string in the list then do it again
+    list_of_strings_reversed = [xx[::-1] for xx in new_p]
+    commonsuffix = os.path.commonprefix(list_of_strings_reversed)
+    new_p = [x[len(commonsuffix) :] for x in list_of_strings_reversed]
+
+    return [xx[::-1] for xx in new_p]
 
 
 def _fetch_from_MP(mpr, mpid, metadata_keys):
@@ -111,14 +125,37 @@ def _get_api_key(api_key):
 class Database(MSONable):
     """Contains all materials and metadata for some database."""
 
+    def cleanup_paths(self):
+        """When loading data from disk, paths can become very repetitive. This
+        method strips all common prefixes and suffixes from the keys of the
+        structures and metadata properties."""
+
+        old_keys = list(self._structures.keys())
+        new_keys = _delete_common_strings(old_keys)
+        for old_key, new_key in zip(old_keys, new_keys):
+            self._structures[new_key] = self._structures.pop(old_key)
+            self._metadata[new_key] = self._metadata.pop(old_key)
+
     @classmethod
     def from_files(cls, root, filename="CONTCAR", verbose=True):
-        """Searches for files matching the provided ``filename``, and assumes
-        those files are structural files in CIF format. The names/ids of these
-        files is given by the full directory structure where that file was
-        found. For example, if ``root == "my_dir"``, ``filename == "CONTCAR"``
-        and we have a single structure file in ``my_dir/test/CONTCAR``, then
-        the resulting structures will be ``{"my_dir/test": struct}``.
+        """Searches for files matching the provided ``filename``, which can
+        include wildcards, and assumes those files are structural files in CIF
+        format. The names/ids of these files is given by the full directory
+        structure where that file was found. For example, if
+        ``root == "my_dir"``, ``filename == "CONTCAR"`` and we have a single
+        structure file in ``my_dir/test/CONTCAR``, then the resulting
+        structures will be ``{"my_dir/test/CONTCAR": struct}``.
+            Similarly, if ``filename == "CONTCAR*", then all files of the form
+        ``CONTCAR*`` will be found and used. The directory structure produced
+        will be something like
+
+        .. code-block:: python
+
+            {
+                "my_dir/test/CONTCAR1": struct1,
+                "my_dir/test/CONTCAR2": struct2,
+                ...
+            }
 
         Parameters
         ----------
@@ -136,10 +173,11 @@ class Database(MSONable):
         """
 
         structures = {
-            str(path.parent): Structure.from_file(path)
+            str(path.stem): Structure.from_file(path)
             for path in Path(root).rglob(filename)
         }
-        return cls(structures, dict(), dict())
+        metadata = {key: None for key in structures.keys()}
+        return cls(structures, metadata, dict())
 
     @classmethod
     def from_materials_project(
