@@ -16,12 +16,11 @@ import lightshow
 
 XSPECTRA_DEFAULT_CARDS = {
     "QE": {
-        "cell": {},
         "control": {
             "restart_mode": "from_scratch",
+            "wf_collect": ".true."
         },
         "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
-        "ions": {},
         "system": {
             "degauss": 0.002,
             "ecutrho": 320,
@@ -37,7 +36,6 @@ XSPECTRA_DEFAULT_CARDS = {
             "edge": "K",
             "outdir": "../",
             "prefix": "pwscf",
-            "!wf_collect": ".true.",
             "xcheck_conv": 200,
             "xerror": 0.01,
             "xniter": 5000,
@@ -61,10 +59,8 @@ XSPECTRA_DEFAULT_CARDS = {
         "plotTrue": {"gamma_mode": "constant", "xgamma": 0.05},
     },
     "XS_controls": {
-        "element": "Ti",
-        "edge": "K",
         "kden": "-1",
-        "psp": {"Ti+": "Ti.fch.upf", "Co+": "Co.fch.upf"},
+        "psp": {"Ti+": "Ti.fch.upf"},
         "Rmin": "9.0",
         "scf_kden": "-1",
         "core_psp_json": "FCH1",
@@ -87,7 +83,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
             cards = {
                 "QE": {
-                    "cell": {},
                     "control": {
                         "restart_mode": "from_scratch",
                         "wf_collect": ".true."
@@ -287,8 +282,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             "    xniter = " + str(XSparams["input_xspectra"]["xniter"]),
             "    xiabs = %d" % iabs,
             "    xerror = " + str(XSparams["input_xspectra"]["xerror"]),
-            "    !wf_collect = .true.",
-            "    xcoordcrys = .false.",
+            "    xcoordcrys = '" + XSparams["input_xspectra"]["xcoordcrys"] + "'",
             "    xcheck_conv = "
             + str(XSparams["input_xspectra"]["xcheck_conv"]),
             "    xepsilon(1) = %d" % dirs[0],
