@@ -171,9 +171,19 @@ class Database(MSONable):
         """
 
         structures = {
-            str(path.stem): Structure.from_file(path)
+            str(Path(path.parent) / path.stem): Structure.from_file(path)
             for path in Path(root).rglob(filename)
         }
+
+        # Check for any duplicate names
+        names = list(structures.keys())
+        names = [Path(name).name for name in names]
+        if len(list(set(names))) < len(names):
+            new_structures = dict()
+            for key, value in structures.items():
+                new_structures[str(Path(key).parent)] = value
+            structures = new_structures
+
         metadata = {key: dict() for key in structures.keys()}
         return cls(structures, metadata, dict())
 
