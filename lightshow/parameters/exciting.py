@@ -97,7 +97,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     species_path : str
         A string contains the absolute path for species files.
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
-        The method for constructing he kpoints file from the structure. Should
+        The method for constructing the kpoints file from the structure. Should
         be a class with a ``__call__`` method defined. This method should take
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
