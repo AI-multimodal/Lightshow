@@ -24,7 +24,6 @@ EXCITING_DEFAULT_CARDS = {
         "xstype": "BSE",
         "vkloff": "0.05 0.03 0.13",
         "nempty": "150",
-        "gqmax": "4.0",
         "broad": "0.0327069",
         "tevout": "true",
         "tappinfo": "true",
