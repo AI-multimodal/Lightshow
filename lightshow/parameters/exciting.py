@@ -32,7 +32,6 @@ EXCITING_DEFAULT_CARDS = {
         "screening": {"screentype": "full", "nempty": "150"},
         "BSE": {
             "xas": "true",
-            "xasedge": "K",
             "bsetype": "singlet",
             "nstlxas": "1 20",
             "distribute": "true",
