@@ -146,7 +146,6 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         # Set gqmax
         self._gqmax = gqmax
-        self._cards["xs"]["gqmax"] = self._gqmax
 
         # Method for determining the kmesh
         self._name = name
@@ -193,6 +192,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        # Set gqmax
+        self._cards["xs"]["gqmax"] = self._gqmax
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
