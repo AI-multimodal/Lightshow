@@ -8,6 +8,8 @@ from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
 
+EXCITING_DEFAULT_GQMAX = 4.0
+
 EXCITING_DEFAULT_CARDS = {
     "structure": {"speciespath": "./", "autormt": "true"},
     "groundstate": {
@@ -24,6 +26,7 @@ EXCITING_DEFAULT_CARDS = {
         "xstype": "BSE",
         "vkloff": "0.05 0.03 0.13",
         "nempty": "150",
+        "gqmax": str(EXCITING_DEFAULT_GQMAX),
         "broad": "0.0327069",
         "tevout": "true",
         "tappinfo": "true",
@@ -128,7 +131,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         ],
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
         nbands=UnitCellVolumeEstimate(e_range=30.0),
-        gqmax=4.0,
+        gqmax=EXCITING_DEFAULT_GQMAX,
         name="EXCITING",
     ):
         # Default cards
@@ -146,6 +149,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         # Set gqmax
         self._gqmax = str(gqmax)
+        self._cards["xs"]["gqmax"] = self._gqmax
 
         # Method for determining the kmesh
         self._name = name
