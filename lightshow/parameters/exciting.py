@@ -105,6 +105,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         structure. Should be a class with a ``__call__`` method defined. This
         method should take the structure as input and return an integer: the
         number of valence bands to use in the calculation.
+    gqmax : float
+        |G+q| cutoff of the plane wave expansion
     """
 
     @property
@@ -127,6 +129,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         ],
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
         nbands=UnitCellVolumeEstimate(e_range=30.0),
+        gqmax=4.0,
         name="EXCITING",
     ):
         # Default cards
@@ -141,6 +144,10 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         # Method for determining the kmesh
         self._kpoints = kpoints
+
+        # Set gqmax
+        self._gqmax = gqmax
+        self._cards["xs"]["gqmax"] = self._gqmax
 
         # Method for determining the kmesh
         self._name = name
