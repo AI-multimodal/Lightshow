@@ -176,9 +176,6 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
 
-        # Get the directory names
-        species = [structure[site].specie.symbol for site in sites]
-
         excitinginput = ExcitingInput(structure)
         # Estimate number of band
         nbands = self._nbands(structure)
@@ -193,14 +190,12 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
-        i = 0
-        for specie in sorted(structure.types_of_species, key=lambda el: el.X):
-            i = i + 1
+        for i, specie in enumerate(sorted(structure.types_of_species, key=lambda el: el.X)):
             if specie.symbol == species[0]:
-                self._cards["xs"]["BSE"]["xasspecies"] = str(i)
+                self._cards["xs"]["BSE"]["xasspecies"] = str(i + 1)
 
         for site, specie in zip(sites, species):
-            path = target_directory / Path(f"{site:03}_{specie}")
+            path = target_directory / f"{site:03}_{specie}"
             path.mkdir(exist_ok=True, parents=True)
 
             filepath_xas = path / "input.xml"
@@ -215,7 +210,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             xs_loc.insert(-1, plan)
             ploc = xs_loc.find("plan")
             for task in self._plan:
-                _ = ET.SubElement(ploc, "doonly", task=task)
+                ET.SubElement(ploc, "doonly", task=task)
 
             excitinginput._indent(root)
             tree.write(filepath_xas)
