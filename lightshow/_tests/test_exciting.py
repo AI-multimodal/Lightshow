@@ -228,8 +228,9 @@ def test_exciting_own_parameters(tmp_path: Path, mp_Structure_mp390: Structure):
 
     xs_xml = subelements[3]
     assert xs_xml.tag == 'xs'
-    assert len(xs_xml.keys()) == 4, 'Excpect xs to have 4 attributes.'
+    assert len(xs_xml.keys()) == 5, 'Excpect xs to have 4 attributes.'
     assert set(xs_xml.keys()) == {'ngridk', 'nempty', 'ngridq', 'xstype'}, 'Excpected xs keys differ from found keys.'
+    assert xs_xml.get('gqmax') == '4.0'
     assert xs_xml.get('ngridk') == '5 5 6'
     assert xs_xml.get('xstype') == 'BSE'
     assert xs_xml.get('nempty') == '43'
