@@ -255,7 +255,7 @@ def test_exciting_own_parameters(tmp_path: Path, mp_Structure_mp390: Structure):
 
     bse_xml = xs_subelements[2]
     assert bse_xml.tag == 'BSE', 'Third xs subelement should be BSE'
-    assert set(bse_xml.keys()) == {'nstlxas', 'xasspecies', 'xasatom'}
+    assert set(bse_xml.keys()) == {'nstlxas', 'xasedge', 'xasspecies', 'xasatom'}
     assert bse_xml.get('nstlxas') == '1 59'
     assert bse_xml.get('xasspecies') == '1'
     assert bse_xml.get('xasatom') == '2'

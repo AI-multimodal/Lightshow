@@ -32,7 +32,6 @@ EXCITING_DEFAULT_CARDS = {
         "screening": {"screentype": "full", "nempty": "150"},
         "BSE": {
             "xas": "true",
-            "xasedge": "K",
             "bsetype": "singlet",
             "nstlxas": "1 20",
             "distribute": "true",
@@ -92,11 +91,12 @@ class EXCITINGParameters(MSONable, _BaseParameters):
                     "qpointset": {"qpoint": {"text()": "0.0 0.0 0.0"}},
                 }
             }
-
+    edge : str
+        The XAS edge for the calculation
     species_path : str
         A string contains the absolute path for species files.
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
-        The method for constructing he kpoints file from the structure. Should
+        The method for constructing the kpoints file from the structure. Should
         be a class with a ``__call__`` method defined. This method should take
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
@@ -125,6 +125,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             "exccoulint",
             "bse",
         ],
+        edge='K',
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
         nbands=UnitCellVolumeEstimate(e_range=30.0),
         name="EXCITING",
@@ -136,11 +137,14 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._cards["structure"]["speciespath"] = self._species_path
         # Update plan
         self._plan = plan
-        # Method for determining number of bands
-        self._nbands = nbands
 
+        # Set XAS edge
+        self._edge = edge
+        self._cards["xs"]["BSE"]["xasedge"] = self._edge
         # Method for determining the kmesh
         self._kpoints = kpoints
+        # Method for determining number of bands
+        self._nbands = nbands
 
         # Method for determining the kmesh
         self._name = name
