@@ -22,6 +22,13 @@ class _BaseKpointsMethod(ABC):
         
         ...
 
+class Constant(MSONable, _BaseKpointsMethod):
+
+    def __init__(self, kmesh):
+        self._kmesh = kmesh
+
+    def __call__(self, structure):
+        return tuple(self._kmesh)
 
 class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
     """For a kmesh sampling, e.g. [m, n, p], of a crystal "cell" is equivalent
