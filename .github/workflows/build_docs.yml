@@ -11,8 +11,18 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
+
     steps:
+
     - uses: actions/checkout@v1
+
+    - name: Install dev requirements
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        python3 -m pip install '.[dev]'
+        python3 -m pip list
+
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
