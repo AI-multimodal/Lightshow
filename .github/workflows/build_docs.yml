@@ -14,14 +14,13 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
-    - name: Install dev requirements
+    - name: Copy requirements
       shell: bash -l {0}
       run: |
-        set -vxeuo pipefail
-        python3 -m pip install '.[dev]'
-        python3 -m pip list
+        cp requirements.txt docs
+        cat requirements-dev.txt >> docs/requirements.txt
 
     - uses: ammaraskar/sphinx-action@master
       with:
