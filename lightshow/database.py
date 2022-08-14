@@ -144,10 +144,10 @@ class Database(MSONable):
         structure where that file was found. For example, if
         ``root == "my_dir"``, ``filename == "CONTCAR"`` and we have a single
         structure file in ``my_dir/test/CONTCAR``, then the resulting
-        structures will be ``{"my_dir/test/CONTCAR": struct}``.
-            Similarly, if ``filename == "CONTCAR*", then all files of the form
-        ``CONTCAR*`` will be found and used. The directory structure produced
-        will be something like
+        structures will be ``{"my_dir/test/CONTCAR": struct}``. Similarly, if
+        ``filename == "CONTCAR*", then all files of the form ``CONTCAR*`` will
+        be found and used. The directory structure produced will be something
+        like
 
         .. code-block:: python
 
