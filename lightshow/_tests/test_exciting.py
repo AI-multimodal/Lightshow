@@ -2,13 +2,16 @@
 Basic tests for exciting.
 """
 from pathlib import Path
-from xml.etree import ElementTree
+import pytest
+import sys
 
 from pymatgen.core.structure import Structure
+from xml.etree import ElementTree
 
 from lightshow.parameters.exciting import EXCITINGParameters
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 8), reason="requires py<3.8")
 def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
     """Test the default parameters of exciting."""
     exciting_parameters = EXCITINGParameters()
