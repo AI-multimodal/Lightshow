@@ -48,11 +48,6 @@ jobs:
         set -vxeuo pipefail
         pytest -v --cov --cov-report xml lightshow/_tests
 
-    - name: Build docs
-      uses: ammaraskar/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-
     #
     # - name: Upload code coverage
     #   uses: codecov/codecov-action@v2
