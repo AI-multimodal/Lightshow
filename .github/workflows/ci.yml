@@ -48,6 +48,14 @@ jobs:
         set -vxeuo pipefail
         pytest -v --cov --cov-report xml lightshow/_tests
 
+    - name: Install sphinx dependencies
+      run: |
+        pip install sphinx sphinx_rtd_theme
+
+    - name: Sphinx build
+      run: |
+        make -C docs/ html
+
     #
     # - name: Upload code coverage
     #   uses: codecov/codecov-action@v2
