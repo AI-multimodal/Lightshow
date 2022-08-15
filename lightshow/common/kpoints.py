@@ -10,7 +10,7 @@ class _BaseKpointsMethod(ABC):
         """Base abstraction for the various ways to get the kpoints for any
         simulation. This method should take the structure as input, and return
         a tuple containing the desired kmesh.
-        
+
         Parameters
         ----------
         structure : pymatgen.core.structure.Structure
@@ -19,16 +19,17 @@ class _BaseKpointsMethod(ABC):
         -------
         tuple
         """
-        
+
         ...
 
-class Constant(MSONable, _BaseKpointsMethod):
 
+class Constant(MSONable, _BaseKpointsMethod):
     def __init__(self, kmesh):
         self._kmesh = kmesh
 
     def __call__(self, structure):
         return tuple(self._kmesh)
+
 
 class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
     """For a kmesh sampling, e.g. [m, n, p], of a crystal "cell" is equivalent
@@ -50,7 +51,7 @@ class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
     max_radii : float, optional
         Maximum radius used for constructing the lookup table.
     """
-    
+
     def __init__(self, cutoff=32.0, max_radii=50.0):
         self._cutoff = cutoff
         self._max_radii = max_radii
