@@ -7,7 +7,14 @@ from pymatgen.core.structure import IStructure
 from pymatgen.ext.matproj import MPRestError
 from warnings import warn
 
-from lightshow import Database, FEFFParameters, VASPParameters, OCEANParameters
+from lightshow import (
+    Database,
+    FEFFParameters,
+    VASPParameters,
+    OCEANParameters,
+    XSpectraParameters,
+    EXCITINGParameters,
+)
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
 
 
@@ -194,10 +201,19 @@ class TestDatabase:
                 force_spin_unpolarized=False,
             )
             ocean_params = OCEANParameters(edge="K")
+            exciting_params = EXCITINGParameters(edge="K")
+            xspectra_params = XSpectraParameters(edge="K")
+
             dat.write(
                 target,
                 absorbing_atoms=["Ti", "O"],
-                options=[feff_parameters, vasp_params_corehole, ocean_params],
+                options=[
+                    feff_parameters,
+                    vasp_params_corehole,
+                    ocean_params,
+                    exciting_params,
+                    xspectra_params,
+                ],
             )
 
             _validate_VASP_FEFF_calculations_match(root)
