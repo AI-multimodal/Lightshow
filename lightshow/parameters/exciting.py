@@ -108,7 +108,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         method should take the structure as input and return an integer: the
         number of valence bands to use in the calculation.
     gqmax : float
-        |G+q| cutoff of the plane wave expansion
+        :math:`|G+q|` cutoff of the plane wave expansion
     """
 
     @property
@@ -129,7 +129,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             "exccoulint",
             "bse",
         ],
-        edge='K',
+        edge="K",
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
         nbands=UnitCellVolumeEstimate(e_range=30.0),
         gqmax=EXCITING_DEFAULT_GQMAX,
@@ -203,7 +203,9 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         # Determine XAS species
         species = [structure[site].specie.symbol for site in sites]
 
-        for i, specie in enumerate(sorted(structure.types_of_species, key=lambda el: el.X)):
+        for i, specie in enumerate(
+            sorted(structure.types_of_species, key=lambda el: el.X)
+        ):
             if specie.symbol == species[0]:
                 self._cards["xs"]["BSE"]["xasspecies"] = str(i + 1)
 

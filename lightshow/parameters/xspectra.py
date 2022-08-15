@@ -16,10 +16,7 @@ import lightshow
 
 XSPECTRA_DEFAULT_CARDS = {
     "QE": {
-        "control": {
-            "restart_mode": "from_scratch",
-            "wf_collect": ".true."
-        },
+        "control": {"restart_mode": "from_scratch", "wf_collect": ".true."},
         "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
         "system": {
             "degauss": 0.002,
@@ -282,7 +279,9 @@ class XSpectraParameters(MSONable, _BaseParameters):
             "    xniter = " + str(XSparams["input_xspectra"]["xniter"]),
             "    xiabs = %d" % iabs,
             "    xerror = " + str(XSparams["input_xspectra"]["xerror"]),
-            "    xcoordcrys = '" + XSparams["input_xspectra"]["xcoordcrys"] + "'",
+            "    xcoordcrys = '"
+            + XSparams["input_xspectra"]["xcoordcrys"]
+            + "'",
             "    xcheck_conv = "
             + str(XSparams["input_xspectra"]["xcheck_conv"]),
             "    xepsilon(1) = %d" % dirs[0],

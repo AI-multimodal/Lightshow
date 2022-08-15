@@ -8,7 +8,7 @@ class _BaseNbandsMethod(ABC):
     def __call__(self, structure):
         """Base abstraction for the various ways to get the number of bands
         used in a variety of alculations.
-        
+
         Parameters
         ----------
         structure : pymatgen.core.structure.Structure
@@ -17,12 +17,11 @@ class _BaseNbandsMethod(ABC):
         -------
         int
         """
-        
+
         ...
 
 
 class Constant(MSONable, _BaseNbandsMethod):
-
     def __init__(self, nbands):
         self._nbands = nbands
 
@@ -44,11 +43,14 @@ class UnitCellVolumeEstimate(MSONable, _BaseNbandsMethod):
         self._e_range = e_range
 
     def __call__(self, structure):
-        return int(round(
-            0.256 * structure.lattice.volume * (
-                (self._e_range / 13.6056980659) ** (3.0 / 2.0)
+        return int(
+            round(
+                0.256
+                * structure.lattice.volume
+                * ((self._e_range / 13.6056980659) ** (3.0 / 2.0))
             )
-        ))
+        )
+
 
 # class LightshowHEG(MSONable, _BaseNbandsMethod):
 
