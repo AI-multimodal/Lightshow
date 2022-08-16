@@ -15,7 +15,7 @@ from pymatgen.core.structure import Structure
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
-from lightshow import _get_API_key_from_environ, __version__
+from lightshow import _get_API_key_from_environ
 from lightshow import pymatgen_utils
 
 
@@ -65,9 +65,7 @@ def _fetch_from_MP(mpr, mpid, metadata_keys):
     return structure, metadata
 
 
-def _from_mpids_list(
-    mpids, api_key, metadata_keys, verbose=True, suppress_MPRestError=False
-):
+def _from_mpids_list(mpids, api_key, metadata_keys, verbose=True):
     """Makes one large API call to the Materials Project database and pulls the
     relevant structural files given a list of Materials Project ID's (mpids).
 
@@ -81,37 +79,27 @@ def _from_mpids_list(
         If True, will only
     verbose : bool, optional
         If True, will use tqdm to print a progress bar.
-    suppress_MPRestError : bool, optional
-        If True, will ignore any ``MPRestError`` thrown during the process of
-        pulling data.
 
     Returns
     -------
     dict
-        A dictionary containing the structures (with keys as the mpids)
-        metadata (with the same keys), and any mpids that were missed due to a
-        :class:`pymatgen.ext.matproj.MPRestError`.
+        A dictionary containing the structures (with keys as the mpids) and
+        metadata (with the same keys).
     """
 
     structures = dict()
     metadatas = dict()
-    errors = []
     with MPRester(api_key) as mpr:
         for mpid in tqdm(mpids, disable=not verbose):
-            if suppress_MPRestError:
-                try:
-                    structure, metadata = _fetch_from_MP(
-                        mpr, mpid, metadata_keys
-                    )
-                except MPRestError:
-                    errors.append(mpid)
-                    continue
-            else:
+            try:
                 structure, metadata = _fetch_from_MP(mpr, mpid, metadata_keys)
-            structures[mpid] = structure
+            except MPRestError as error:
+                warn(f"MPRestError pulling mpid={mpid}, error: {error}")
+                continue
+            structures[mpid] = structure.get_primitive_structure()
             metadatas[mpid] = metadata
 
-    return {"structures": structures, "metadata": metadatas, "errors": errors}
+    return {"structures": structures, "metadata": metadatas}
 
 
 def _get_api_key(api_key):
@@ -171,7 +159,9 @@ class Database(MSONable):
         """
 
         structures = {
-            str(Path(path.parent) / path.stem): Structure.from_file(path)
+            str(Path(path.parent) / path.stem): Structure.from_file(
+                path
+            ).get_primitive_structure()
             for path in Path(root).rglob(filename)
         }
 
@@ -185,7 +175,8 @@ class Database(MSONable):
             structures = new_structures
 
         metadata = {key: dict() for key in structures.keys()}
-        return cls(structures, metadata, dict())
+
+        return cls(structures=structures, metadata=metadata)
 
     @classmethod
     def from_materials_project(
@@ -207,7 +198,6 @@ class Database(MSONable):
             "diel",
         ],
         verbose=True,
-        suppress_MPRestError=True,
     ):
         """Constructs the :class:`.Database` object by pulling structures and
         metadata directly from the Materials Project. The following query types
@@ -295,19 +285,51 @@ class Database(MSONable):
             api_key,
             metadata_keys,
             verbose=verbose,
-            suppress_MPRestError=suppress_MPRestError,
         )
 
-        # Instantiate the class and return
-        errors = {"MPRestError": data["errors"]}
-        return cls(data["structures"], data["metadata"], errors)
+        return cls(structures=data["structures"], metadata=data["metadata"])
+
+    def initialize_supercells(self, supercell_cutoff=9.0):
+        """Initializes the supercells from the structures pulled from the
+        Materials project.
+
+        Parameters
+        ----------
+        supercell_cutoff : float, optional
+            Parameter used for constructing the supercells. Default is 9
+            Angstroms. TODO: this needs clearer documentation.
+        """
+
+        for key, prim in self._structures.items():
+            supercell = pymatgen_utils.make_supercell(prim, supercell_cutoff)
+            self._supercells[key] = supercell.get_sorted_structure()
+        self._supercell_cutoff = supercell_cutoff
+        self._supercells_initialized = True
+
+    def initialize_inequivalent_sites(self):
+        """Iterates through the structures and updates the metadata with
+        keys corresponding to the inequivalent sites in the structure. This
+        also tracks the atom types corresponding to the inequivalent sites and
+        their multiplicities in the structure."""
+
+        for key, prim in self._structures.items():
+            info = pymatgen_utils.get_inequivalent_site_info(prim)
+            self._metadata[key]["primitive"] = info
+
+        # Do the same for the supercells
+        for key, supercell in self._supercells.items():
+            info = pymatgen_utils.get_inequivalent_site_info(supercell)
+            self._metadata[key]["supercell"] = info
+
+        self._inequivalent_sites_initialized = True
 
     @property
     def structures(self):
         """A dictionary of :class:`pymatgen.core.structure.Structure` objects.
-        The keys are the IDs of the structure. In the case of data pulled from
-        the Materials Project, these are the MPIDs. Otherwise, they are simply
-        strings encoding some information about the origins of the structures.
+        Contains the primitive structures. The keys are the IDs of the
+        structure. In the case of data pulled from the Materials Project, these
+        are the MPIDs. Otherwise, they are simply strings encoding some
+        information about the origins of the structures.
 
         Returns
         -------
@@ -315,6 +337,21 @@ class Database(MSONable):
         """
 
         return self._structures
+
+    @property
+    def supercells(self):
+        """A dictionary of :class:`pymatgen.core.structure.Structure` objects
+        containing supercells and the same keys as ``structures``.
+
+        Returns
+        -------
+        dict
+        """
+
+        if not self._supercells_initialized:
+            warn("Run initialize_supercells(); supercells is probably empty")
+
+        return self._supercells
 
     @property
     def metadata(self):
@@ -331,34 +368,91 @@ class Database(MSONable):
         return self._metadata
 
     @property
-    def errors(self):
-        """A dictionary containing any errors as tracked during the process of
-        constructing the Dataset.
+    def database_status(self):
+        """A dictionary containing the current status of the database.
+        Basically everything except the structures, metadata and supercells.
 
         Returns
         -------
         dict
         """
 
-        return self._errors
+        return {
+            key: value
+            for key, value in self.as_dict().items()
+            if key not in ["structures", "metadata", "supercells"]
+        }
 
-    def __init__(self, structures, metadata=dict(), errors=dict()):
+    def __init__(
+        self,
+        structures,
+        metadata=dict(),
+        supercells=dict(),
+        supercell_cutoff=None,
+        inequivalent_sites_initialized=False,
+        supercells_initialized=False,
+    ):
         """Initializer for the Database class. Note it is recommended to use
         the classmethods to initialize this object."""
 
         self._structures = structures
         self._metadata = metadata
-        self._errors = errors
+        self._supercells = supercells
+        self._supercell_cutoff = supercell_cutoff
+        self._inequivalent_sites_initialized = inequivalent_sites_initialized
+        self._supercells_initialized = supercells_initialized
+
+    def _setup_preliminary_attributes(self):
+        """Initializes supercells and inequivalent site info in the metadata
+        if they're not already."""
+
+        if not self._supercells_initialized:
+            warn(
+                "Initializing supercells with supercell_cutoff=9.0. "
+                "Run initialize_supercells(supercell_cutoff=...) to set "
+                "this cutoff manually."
+            )
+            self.initialize_supercells(9.0)
+
+        if not self._inequivalent_sites_initialized:
+            self.initialize_inequivalent_sites()
+
+    @staticmethod
+    def _get_site_indexes_matching_atom(info, species):
+        """For an info dictionary of the form
+        {
+            "sites": inequivalent_sites,
+            "species": species,
+            "multiplicities": multiplicities
+        }
+        gets the inequivalent indexes matching the provided atom type/species.
+        Also returns None if ``species`` is None.
+
+        Parameters
+        ----------
+        info : dict
+        species : str
+            The atom type, e.g. "Ti", "O", etc.
+
+        Returns
+        -------
+        list
+        """
+
+        if species is None:
+            return None
+
+        return [
+            index
+            for index, specie in zip(info["sites"], info["species"])
+            if specie == species
+        ]
 
     def write(
         self,
         root,
         absorbing_atoms=None,
         options=[],
-        max_primitive_total_atoms=int(1e16),
-        supercell_cutoff=9.0,
-        max_supercell_total_atoms=int(1e16),
-        max_inequivalent_sites=int(1e16),
         pbar=True,
         copy_script=None,
     ):
@@ -409,18 +503,6 @@ class Database(MSONable):
             specifies which calculations to setup, each of the options also
             contains the complete set of parameters necessary to characterize
             each individual set of input files (for e.g. FEFF, VASP, etc.).
-        max_primitive_total_atoms : int, optional
-            The maximum number of allowed total atoms in the primitive cell.
-        supercell_cutoff : float, optional
-            Parameter used for constructing the supercells. Default is 9
-            Angstroms. TODO: this needs clearer documentation.
-        max_supercell_total_atoms : int, optional
-            The maximum number of allowed total atoms in any supercell
-            constructed during the process of writing the input files.
-        max_inequivalent_sites : int, optional
-            The maximum number of allowed inequivalent sites in any primitive
-            cell. This can be set to a low value to help avoid calculations of
-            amorphous materials.
         pbar : bool, optional
             If True, enables the :class:`tqdm` progress bar.
         copy_script : os.PathLike
@@ -428,7 +510,12 @@ class Database(MSONable):
             of the input file locations.
         """
 
+        self._setup_preliminary_attributes()
+
         root = str(Path(root).resolve())  # Get absolute path
+
+        if not isinstance(absorbing_atoms, list):
+            absorbing_atoms = [absorbing_atoms]
 
         writer_metadata = {
             "locals": {
@@ -436,95 +523,35 @@ class Database(MSONable):
                 for key, value in locals().items()
                 if key not in ["self", "options"]
             },
-            "created_at": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
-            "errors": {
-                "MPRestError": self._errors.get("MPRestError", dict()),
-                "max_primitive_total_atoms": [],
-                "max_supercell_total_atoms": [],
-                "max_inequivalent_sites": [],
-                "writer": [],
-            },
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "options": [option.as_dict() for option in options],
-            "version": __version__,
+            **self.database_status,
         }
 
         root = Path(root)
         root.mkdir(exist_ok=True, parents=True)
         writer_metadata_path = root / Path("writer_metadata.json")
 
-        if not isinstance(absorbing_atoms, list):
-            absorbing_atoms = [absorbing_atoms]
-
-        for key in tqdm(self._structures.keys(), disable=not pbar):
-
-            structure = self._structures[key]
-            primitive_structure = structure.get_primitive_structure()
-
-            # Check if the primitive cell has too many atoms. If it does,
-            # we simply continue at this point
-            if len(primitive_structure) > max_primitive_total_atoms:
-                writer_metadata["errors"]["max_primitive_total_atoms"].append(
-                    {
-                        "name": key,
-                        "primitive_cell_size": len(primitive_structure),
-                    }
-                )
-                continue
-
-            # Construct the supercell which will be used in general for VASP and
-            # XSpectra calculations, but will be helpful in referencing
-            supercell = pymatgen_utils.make_supercell(
-                structure, supercell_cutoff
-            ).get_sorted_structure()
-
-            # If the supercell is too large, we continue as well
-            # should only work for VASP and XSpectra
-            if len(supercell) > max_supercell_total_atoms:
-                writer_metadata["errors"]["max_supercell_total_atoms"].append(
-                    {"name": key, "supercell_size": len(supercell)}
-                )
-                continue
+        for key, supercell in tqdm(self._supercells.items(), disable=not pbar):
 
             for absorbing_atom in absorbing_atoms:
 
+                primitive_info = self._metadata[key]["primitive"]
+                supercell_info = self._metadata[key]["supercell"]
+
                 # If inequiv is None, that means that the absorbing_atom was not
-                # specified
-                inequiv = (
-                    pymatgen_utils.get_symmetrically_inequivalent_sites(
-                        structure, absorbing_atom
-                    )
-                    if absorbing_atom is not None
-                    else None
+                # specified (absorbing_atom is None)
+                inequiv = self._get_site_indexes_matching_atom(
+                    primitive_info, absorbing_atom
                 )
-
-                if len(inequiv) == 0 and absorbing_atom is not None:
-                    warn(
-                        f"No absorbing atoms of type {absorbing_atom} in "
-                        f"structure corresponding to {key}"
-                    )
-                    continue
-
-                # Need the indices for the supercell to construct the mapping
-                inequiv_sc = (
-                    pymatgen_utils.get_symmetrically_inequivalent_sites(
-                        supercell, absorbing_atom
-                    )
-                    if absorbing_atom is not None
-                    else None
+                inequiv_sc = self._get_site_indexes_matching_atom(
+                    supercell_info, absorbing_atom
                 )
 
                 if inequiv_sc is not None and inequiv is not None:
                     index_mapping = {k: v for k, v in zip(inequiv, inequiv_sc)}
                 else:
                     index_mapping = None
-
-                # Check the number of inequivalent sites against the maximum
-                # allowed
-                if len(inequiv) > max_inequivalent_sites:
-                    writer_metadata["errors"]["max_inequivalent_sites"].append(
-                        {"key": key, "n_ineqivalent_sites": len(inequiv)}
-                    )
-                    continue
 
                 # If the for VASP and XSpectra calculations, use supercell;
                 # otherwise, use unit cell structure
@@ -533,18 +560,17 @@ class Database(MSONable):
                 # if no, ignore them
                 kwargs = {
                     "structure_sc": supercell,
-                    "structure_uc": structure,
+                    "structure_uc": self._structures[key],
                     "sites": inequiv,
                     "index_mapping": index_mapping,
                 }
-                if self._metadata is not None:
-                    if key in self._metadata.keys():
-                        if (
-                            "band_gap" in self._metadata[key].keys()
-                            and "diel" in self._metadata[key].keys()
-                        ):
-                            kwargs["bandgap"] = self._metadata[key]["band_gap"]
-                            kwargs["diel"] = self._metadata[key]["diel"]
+                if key in self._metadata.keys():
+                    if (
+                        "band_gap" in self._metadata[key].keys()
+                        and "diel" in self._metadata[key].keys()
+                    ):
+                        kwargs["bandgap"] = self._metadata[key]["band_gap"]
+                        kwargs["diel"] = self._metadata[key]["diel"]
 
                 # Write the files that we can
                 for option in options:

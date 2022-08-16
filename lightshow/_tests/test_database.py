@@ -122,9 +122,7 @@ class TestDatabase:
     @staticmethod
     def test_from_materials_project(mp_Structure_mp390, mp_Structure_mvc11115):
         try:
-            dat = Database.from_materials_project(
-                ["mp-390", "mvc-11115"], suppress_MPRestError=False
-            )
+            dat = Database.from_materials_project(["mp-390", "mvc-11115"])
         except MPRestError:
             warn(
                 "MPRestError during pulling data- using locally stored "
