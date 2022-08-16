@@ -1,7 +1,7 @@
 from pathlib import Path
+from functools import lru_cache
 import numpy as np
 from pymatgen.core.structure import IStructure
-from pymatgen.io.ase import AseAtomsAdaptor as ase
 
 
 ATOMIC_NUMBERS = {
@@ -128,7 +128,7 @@ ATOMIC_NUMBERS = {
 ATOMIC_NUMBERS = {value: key for key, value in ATOMIC_NUMBERS.items()}
 
 
-def read_FEFF_geometry(path):
+def read_FEFF_geometry(path, rounding=4):
 
     path = Path(path) / "feff.inp"
 
@@ -142,12 +142,12 @@ def read_FEFF_geometry(path):
     feff_lines = [xx.split() for xx in feff_lines]
 
     atoms = [xx[4] for xx in feff_lines]
-    distances = [float(xx[5]) for xx in feff_lines]
+    distances = np.round([float(xx[5]) for xx in feff_lines], rounding)
 
-    return [{"atoms": atoms[1:], "distances": distances[1:]}]
+    return {"atoms": atoms[1:], "distances": distances[1:]}
 
 
-def read_VASP_geometry(path, neighbor_radius=10.0):
+def read_VASP_geometry(path, neighbor_radius=10.0, rounding=4):
 
     path = Path(path) / "POSCAR"
 
@@ -160,14 +160,17 @@ def read_VASP_geometry(path, neighbor_radius=10.0):
     tmp = [[xx.nn_distance, str(xx.specie)] for xx in neigh]
     tmp.sort(key=lambda xx: xx[0])
 
-    return [
-        {"atoms": [xx[1] for xx in tmp], "distances": [xx[0] for xx in tmp]}
-    ]
+    return {
+        "atoms": [xx[1] for xx in tmp],
+        "distances": np.round([xx[0] for xx in tmp], rounding),
+    }
 
 
-def read_OCEAN_geometry(path, neighbor_radius=10.0):
+def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
 
     path = Path(path) / "ocean.in"
+
+    absorber = str(path.parts[-2])
 
     with open(path, "r") as f:
         ocean_lines = f.readlines()
@@ -206,12 +209,93 @@ def read_OCEAN_geometry(path, neighbor_radius=10.0):
     atoms = [ATOMIC_NUMBERS[znucl[xx - 1]] for xx in typat]
 
     structure = IStructure(lattice=mat, species=atoms, coords=geometry)
-    prim_super = ase.get_atoms(structure) * 3
-    structure = ase.get_structure(prim_super)
 
     # Need to deal with this. OCEAN's indices of relevance are not necessarily 0
-    neigh = structure.get_neighbors(structure[0], r=neighbor_radius)
-    tmp = [[xx.nn_distance, str(xx.specie)] for xx in neigh]
-    tmp.sort(key=lambda xx: xx[0])
+    absorbing_sites = [ii for ii, atom in enumerate(atoms) if atom == absorber]
+    return_list = []
+    for site in absorbing_sites:
+        neigh = structure.get_neighbors(structure[site], r=neighbor_radius)
+        tmp = [[xx.nn_distance, str(xx.specie)] for xx in neigh]
+        tmp.sort(key=lambda xx: xx[0])
+        return_list.append(
+            {
+                "atoms": [xx[1] for xx in tmp],
+                "distances": np.round([xx[0] for xx in tmp], rounding),
+            }
+        )
+    return return_list
 
-    return {"atoms": [xx[1] for xx in tmp], "distances": [xx[0] for xx in tmp]}
+
+@lru_cache(maxsize=16)
+def _read_OCEAN_geometry(path, neighbor_radius, rounding):
+    return read_OCEAN_geometry(
+        path, neighbor_radius=neighbor_radius, rounding=rounding
+    )
+
+
+def consistency_check(
+    path, rounding=3, first_n_distances=10, neighbor_radius=10.0
+):
+    """Summary
+
+    Parameters
+    ----------
+    path : os.PathLike
+        A path to a particular materials directory.
+    rounding : int, optional
+        The number of decimal points to round the distances to.
+    first_n_distances : int, optional
+        The first n distances are taken to do the consistency check. These
+        distances are sorted in the order of closest to furthest to the
+        absorbing atom.
+    """
+
+    atom_dirs_FEFF = sorted(list((Path(path) / "FEFF").iterdir()))
+    atom_dirs_VASP = sorted(list((Path(path) / "VASP").iterdir()))
+
+    assert [xx.name for xx in atom_dirs_FEFF] == [
+        xx.name for xx in atom_dirs_VASP
+    ]
+
+    for path_FEFF, path_VASP in zip(atom_dirs_FEFF, atom_dirs_VASP):
+        data_FEFF = read_FEFF_geometry(path_FEFF, rounding=rounding)
+        data_VASP = read_VASP_geometry(
+            path_VASP, neighbor_radius=neighbor_radius, rounding=rounding
+        )
+
+        a1 = data_FEFF["atoms"][:first_n_distances]
+        a2 = data_VASP["atoms"][:first_n_distances]
+        assert a1 == a2, f"\n{a1}\n{a2}"
+
+        d1 = data_FEFF["distances"][:first_n_distances]
+        d2 = data_VASP["distances"][:first_n_distances]
+        if not np.allclose(d1, d2):
+            raise AssertionError(f"\n{d1}\n{d2}")
+
+        absorber = str(path_FEFF.name).split("_")[1]
+        path_OCEAN = Path(path) / "OCEAN" / absorber
+
+        all_data_OCEAN = _read_OCEAN_geometry(
+            path_OCEAN, neighbor_radius=neighbor_radius, rounding=rounding
+        )
+
+        ocean_checks = []
+        for data_OCEAN in all_data_OCEAN:
+
+            if not (
+                data_OCEAN["atoms"][:first_n_distances]
+                == data_VASP["atoms"][:first_n_distances]
+            ):
+                ocean_checks.append(False)
+            else:
+                ocean_checks.append(True)
+
+            if not np.allclose(
+                data_OCEAN["distances"][:first_n_distances],
+                data_VASP["distances"][:first_n_distances],
+            ):
+                ocean_checks.append(False)
+            else:
+                ocean_checks.append(True)
+
+        assert any(ocean_checks)
