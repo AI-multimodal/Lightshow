@@ -577,9 +577,8 @@ class Database(MSONable):
                     path = root / Path(key) / Path(option.name)
                     status = option.write(path, **kwargs)
                     if not status["pass"]:
-                        writer_metadata["errors"]["writer"].append(
-                            {"name": key, **status["errors"]}
-                        )
+                        d = {"name": key, **status["errors"]}
+                        warn(f"error: {key}+{option.name}: {d}")
                     if copy_script is not None and "paths" in status.keys():
                         for p in status["paths"]:
                             copy2(copy_script, p)
