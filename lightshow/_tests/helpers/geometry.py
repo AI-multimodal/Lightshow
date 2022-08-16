@@ -226,6 +226,66 @@ def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
     return return_list
 
 
+def read_XSpectra_geometry(path, neighbor_radius=10.0, rounding=4):
+
+    path = Path(path) / "es.in"
+
+    with open(path, "r") as f:
+        xspectra_lines = f.readlines()
+    xspectra_lines = [xx.strip() for xx in xspectra_lines]
+
+    # Parse the Xspectra lines... also a pain, just like OCEAN
+    atoms = []
+    geom = []
+    mat = None
+    absorber = None
+    ii = 0
+    while ii < len(xspectra_lines):
+        line = xspectra_lines[ii]
+        if "ATOMIC_POSITIONS" in line:
+            ii += 1
+            jj = 0
+            while True:
+                line = xspectra_lines[ii]
+                line_split = line.split()
+                atom = line_split[0]
+                position = line_split[1:]
+                if "+" in atom:
+                    absorber = jj
+                    atom = atom[:-1]  # Remove the "+"
+                if atom not in ATOMIC_NUMBERS.values():
+                    break
+                atoms.append(atom)
+                geom.append(position)
+
+                ii += 1
+                jj += 1
+
+        if "CELL_PARAMETERS" in line:
+            mat = np.array(
+                [xx.split() for xx in xspectra_lines[ii + 1 : ii + 4]],
+                dtype=float,
+            )
+            break
+
+        ii += 1
+
+    assert absorber is not None
+
+    geom = np.array(geom, dtype=float)
+
+    structure = IStructure(lattice=mat, species=atoms, coords=geom)
+
+    neigh = structure.get_neighbors(structure[absorber], r=neighbor_radius)
+    tmp = [[xx.nn_distance, str(xx.specie)] for xx in neigh]
+    tmp.sort(key=lambda xx: xx[0])
+
+    return {
+        "atoms": [xx[1] for xx in tmp],
+        "distances": np.round([xx[0] for xx in tmp], rounding),
+    }
+
+
 @lru_cache(maxsize=16)
 def _read_OCEAN_geometry(path, neighbor_radius, rounding):
     return read_OCEAN_geometry(
@@ -252,25 +312,35 @@ def consistency_check(
 
     atom_dirs_FEFF = sorted(list((Path(path) / "FEFF").iterdir()))
     atom_dirs_VASP = sorted(list((Path(path) / "VASP").iterdir()))
+    atom_dirs_Xspectra = sorted(list((Path(path) / "Xspectra").iterdir()))
 
     assert [xx.name for xx in atom_dirs_FEFF] == [
         xx.name for xx in atom_dirs_VASP
     ]
 
-    for path_FEFF, path_VASP in zip(atom_dirs_FEFF, atom_dirs_VASP):
+    for path_FEFF, path_VASP, path_XSpectra in zip(
+        atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_Xspectra
+    ):
         data_FEFF = read_FEFF_geometry(path_FEFF, rounding=rounding)
         data_VASP = read_VASP_geometry(
             path_VASP, neighbor_radius=neighbor_radius, rounding=rounding
         )
+        data_XSpectra = read_XSpectra_geometry(
+            path_XSpectra, neighbor_radius=neighbor_radius, rounding=rounding
+        )
 
         a1 = data_FEFF["atoms"][:first_n_distances]
         a2 = data_VASP["atoms"][:first_n_distances]
-        assert a1 == a2, f"\n{a1}\n{a2}"
+        a3 = data_XSpectra["atoms"][:first_n_distances]
+        assert a1 == a2 == a3, f"\n{a1}\n{a2}\n{a3}"
 
         d1 = data_FEFF["distances"][:first_n_distances]
         d2 = data_VASP["distances"][:first_n_distances]
+        d3 = data_XSpectra["distances"][:first_n_distances]
         if not np.allclose(d1, d2):
             raise AssertionError(f"\n{d1}\n{d2}")
+        if not np.allclose(d2, d3):
+            raise AssertionError(f"\n{d2}\n{d3}")
 
         absorber = str(path_FEFF.name).split("_")[1]
         path_OCEAN = Path(path) / "OCEAN" / absorber
