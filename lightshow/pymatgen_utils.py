@@ -43,7 +43,7 @@ def make_supercell(prim, cutoff=9.0):
     return structure
 
 
-def get_symmetrically_inequivalent_sites(structure, atom_type):
+def get_inequivalent_site_info(structure):
     """Gets the symmetrically inequivalent sites as found by the
     SpacegroupAnalyzer class from Pymatgen.
 
@@ -51,27 +51,28 @@ def get_symmetrically_inequivalent_sites(structure, atom_type):
     ----------
     structure : pymatgen.core.structure.Structure
         The Pymatgen structure of interest.
-    atom_type : str
-        The absorbing atom symbol, e.g. "Ti".
 
     Returns
     -------
-    list of int
-        The list of symmetrically inequivalent sites in the structure.
+    dict
+        A dictionary containing three lists, one of the inequivalent sites, one
+        for the atom types they correspond to and the last for the multiplicity.
     """
 
     # Get the symmetrically inequivalent indexes
-    equi = (
+    inequivalent_sites = (
         SpacegroupAnalyzer(structure)
         .get_symmetrized_structure()
         .equivalent_indices
     )
 
     # Equivalent indexes must all share the same atom type
-    atoms = np.array([str(structure[xx[0]].specie) for xx in equi])
+    multiplicities = [len(xx) for xx in inequivalent_sites]
+    inequivalent_sites = [xx[0] for xx in inequivalent_sites]
+    species = [str(structure[xx].specie) for xx in inequivalent_sites]
 
-    # Find where the atom type is equal to the target
-    where_target = np.where(atoms == atom_type)[0]
-
-    # Get the absorbing atom indexes
-    return [equi[ii][0] for ii in where_target]
+    return {
+        "sites": inequivalent_sites,
+        "species": species,
+        "multiplicities": multiplicities,
+    }
