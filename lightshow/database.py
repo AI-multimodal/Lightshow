@@ -135,7 +135,7 @@ class Database(MSONable):
                 self._supercells[new_key] = self._supercells.pop(old_key)
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR"):
+    def from_files(cls, root, filename="CONTCAR", cleanup_paths=True):
         """Searches for files matching the provided ``filename``, which can
         include wildcards, and assumes those files are structural files in CIF
         format. The names/ids of these files is given by the full directory
@@ -162,6 +162,9 @@ class Database(MSONable):
         filename : str, optional
             The files to search for. Uses ``rglob`` to recursively find any
             files matching ``filename`` within the provided directory.
+        cleanup_paths : bool, optional
+            If True, runs :class:`cleanup_paths()` after initializing the
+            Database.
 
         Returns
         -------
@@ -186,7 +189,10 @@ class Database(MSONable):
 
         metadata = {key: dict() for key in structures.keys()}
 
-        return cls(structures=structures, metadata=metadata, supercells=dict())
+        kls = cls(structures=structures, metadata=metadata, supercells=dict())
+        if cleanup_paths:
+            kls.cleanup_paths()
+        return kls
 
     @classmethod
     def from_materials_project(
