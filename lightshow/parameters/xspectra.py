@@ -3,6 +3,8 @@ import os
 import json
 import bz2
 import base64
+import shutil
+from warnings import warn
 from collections import OrderedDict
 
 from monty.json import MSONable
@@ -10,6 +12,7 @@ from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow import _get_CHPSP_DIRECTORY_from_environ
 import lightshow
 
 
@@ -148,12 +151,13 @@ class XSpectraParameters(MSONable, _BaseParameters):
         be a class with a ``__call__`` method defined. This method should take
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
-    nbands : lightshow.common.nbands._BaseNbandsMethod
-        The method for determining the number of valence bands from the
-        structure. Should be a class with a ``__call__`` method defined. This
-        method should take the structure as input and return an integer: the
-        number of valence bands to use in the calculation.
-
+    psp_directory : os.PathLike, optional
+        The location in which the core-hole potential files for absorption atoms
+        are stored. Each element should have two files, e.g. "Ti.fch.upf" and
+        "Core_Ti.wfc". "Ti.fch.upf" is the core-hole pesuodo potetial file and
+        "Core_Ti.wfc" is the core electron wavefunction. The naming of the
+        pseudopotentials and core electron wavefunction should follow the exact
+        specific structure.If None, checks the environment for ``XS_CHPSP_DIRECTORY``.
     """
 
     @property
@@ -168,10 +172,24 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self,
         cards=XSPECTRA_DEFAULT_CARDS,
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        psp_directory=None,
         defaultConvPerAtom=1e-10,
         edge="K",
         name="XSpectra",
     ):
+
+        # psp information
+        if psp_directory is None:
+            psp_directory = _get_CHPSP_DIRECTORY_from_environ()
+        if psp_directory is None:
+            warn(
+                "psp_directory not provided, and XS_CHPSPS_DIRECTORY not in "
+                "the current environment variables. core-hole pseudo "
+                "potential files will not be written."
+            )
+
+        self._psp_directory = psp_directory
+
         self._cards = cards
         # Method for determining the kmesh
         self._kpoints = kpoints
@@ -436,7 +454,24 @@ class XSpectraParameters(MSONable, _BaseParameters):
         # ecutwfc = 100
         # ecutrho = 800
         # for i in psp2:
+
         psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
+        # copy core-hole potential and core wfn to target folder
+        if self._psp_directory is not None:
+            try:
+                shutil.copyfile(
+                    self._psp_directory + f"{element}.fch.upf",
+                    str(target_directory) + f"/{element}.fch.upf",
+                )
+                shutil.copyfile(
+                    self._psp_directory + f"Core_{element}.wfc",
+                    str(target_directory) + f"/Core_{element}.wfc",
+                )
+            except FileNotFoundError:
+                warn(
+                    f"{element}.fch.upf or Core_{element}.wfc not found in {self._psp_directory}"
+                )
+
         # Determine iabs
         psp = OrderedDict(psp)
         for i, j in enumerate(psp.keys()):
