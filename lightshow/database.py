@@ -17,7 +17,6 @@ from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ, __version__
 from lightshow import pymatgen_utils
-from lightshow.parameters.xspectra import XSpectraParameters
 
 
 def _delete_common_strings(list_of_strings):
@@ -526,16 +525,6 @@ class Database(MSONable):
                         {"key": key, "n_ineqivalent_sites": len(inequiv)}
                     )
                     continue
-                # For XSpectra calculations, users need to take care of the
-                # core-hole pseuodopotentials and the core wave function
-                # by themselves if there are elements other than Ti
-                for option in options:
-                    if isinstance(option, XSpectraParameters):
-                        warn(
-                            f"The core-hole pseudo potential and core wave function "
-                            f"for {absorbing_atom} element will not be generated on "
-                            f"the fly. Please take care of them by yourself."
-                        )
 
                 # If the for VASP and XSpectra calculations, use supercell;
                 # otherwise, use unit cell structure
