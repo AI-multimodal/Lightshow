@@ -1,41 +1,33 @@
-import json
-from os import environ
+from copy import deepcopy
 from pathlib import Path
-
 import pytest
 
-from pymatgen.core.structure import Structure
+from lightshow import Database
 
-
-API_KEY = environ.get("PMG_API_KEY", None)
-
-
-@pytest.fixture
-def mp_Structure_mp390():
-    path = Path.cwd() / Path("lightshow") / Path("_tests")
-    path = path / Path("mp-390.json")
-    with open(path, "r") as infile:
-        loaded_json = json.load(infile)
-    return Structure.from_dict(loaded_json)
+STRUCTURE_FILES_PATH = (
+    Path.cwd() / Path("lightshow") / Path("_tests") / Path("structure_files")
+)
 
 
 @pytest.fixture
-def mp_Structure_mvc11115():
-    path = Path.cwd() / Path("lightshow") / Path("_tests")
-    path = path / Path("mvc-11115.json")
-    with open(path, "r") as infile:
-        loaded_json = json.load(infile)
-    return Structure.from_dict(loaded_json)
+def test_structure_names():
+    return [
+        "mp-390",
+        "mvc-11115",
+        "mp-1215",
+        "mp-1840",
+        "mp-2657",
+        "mp-2664",
+        "mp-430",
+        "mp-458",
+        "mp-10734",
+    ]
 
 
 @pytest.fixture
-def TiO10():
-    path = Path(__file__).parent.resolve() / Path("TiO10.json")
-    with open(path, "r") as f:
-        d = json.load(f)
-    for key in d.keys():
-        d[key] = Structure.from_dict(d[key])
-    return d
+def database_from_file():
+    dat = Database.from_files(STRUCTURE_FILES_PATH, filename="POSCAR")
+    return deepcopy(dat)
 
 
 @pytest.fixture
