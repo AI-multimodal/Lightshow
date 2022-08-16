@@ -125,7 +125,6 @@ ATOMIC_NUMBERS = {
     "Og": 118,
     "Uue": 119,
 }
-
 ATOMIC_NUMBERS = {value: key for key, value in ATOMIC_NUMBERS.items()}
 
 
@@ -145,7 +144,7 @@ def read_FEFF_geometry(path):
     atoms = [xx[4] for xx in feff_lines]
     distances = [float(xx[5]) for xx in feff_lines]
 
-    return {"atoms": atoms[1:], "distances": distances[1:]}
+    return [{"atoms": atoms[1:], "distances": distances[1:]}]
 
 
 def read_VASP_geometry(path, neighbor_radius=10.0):
@@ -161,7 +160,9 @@ def read_VASP_geometry(path, neighbor_radius=10.0):
     tmp = [[xx.nn_distance, str(xx.specie)] for xx in neigh]
     tmp.sort(key=lambda xx: xx[0])
 
-    return {"atoms": [xx[1] for xx in tmp], "distances": [xx[0] for xx in tmp]}
+    return [
+        {"atoms": [xx[1] for xx in tmp], "distances": [xx[0] for xx in tmp]}
+    ]
 
 
 def read_OCEAN_geometry(path, neighbor_radius=10.0):
