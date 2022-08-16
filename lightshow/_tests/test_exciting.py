@@ -3,8 +3,6 @@ Basic tests for exciting.
 """
 import re
 from pathlib import Path
-import pytest
-import sys
 
 from pymatgen.core.structure import Structure
 from xml.etree import ElementTree
@@ -12,7 +10,6 @@ from xml.etree import ElementTree
 from lightshow.parameters.exciting import EXCITINGParameters
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 8), reason="requires py<3.8")
 def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
     """Test the default parameters of exciting."""
     exciting_parameters = EXCITINGParameters()
@@ -94,8 +91,10 @@ def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
     assert atoms_o[0].items() == [
         ("coord", "      0.95616300       0.45616300       0.50000000")
     ], "Coordinate of first O differs to input"
-    assert re.match(r' {6}0\.79383700 {7}0\.79383700 {7}[01]\.00000000', atoms_o[1].items()[0][1]
-                    ), "Coordinate of second O differs to input"
+    assert re.match(
+        r" {6}0\.79383700 {7}0\.79383700 {7}[01]\.00000000",
+        atoms_o[1].items()[0][1],
+    ), "Coordinate of second O differs to input"
     assert atoms_o[2].items() == [
         ("coord", "      0.54383700       0.04383700       0.50000000")
     ], "Coordinate of third O differs to input"
