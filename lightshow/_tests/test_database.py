@@ -1,5 +1,4 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 from pymatgen.core.structure import IStructure
@@ -121,7 +120,6 @@ class TestDatabase:
     @staticmethod
     def test_database_from_disk(database_from_file, test_structure_names):
         dat = database_from_file
-        dat.cleanup_paths()
         dat.initialize_supercells(9.0)
         dat.initialize_inequivalent_sites()
         assert set(dat.structures.keys()) == set(test_structure_names)
@@ -139,55 +137,52 @@ class TestDatabase:
             warn("MPRestError during pulling data")
 
     @staticmethod
-    def test_write(dummy_potcar_file_directory, database_from_file):
+    def test_write(dummy_potcar_file_directory, database_from_file, tmp_path):
 
-        # Write a few test files to disk somewhere, then read them in
-        with TemporaryDirectory() as tempDir:
+        # Load it all in
+        dat = database_from_file
+        dat.initialize_supercells(9.0)
+        dat.initialize_inequivalent_sites()
 
-            # Load it all in
-            dat = database_from_file
-            dat.initialize_supercells(9.0)
-            dat.initialize_inequivalent_sites()
+        target = Path(tmp_path) / Path("iama") / Path("destination")
+        target.mkdir(exist_ok=True, parents=True)
 
-            target = Path(tempDir) / Path("iama") / Path("destination")
-            target.mkdir(exist_ok=True, parents=True)
+        # Write it (note these are Ti-O compounds)
+        feff_parameters = FEFFParameters(
+            cards={
+                "S02": "0",
+                "COREHOLE": "RPA",
+                "CONTROL": "1 1 1 1 1 1",
+                "XANES": "4 0.04 0.1",
+                "SCF": "7.0 0 100 0.2 3",
+                "FMS": "9.0 0",
+                "EXCHANGE": "0 0.0 0.0 2",
+                "RPATH": "-1",
+            },
+            edge="K",
+            radius=6.0,
+            spectrum="XANES",
+            name="FEFF",
+        )
+        vasp_params_corehole = VASPParameters(
+            incar=VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
+            potcar_directory=dummy_potcar_file_directory,
+            force_spin_unpolarized=False,
+        )
+        ocean_params = OCEANParameters(edge="K")
+        exciting_params = EXCITINGParameters(edge="K")
+        xspectra_params = XSpectraParameters(edge="K")
 
-            # Write it (note these are Ti-O compounds)
-            feff_parameters = FEFFParameters(
-                cards={
-                    "S02": "0",
-                    "COREHOLE": "RPA",
-                    "CONTROL": "1 1 1 1 1 1",
-                    "XANES": "4 0.04 0.1",
-                    "SCF": "7.0 0 100 0.2 3",
-                    "FMS": "9.0 0",
-                    "EXCHANGE": "0 0.0 0.0 2",
-                    "RPATH": "-1",
-                },
-                edge="K",
-                radius=6.0,
-                spectrum="XANES",
-                name="FEFF",
-            )
-            vasp_params_corehole = VASPParameters(
-                incar=VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
-                potcar_directory=dummy_potcar_file_directory,
-                force_spin_unpolarized=False,
-            )
-            ocean_params = OCEANParameters(edge="K")
-            exciting_params = EXCITINGParameters(edge="K")
-            xspectra_params = XSpectraParameters(edge="K")
+        dat.write(
+            target,
+            absorbing_atoms=["Ti", "O"],
+            options=[
+                feff_parameters,
+                vasp_params_corehole,
+                ocean_params,
+                exciting_params,
+                xspectra_params,
+            ],
+        )
 
-            dat.write(
-                target,
-                absorbing_atoms=["Ti", "O"],
-                options=[
-                    feff_parameters,
-                    vasp_params_corehole,
-                    ocean_params,
-                    exciting_params,
-                    xspectra_params,
-                ],
-            )
-
-            _validate_VASP_FEFF_calculations_match(target)
+        _validate_VASP_FEFF_calculations_match(target)
