@@ -530,10 +530,7 @@ class Database(MSONable):
                 # core-hole pseuodopotentials and the core wave function
                 # by themselves if there are elements other than Ti
                 for option in options:
-                    if (
-                        isinstance(option, XSpectraParameters)
-                        and absorbing_atom != "Ti"
-                    ):
+                    if isinstance(option, XSpectraParameters):
                         warn(
                             f"The core-hole pseudo potential and core wave function "
                             f"for {absorbing_atom} element will not be generated on "

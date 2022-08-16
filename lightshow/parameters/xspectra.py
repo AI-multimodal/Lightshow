@@ -55,11 +55,7 @@ XSPECTRA_DEFAULT_CARDS = {
         "plotTrue": {"gamma_mode": "constant", "xgamma": 0.05},
     },
     "XS_controls": {
-        "kden": "-1",
-        "psp": {"Ti+": "Ti.fch.upf"},
         "Rmin": "9.0",
-        "scf_kden": "-1",
-        "core_psp_json": "FCH1",
         "psp_json": "SSSP_precision",
     },
 }
@@ -419,25 +415,28 @@ class XSpectraParameters(MSONable, _BaseParameters):
         )
         gs_in.write_file(path / "gs.in")
         # Get the psp data read for ES calculations
-        pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
-        try:
-            psp2, ecutwfc, ecutrho = self._unpackPsps(
-                ecutwfc,
-                ecutrho,
-                pspDatabaseRoot,
-                DatabaseDir,
-                [self._cards["XS_controls"]["element"]],
-                target_directory,
-                needWfn=True,
-            )
-        except KeyError:
-            # throw a warning here
-            # warn("take care of the core-hole psp for absorber by yourself")
-            psp2 = {element: f"{element}.fch.upf"}
-            ecutwfc = 100
-            ecutrho = 800
-        for i in psp2:
-            psp[i + "+"] = psp2[i]
+        # pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
+        # try:
+        #    psp2, ecutwfc, ecutrho = self._unpackPsps(
+        #        ecutwfc,
+        #        ecutrho,
+        #        pspDatabaseRoot,
+        #        DatabaseDir,
+        #        [self._cards["XS_controls"]["element"]],
+        #        target_directory,
+        #        needWfn=True,
+        #    )
+        # except KeyError:
+        # throw a warning here
+        # warn("take care of the core-hole psp for absorber by yourself")
+
+        # give a name to the pseudo potential
+        # set relatively large cutoff as default
+        # psp2 = {element: f"{element}.fch.upf"}
+        # ecutwfc = 100
+        # ecutrho = 800
+        # for i in psp2:
+        psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
         # Determine iabs
         psp = OrderedDict(psp)
         for i, j in enumerate(psp.keys()):
