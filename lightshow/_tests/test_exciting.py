@@ -1,6 +1,7 @@
 """
 Basic tests for exciting.
 """
+import re
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -76,27 +77,26 @@ def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
         ("speciesfile", "O.xml")
     ], "species is inconsistent"
 
-    atoms_h = list(species_ti_xml)
-    assert len(atoms_h) == 2, "Number of Ti atoms is wrong"
-    assert atoms_h[0].items() == [
+    atoms_ti = list(species_ti_xml)
+    assert len(atoms_ti) == 2, "Number of Ti atoms is wrong"
+    assert atoms_ti[0].items() == [
         ("coord", "      0.75000000       0.25000000       0.50000000")
     ], "Coordinate of first Ti differs to input"
-    assert atoms_h[1].items() == [
+    assert atoms_ti[1].items() == [
         ("coord", "      0.00000000       0.00000000       0.00000000")
     ], "Coordinate of second Ti differs to input"
 
-    atoms_he = list(species_o_xml)
-    assert len(atoms_he) == 4, "Number of O atoms is wrong"
-    assert atoms_he[0].items() == [
+    atoms_o = list(species_o_xml)
+    assert len(atoms_o) == 4, "Number of O atoms is wrong"
+    assert atoms_o[0].items() == [
         ("coord", "      0.95616300       0.45616300       0.50000000")
     ], "Coordinate of first O differs to input"
-    assert atoms_he[1].items() == [
-        ("coord", "      0.79383700       0.79383700       0.00000000")
-    ], "Coordinate of second O differs to input"
-    assert atoms_he[2].items() == [
+    assert re.match(r' {6}0\.79383700 {7}0\.79383700 {7}[01]\.00000000', atoms_o[1].items()[0][1]
+                    ), "Coordinate of second O differs to input"
+    assert atoms_o[2].items() == [
         ("coord", "      0.54383700       0.04383700       0.50000000")
     ], "Coordinate of third O differs to input"
-    assert atoms_he[3].items() == [
+    assert atoms_o[3].items() == [
         ("coord", "      0.20616300       0.20616300       0.00000000")
     ], "Coordinate of fourth O differs to input"
 
