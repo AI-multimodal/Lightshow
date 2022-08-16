@@ -248,91 +248,90 @@ class OCEANParameters(MSONable, _BaseParameters):
         # Obtain absorbing atom
         species = [structure[site].specie.symbol for site in sites]
         element_list = []
-        for site, specie in zip(sites, species):
+        for specie in species:
             element = Element(specie)
-            if element not in element_list:
-                element_list.append(element)
-                cards = copy(self._cards)
+            if element in element_list:
+                continue
+            element_list.append(element)
+            cards = copy(self._cards)
 
-                cards["edges"] = f"-{element.number} {self._edge}"
-                # ocean use a negative value to represent the number of
-                # conduction bands
-                cards["nbands"] = -1 * self._nbands(structure)
+            cards["edges"] = f"-{element.number} {self._edge}"
+            # ocean use a negative value to represent the number of
+            # conduction bands
+            cards["nbands"] = -1 * self._nbands(structure)
 
-                # Standardized methods for getting the kpoints
-                kmesh = self._kpoints(structure)
-                cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+            # Standardized methods for getting the kpoints
+            kmesh = self._kpoints(structure)
+            cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
 
-                # Determine the diemac
-                if self._bandgap is not None or self._diel is not None:
-                    if self._diel is not None:
-                        cards["diemac"] = self._diel
-                    elif self._bandgap is not None:
-                        cards["diemac"] = np.exp(3.5 / self._bandgap)
-                elif self._bandgap is None and self._diel is None:
-                    if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
-                        bandgap = kwargs["bandgap"]
-                        diel = kwargs["diel"]
-                        if diel is not None:
-                            if diel["poly_electronic"] is not None:
-                                cards["diemac"] = diel["poly_electronic"]
-                        elif bandgap is not None:
-                            if bandgap > 0.000001:
-                                cards["diemac"] = np.exp(3.5 / bandgap)
-                            else:
-                                cards["diemac"] = 1000000
-                # Determine the SCF? convergence threshold
-                cards["toldfe"] = self._defaultConvPerAtom * len(structure)
-                # Change screen.nkpt -Int to triplet of ints
-                if (
-                    "screen.nkpt" in cards
-                    and len(cards["screen.nkpt"].split()) == 1
-                ):
-                    cards["screen.nkpt"] = self._oceanKptSampling(
-                        structure.lattice.matrix, float(cards["screen.nkpt"])
+            # Determine the diemac
+            if self._bandgap is not None or self._diel is not None:
+                if self._diel is not None:
+                    cards["diemac"] = self._diel
+                elif self._bandgap is not None:
+                    cards["diemac"] = np.exp(3.5 / self._bandgap)
+            elif self._bandgap is None and self._diel is None:
+                if "bandgap" in kwargs.keys() and "diel" in kwargs.keys():
+                    bandgap = kwargs["bandgap"]
+                    diel = kwargs["diel"]
+                    if diel is not None:
+                        if diel["poly_electronic"] is not None:
+                            cards["diemac"] = diel["poly_electronic"]
+                    elif bandgap is not None:
+                        if bandgap > 0.000001:
+                            cards["diemac"] = np.exp(3.5 / bandgap)
+                        else:
+                            cards["diemac"] = 1000000
+            # Determine the SCF? convergence threshold
+            cards["toldfe"] = self._defaultConvPerAtom * len(structure)
+            # Change screen.nkpt -Int to triplet of ints
+            if (
+                "screen.nkpt" in cards
+                and len(cards["screen.nkpt"].split()) == 1
+            ):
+                cards["screen.nkpt"] = self._oceanKptSampling(
+                    structure.lattice.matrix, float(cards["screen.nkpt"])
+                )
+
+            # OCEAN will calculate every atom within the same specie
+            path = target_directory / Path(specie)
+            path.mkdir(exist_ok=True, parents=True)
+            filepath_xas = path / "ocean.in"
+            self._write_ocean_in(filepath_xas, structure, cards)
+
+            # Deal with the dipole case only
+            # notice I put the photonSymm in the folder, which is created by John
+            photons = list()
+            photons.append({"dipole": [1, 0, 0, 1]})
+            photons.append({"dipole": [0, 1, 0, 1]})
+            photons.append({"dipole": [0, 0, 1, 1]})
+
+            totalweight = 0
+            for photon in photons:
+                totalweight += photon["dipole"][3]
+
+            photonCount = 0
+            for photon in photons:
+                photonCount += 1
+                dir1 = photon["dipole"][0:3]
+                dir2 = dir1
+                weight = photon["dipole"][3] / totalweight
+                mode = "dipole"
+
+                with open(path / ("photon%d" % (photonCount)), "w") as f:
+                    f.write(mode + "\n")
+                    f.write(
+                        "cartesian %f %f %f \n" % (dir1[0], dir1[1], dir1[2])
                     )
-
-                # OCEAN will calculate every atom within the same specie
-                path = target_directory / Path(f"{site:03}_{specie}")
-                path.mkdir(exist_ok=True, parents=True)
-                filepath_xas = path / "ocean.in"
-                self._write_ocean_in(filepath_xas, structure, cards)
-
-                # Deal with the dipole case only
-                # notice I put the photonSymm in the folder, which is created by John
-                photons = list()
-                photons.append({"dipole": [1, 0, 0, 1]})
-                photons.append({"dipole": [0, 1, 0, 1]})
-                photons.append({"dipole": [0, 0, 1, 1]})
-
-                totalweight = 0
-                for photon in photons:
-                    totalweight += photon["dipole"][3]
-
-                photonCount = 0
-                for photon in photons:
-                    photonCount += 1
-                    dir1 = photon["dipole"][0:3]
-                    dir2 = dir1
-                    weight = photon["dipole"][3] / totalweight
-                    mode = "dipole"
-
-                    with open(path / ("photon%d" % (photonCount)), "w") as f:
-                        f.write(mode + "\n")
-                        f.write(
-                            "cartesian %f %f %f \n"
-                            % (dir1[0], dir1[1], dir1[2])
-                        )
-                        f.write("end\n")
-                        f.write(
-                            "cartesian %f %f %f \n"
-                            % (dir2[0], dir2[1], dir2[2])
-                        )
-                        f.write("end\n")
-                        f.write("1\n")
-                        # 4966 is hard coded for Ti
-                        # NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
-                        f.write(str(weight) + "\n")
-                        f.close
+                    f.write("end\n")
+                    f.write(
+                        "cartesian %f %f %f \n" % (dir2[0], dir2[1], dir2[2])
+                    )
+                    f.write("end\n")
+                    f.write("1\n")
+                    # 4966 is hard coded for Ti
+                    # NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
+                    f.write(str(weight) + "\n")
+                    f.close
 
         return {"pass": True, "errors": dict()}
