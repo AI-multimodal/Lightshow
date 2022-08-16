@@ -2,6 +2,8 @@ from copy import deepcopy
 from pathlib import Path
 import pytest
 
+from pymatgen.core.structure import Structure
+
 from lightshow import Database
 
 STRUCTURE_FILES_PATH = (
@@ -26,10 +28,19 @@ def test_structure_names():
 
 @pytest.fixture
 def database_from_file():
-    dat = Database.from_files(STRUCTURE_FILES_PATH, filename="POSCAR")
+    dat = Database.from_files(
+        STRUCTURE_FILES_PATH, filename="POSCAR", cleanup_paths=True
+    )
     return deepcopy(dat)
 
 
 @pytest.fixture
 def dummy_potcar_file_directory():
     return str(Path(__file__).parent.resolve() / Path("dummy_potcar_files"))
+
+
+@pytest.fixture
+def mp_Structure_mp390():
+    return Structure.from_file(
+        STRUCTURE_FILES_PATH / Path("mp-390") / Path("POSCAR")
+    )
