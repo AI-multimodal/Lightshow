@@ -19,7 +19,10 @@ from lightshow import _get_API_key_from_environ
 from lightshow import pymatgen_utils
 
 
-def _delete_common_strings(list_of_strings):
+def _delete_common_strings(old_list_of_strings):
+
+    list_of_strings = [str(Path(xx).parent) for xx in old_list_of_strings]
+    list_of_names = [str(Path(xx).name) for xx in old_list_of_strings]
 
     commonprefix = os.path.commonprefix(list_of_strings)
     new_p = [x[len(commonprefix) :] for x in list_of_strings]
@@ -29,7 +32,11 @@ def _delete_common_strings(list_of_strings):
     commonsuffix = os.path.commonprefix(list_of_strings_reversed)
     new_p = [x[len(commonsuffix) :] for x in list_of_strings_reversed]
 
-    return [xx[::-1] for xx in new_p]
+    final_p = [xx[::-1] for xx in new_p]
+
+    return [
+        str(Path(xx) / Path(name)) for xx, name in zip(final_p, list_of_names)
+    ]
 
 
 def _fetch_from_MP(mpr, mpid, metadata_keys):
@@ -124,6 +131,9 @@ class Database(MSONable):
             self._structures[new_key] = self._structures.pop(old_key)
             self._metadata[new_key] = self._metadata.pop(old_key)
 
+            if self._supercells_initialized:
+                self._supercells[new_key] = self._supercells.pop(old_key)
+
     @classmethod
     def from_files(cls, root, filename="CONTCAR"):
         """Searches for files matching the provided ``filename``, which can
@@ -176,7 +186,7 @@ class Database(MSONable):
 
         metadata = {key: dict() for key in structures.keys()}
 
-        return cls(structures=structures, metadata=metadata)
+        return cls(structures=structures, metadata=metadata, supercells=dict())
 
     @classmethod
     def from_materials_project(
@@ -287,7 +297,11 @@ class Database(MSONable):
             verbose=verbose,
         )
 
-        return cls(structures=data["structures"], metadata=data["metadata"])
+        return cls(
+            structures=data["structures"],
+            metadata=data["metadata"],
+            supercells=dict(),
+        )
 
     def initialize_supercells(self, supercell_cutoff=9.0):
         """Initializes the supercells from the structures pulled from the

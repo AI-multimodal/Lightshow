@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -120,58 +119,35 @@ def _validate_VASP_FEFF_calculations_match(root, decimals=4, r=6.0):
 
 class TestDatabase:
     @staticmethod
-    def test_from_materials_project(mp_Structure_mp390, mp_Structure_mvc11115):
+    def test_database_from_disk(database_from_file, test_structure_names):
+        dat = database_from_file
+        dat.cleanup_paths()
+        dat.initialize_supercells(9.0)
+        dat.initialize_inequivalent_sites()
+        assert set(dat.structures.keys()) == set(test_structure_names)
+        assert set(dat.metadata.keys()) == set(test_structure_names)
+        assert set(dat.supercells.keys()) == set(test_structure_names)
+
+    @staticmethod
+    def test_from_materials_project(test_structure_names):
         try:
-            dat = Database.from_materials_project(["mp-390", "mvc-11115"])
+            dat = Database.from_materials_project(test_structure_names)
+            dat.initialize_supercells(9.0)
+            assert set(dat.structures.keys()) == set(test_structure_names)
+            assert set(dat.supercells.keys()) == set(test_structure_names)
         except MPRestError:
-            warn(
-                "MPRestError during pulling data- using locally stored "
-                "Database for the test"
-            )
-            path = Path.cwd() / Path("lightshow") / Path("_tests")
-            path = path / Path("database_obj_test.json")
-            with open(path, "r") as infile:
-                loaded_json = json.load(infile)
-            dat = Database.from_dict(loaded_json)
-        assert set(dat.structures.keys()) == {"mp-390", "mvc-11115"}
-        assert dat.structures["mp-390"] == mp_Structure_mp390
-        assert dat.structures["mvc-11115"] == mp_Structure_mvc11115
+            warn("MPRestError during pulling data")
 
     @staticmethod
-    def test_mpids_list(mp_Structure_mp390, mp_Structure_mvc11115):
-        with TemporaryDirectory() as tempDir:
-
-            # Create a temporary directory structure and save the structures
-            # as CONTCAR files
-            root = Path(tempDir) / Path("iama") / Path("test")
-            path1 = root / Path("d1")
-            path1.mkdir(exist_ok=True, parents=True)
-            path1 = path1 / Path("CONTCAR")
-            mp_Structure_mp390.to(fmt="POSCAR", filename=path1)
-            path2 = root / Path("d2")
-            path2.mkdir(exist_ok=True, parents=True)
-            path2 = path2 / Path("CONTCAR")
-            mp_Structure_mvc11115.to(fmt="POSCAR", filename=path2)
-
-            dat = Database.from_files(root, filename="CONTCAR")
-            assert str(path1.parent) in dat.structures.keys()
-            assert str(path2.parent) in dat.structures.keys()
-
-    @staticmethod
-    def test_example_database(TiO10, dummy_potcar_file_directory):
+    def test_write(dummy_potcar_file_directory, database_from_file):
 
         # Write a few test files to disk somewhere, then read them in
         with TemporaryDirectory() as tempDir:
-            root = Path(tempDir) / Path("iama") / Path("test")
-            for key, struct in TiO10.items():
-                path = root / Path(f"{key}")
-                path.mkdir(exist_ok=True, parents=True)
-                path = path / Path("POSCAR")
-                struct.to(fmt="POSCAR", filename=path)
-                print("wrote to ", path)
 
             # Load it all in
-            dat = Database.from_files(root, filename="POSCAR")
+            dat = database_from_file
+            dat.initialize_supercells(9.0)
+            dat.initialize_inequivalent_sites()
 
             target = Path(tempDir) / Path("iama") / Path("destination")
             target.mkdir(exist_ok=True, parents=True)
@@ -214,4 +190,4 @@ class TestDatabase:
                 ],
             )
 
-            _validate_VASP_FEFF_calculations_match(root)
+            _validate_VASP_FEFF_calculations_match(target)
