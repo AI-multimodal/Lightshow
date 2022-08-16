@@ -4,7 +4,6 @@ import json
 import bz2
 import base64
 from collections import OrderedDict
-from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
@@ -141,7 +140,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     "kden": "-1",
                     "psp": {
                         "Ti+": "Ti.fch.upf",
-                        "Co+": "Co.fch.upf"
                     },
                     "Rmin": "9.0",
                     "scf_kden": "-1",
@@ -240,14 +238,15 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
                 # print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
                 # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
-                with open(folder / "Core.wfc", "w") as f:
+                element = symbol.split("+")[0]
+                with open(folder / f"Core_{element}.wfc", "w") as f:
                     f.write(pspString.decode("utf-8"))
 
         return psp, ecutwfc, ecutrho
 
     @staticmethod
     def _write_xspectra_in(
-        mode, iabs, dirs, xkvec, XSparams: dict, plot=False
+        mode, iabs, dirs, xkvec, element, XSparams: dict, plot=False
     ):
         """construct input file for XSpectra calculation
 
@@ -317,14 +316,14 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 "/",
             ]
         else:
-            # use constant smearing value: 0.89 eV
+            # use very small smearing value: 0.01 eV
             # Table IIA in Campbell and Papp (2001) https://doi.org/10.1006/adnd.2000.0848
-            inp += ["    gamma_mode = 'constant'", "    xgamma = 0.89 ", "/"]
+            inp += ["    gamma_mode = 'constant'", "    xgamma = 0.01 ", "/"]
 
         inp += [
             "&pseudos",
-            "    filecore = '../../Core.wfc'",
-            "    r_paw(1) = 1.79",  # hard-coded to Ti w/ core-hole
+            f"    filecore = '../../Core_{element}.wfc'",
+            # "    r_paw(1) = 1.79",  # hard-coded to Ti w/ core-hole
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str(XSparams["cut_occ"]["cut_desmooth"]),
@@ -433,7 +432,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             )
         except KeyError:
             # throw a warning here
-            warn("take care of the core-hole psp for absorber by yourself")
+            # warn("take care of the core-hole psp for absorber by yourself")
             psp2 = {element: f"{element}.fch.upf"}
             ecutwfc = 100
             ecutrho = 800
@@ -485,7 +484,12 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 with open(xanesfolder / "xanes.in", "w") as f:
                     f.write(
                         self._write_xspectra_in(
-                            mode, iabs, dir1, dir2, self._cards["XS"]
+                            mode,
+                            iabs,
+                            dir1,
+                            dir2,
+                            self._cards["XS_controls"]["element"],
+                            self._cards["XS"],
                         )
                     )
 
