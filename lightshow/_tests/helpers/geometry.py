@@ -314,11 +314,16 @@ def consistency_check(
     atom_dirs_VASP = sorted(list((Path(path) / "VASP").iterdir()))
     atom_dirs_XSpectra = sorted(list((Path(path) / "XSpectra").iterdir()))
 
-    assert (
-        [xx.name for xx in atom_dirs_FEFF]
-        == [xx.name for xx in atom_dirs_VASP]
-        == [xx.name for xx in atom_dirs_XSpectra]
-    )
+    l1 = [xx.name for xx in atom_dirs_FEFF]
+    l2 = [xx.name for xx in atom_dirs_VASP]
+    l3 = [xx.name for xx in atom_dirs_XSpectra]
+    if not l1 == l2:
+        raise AssertionError(f"\n{l1}\n{l2}")
+
+    # Note that XSpectra comes with quite a few extra files...
+    remaining_length = len(l3) - len(l2)
+    if remaining_length != len(set(l3) - set(l2)):
+        raise AssertionError(f"\n{l2}\n{l3}")
 
     for path_FEFF, path_VASP, path_XSpectra in zip(
         atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_XSpectra
