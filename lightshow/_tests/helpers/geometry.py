@@ -312,16 +312,16 @@ def consistency_check(
 
     atom_dirs_FEFF = sorted(list((Path(path) / "FEFF").iterdir()))
     atom_dirs_VASP = sorted(list((Path(path) / "VASP").iterdir()))
-    atom_dirs_Xspectra = sorted(list((Path(path) / "Xspectra").iterdir()))
+    atom_dirs_XSpectra = sorted(list((Path(path) / "XSpectra").iterdir()))
 
-    assert [xx.name for xx in atom_dirs_FEFF] == [
-        xx.name for xx in atom_dirs_VASP
-    ]
-
-    print(f"Testing path {path}: {len(atom_dirs_FEFF)}")
+    assert (
+        [xx.name for xx in atom_dirs_FEFF]
+        == [xx.name for xx in atom_dirs_VASP]
+        == [xx.name for xx in atom_dirs_XSpectra]
+    )
 
     for path_FEFF, path_VASP, path_XSpectra in zip(
-        atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_Xspectra
+        atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_XSpectra
     ):
         data_FEFF = read_FEFF_geometry(path_FEFF, rounding=rounding)
         data_VASP = read_VASP_geometry(
