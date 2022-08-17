@@ -911,9 +911,10 @@ class VASPParameters(MSONable, _BaseParameters):
             incar["NBANDS"] = nb
 
         poscar = Poscar(structure)
-        potcar_check = self._potcar_constructor.check_POSCAR_valid(poscar)
-        if potcar_check is not None:
-            errors["potentials_do_not_exist"] = potcar_check
+        if self._potcar_constructor._root is not None:
+            potcar_check = self._potcar_constructor.check_POSCAR_valid(poscar)
+            if potcar_check is not None:
+                errors["potentials_do_not_exist"] = potcar_check
 
         if self._force_spin_unpolarized:
             incar["ISPIN"] = 1
