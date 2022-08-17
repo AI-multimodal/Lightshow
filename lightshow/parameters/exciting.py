@@ -229,8 +229,5 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
             excitinginput._indent(root)
             tree.write(filepath_xas)
-        #            excitinginput.write_file(
-        #                "primitive", filepath_xas, bandstr=False #, **self._cards
-        #            )
 
         return {"pass": True, "errors": dict()}
