@@ -7,7 +7,7 @@ import versioneer
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
 # to ensure that we error out properly for people with outdated setuptools
 # and/or pip.
-min_version = (3, 6)
+min_version = (3, 7)
 if sys.version_info < min_version:
     error = """
 Lightshow does not support Python {0}.{1}.
@@ -46,18 +46,18 @@ with open(path.join(here, "requirements-dev.txt")) as requirements_file:
 
 # pip install -e ".[dev]"
 setup(
-    name="xanes_bench",
+    name="lightshow",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="One-stop-shop for building input files for computational "
+    description="A one-stop-shop for building input files for computational "
     " spectroscopy.",
     long_description=readme,
     author="Brookhaven National Laboratory",
     author_email="mcarbone@bnl.gov, john.vinson@nist.gov, dlu@bnl.gov, "
     "vorwerk@physik.hu-berlin.de, xiaqu@bnl.gov",
-    url="https://github.com/AI-multimodal/xanes_bench",
+    url="https://github.com/AI-multimodal/Lightshow",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
-    packages=find_packages(exclude=["docs", "tests"]),
+    packages=find_packages(exclude=["docs", "lightshow/_tests"]),
     entry_points={},
     include_package_data=True,
     package_data={
@@ -69,7 +69,7 @@ setup(
     },
     install_requires=requirements,
     extras_require={"dev": requirements_dev},
-    license="BSD (3-clause)",
+    license="Modified BSD (3-clause)",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Natural Language :: English",
