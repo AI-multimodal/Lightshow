@@ -441,10 +441,17 @@ class PotcarConstructor(MSONable):
             self._root = None
         else:
             self._root = Path(root).resolve()
+            if not Path(self._root).exists():
+                warnings.warn(
+                    f"POTCAR directory {self._root} does not exist. POTCAR "
+                    "files will not be written"
+                )
+                self._root = None
+
         self._override_default_element_mapping = (
             override_default_element_mapping
         )
-        assert Path(self._root).exists()
+
         if self._override_default_element_mapping:
             self._element_mapping = element_mapping
         else:
