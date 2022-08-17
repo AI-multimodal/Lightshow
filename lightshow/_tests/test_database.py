@@ -1,4 +1,6 @@
 from pathlib import Path
+import pytest
+import sys
 
 import numpy as np
 from pymatgen.core.structure import IStructure
@@ -14,6 +16,10 @@ from lightshow import (
     EXCITINGParameters,
 )
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
+
+# Helper testing files
+sys.path.append(str(Path(__file__).parent.resolve() / Path("helpers")))
+from geometry import consistency_check  # noqa
 
 
 def _validate_single_VASP_FEFF_calculation(
@@ -137,12 +143,31 @@ class TestDatabase:
             warn("MPRestError during pulling data")
 
     @staticmethod
-    def test_write(dummy_potcar_file_directory, database_from_file, tmp_path):
+    @pytest.mark.parametrize(
+        "mpid",
+        [
+            "mp-390",
+            "mvc-11115",
+            "mp-1215",
+            "mp-1840",
+            "mp-2657",
+            "mp-2664",
+            "mp-430",
+            "mp-458",
+            "mp-10734",
+        ],
+    )
+    def test_write(
+        mpid, dummy_potcar_file_directory, database_from_file, tmp_path
+    ):
 
         # Load it all in
         dat = database_from_file
         dat.initialize_supercells(9.0)
         dat.initialize_inequivalent_sites()
+        dat._supercells = {mpid: dat.supercells[mpid]}
+        dat._structures = {mpid: dat.structures[mpid]}
+        dat._metadata = {mpid: dat.metadata[mpid]}
 
         target = Path(tmp_path) / Path("iama") / Path("destination")
         target.mkdir(exist_ok=True, parents=True)
@@ -185,4 +210,5 @@ class TestDatabase:
             ],
         )
 
-        _validate_VASP_FEFF_calculations_match(target)
+        # Assert geometires
+        consistency_check(target / Path(mpid), rounding=3)
