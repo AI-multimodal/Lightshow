@@ -30,6 +30,18 @@ def _get_POTCAR_DIRECTORY_from_environ():
     return environ.get("VASP_POTCAR_DIRECTORY", None)
 
 
+def _get_CHPSP_DIRECTORY_from_environ():
+    """Checks for an environment variable XS_CHPSP_DIRECTORY. If does not
+    exist, returns None.
+
+    Returns
+    -------
+    str
+    """
+
+    return environ.get("XS_CHPSP_DIRECTORY", None)
+
+
 from lightshow.database import Database  # noqa
 from lightshow.parameters.feff import FEFFParameters  # noqa
 from lightshow.parameters.vasp import VASPParameters  # noqa

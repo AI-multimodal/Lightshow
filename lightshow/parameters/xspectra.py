@@ -3,14 +3,16 @@ import os
 import json
 import bz2
 import base64
-from collections import OrderedDict
+import shutil
 from warnings import warn
+from collections import OrderedDict
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow import _get_CHPSP_DIRECTORY_from_environ
 import lightshow
 
 
@@ -30,11 +32,10 @@ XSPECTRA_DEFAULT_CARDS = {
     "XS": {
         "cut_occ": {"cut_desmooth": 0.3},
         "input_xspectra": {
-            "edge": "K",
             "outdir": "../",
             "prefix": "pwscf",
             "xcheck_conv": 200,
-            "xerror": 0.01,
+            "xerror": 0.01,  #
             "xniter": 5000,
             "xcoordcrys": ".false.",
         },
@@ -46,21 +47,6 @@ XSPECTRA_DEFAULT_CARDS = {
             "xemin": -15.0,
             "xnepoint": 400,
         },
-        "plotFalse": {
-            "gamma_energy(1)": 7,
-            "gamma_energy(2)": 23,
-            "gamma_mode": "variable",
-            "gamma_value(1)": 0.89,
-            "gamma_value(2)": 2.1,
-        },
-        "plotTrue": {"gamma_mode": "constant", "xgamma": 0.05},
-    },
-    "XS_controls": {
-        "kden": "-1",
-        "psp": {"Ti+": "Ti.fch.upf"},
-        "Rmin": "9.0",
-        "scf_kden": "-1",
-        "core_psp_json": "FCH1",
         "psp_json": "SSSP_precision",
     },
 }
@@ -78,88 +64,58 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         .. code-block:: python
 
-            cards = {
-                "QE": {
-                    "control": {
-                        "restart_mode": "from_scratch",
-                        "wf_collect": ".true."
-                    },
-                    "electrons": {
-                        "conv_thr": 1e-08,
-                        "mixing_beta": 0.4
-                    },
-                    "ions": {},
-                    "system": {
-                        "degauss": 0.002,
-                        "ecutrho": 320,
-                        "ecutwfc": 40,
-                        "nspin": 1,
-                        "occupations": "smearing",
-                        "smearing": "gauss"
-                    }
-                },
-                "XS": {
-                    "cut_occ": {
-                        "cut_desmooth": 0.3
-                    },
-                    "input_xspectra": {
-                        "edge": "K",
-                        "outdir": "../",
-                        "prefix": "pwscf",
-                        "!wf_collect": ".true.",
-                        "xcheck_conv": 200,
-                        "xerror": 0.01,
-                        "xniter": 5000,
-                        "xcoordcrys": ".false."
-                    },
-                    "kpts": {
-                        "kpts": "2 2 2",
-                        "shift": "0 0 0"
-                    },
-                    "plot": {
-                        "cut_occ_states": ".true.",
-                        "terminator": ".true.",
-                        "xemax": 70,
-                        "xemin": -15.0,
-                        "xnepoint": 400
-                    },
-                    "plotFalse": {
-                        "gamma_energy(1)": 7,
-                        "gamma_energy(2)": 23,
-                        "gamma_mode": "variable",
-                        "gamma_value(1)": 0.89,
-                        "gamma_value(2)": 2.1
-                    },
-                    "plotTrue": {
-                        "gamma_mode": "constant",
-                        "xgamma": 0.05
-                    }
-                },
-                "XS_controls": {
-                    "element": "Ti",
-                    "edge": "K",
-                    "kden": "-1",
-                    "psp": {
-                        "Ti+": "Ti.fch.upf",
-                        "Co+": "Co.fch.upf"
-                    },
-                    "Rmin": "9.0",
-                    "scf_kden": "-1",
-                    "core_psp_json": "FCH1",
-                    "psp_json": "SSSP_precision"
-                }
-            }
+           cards = {
+               "QE": {
+                   "control": {
+                       "restart_mode": "from_scratch",
+                       "wf_collect": ".true."
+                   },
+                   "electrons": {
+                       "conv_thr": 1e-08,
+                       "mixing_beta": 0.4
+                   },
+                   "system": {
+                       "degauss": 0.002,
+                       "ecutrho": 320,
+                       "ecutwfc": 40,
+                       "nspin": 1,
+                       "occupations": "smearing",
+                       "smearing": "gauss",
+                   },
+               },
+               "XS": {
+                   "cut_occ": {"cut_desmooth": 0.3},
+                   "input_xspectra": {
+                       "outdir": "../",
+                       "prefix": "pwscf",
+                       "xcheck_conv": 200,
+                       "xerror": 0.01, #
+                       "xniter": 5000,
+                       "xcoordcrys": ".false.",
+                   },
+                   "plot": {
+                       "cut_occ_states": ".true.",
+                       "terminator": ".true.",
+                       "xemax": 70,
+                       "xemin": -15.0,
+                       "xnepoint": 400,
+                   },
+                   "psp_json": "SSSP_precision"
+               },
+           }
+
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing he kpoints file from the structure. Should
         be a class with a ``__call__`` method defined. This method should take
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
-    nbands : lightshow.common.nbands._BaseNbandsMethod
-        The method for determining the number of valence bands from the
-        structure. Should be a class with a ``__call__`` method defined. This
-        method should take the structure as input and return an integer: the
-        number of valence bands to use in the calculation.
-
+    psp_directory : os.PathLike, optional
+        The location in which the core-hole potential files for absorption atoms
+        are stored. Each element should have two files, e.g. "Ti.fch.upf" and
+        "Core_Ti.wfc". "Ti.fch.upf" is the core-hole pesuodo potetial file and
+        "Core_Ti.wfc" is the core electron wavefunction. The naming of the
+        pseudopotentials and core electron wavefunction should follow the exact
+        specific structure.If None, checks the environment for ``XS_CHPSP_DIRECTORY``.
     """
 
     @property
@@ -174,11 +130,26 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self,
         cards=XSPECTRA_DEFAULT_CARDS,
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        psp_directory=None,
         defaultConvPerAtom=1e-10,
         edge="K",
         name="XSpectra",
     ):
+
+        # psp information
+        if psp_directory is None:
+            psp_directory = _get_CHPSP_DIRECTORY_from_environ()
+        if psp_directory is None:
+            warn(
+                "psp_directory not provided, and XS_CHPSPS_DIRECTORY not in "
+                "the current environment variables. core-hole pseudo "
+                "potential files will not be written."
+            )
+        self._psp_directory = psp_directory
+
+        # Default cards
         self._cards = cards
+
         # Method for determining the kmesh
         self._kpoints = kpoints
         self._defaultConvPerAtom = defaultConvPerAtom
@@ -240,7 +211,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
                 # print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
                 # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
-                with open(folder / "Core.wfc", "w") as f:
+                element = symbol.split("+")[0]
+                with open(folder / f"Core_{element}.wfc", "w") as f:
                     f.write(pspString.decode("utf-8"))
 
         return psp, ecutwfc, ecutrho
@@ -270,6 +242,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
         -------
         string of the XSpectra input file
         """
+        element = XSparams["element"]
         inp = [
             "&input_xspectra",
             "    calculation = 'xanes_%s'" % mode,
@@ -296,9 +269,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 "    xkvec(3) = %.10f" % xkvec[2],
             ]
 
-        if plot:
-            inp += ["    xonly_plot = .true."]
-
         inp += [
             "/",
             "&plot",
@@ -307,24 +277,15 @@ class XSpectraParameters(MSONable, _BaseParameters):
             "    xemax = " + str(XSparams["plot"]["xemax"]),
             "    terminator = " + XSparams["plot"]["terminator"],
             "    cut_occ_states = " + XSparams["plot"]["cut_occ_states"],
+            # use very small smearing value: 0.01 eV
+            "    gamma_mode = 'constant'",
+            "    xgamma = 0.01 ",
+            "/",
         ]
-        if plot:
-            inp += [
-                "    xgamma = " + str(XSparams["plotTrue"]["xgamma"]),
-                "    gamma_mode = '"
-                + XSparams["plotTrue"]["gamma_mode"]
-                + "'",
-                "/",
-            ]
-        else:
-            # use constant smearing value: 0.89 eV
-            # Table IIA in Campbell and Papp (2001) https://doi.org/10.1006/adnd.2000.0848
-            inp += ["    gamma_mode = 'constant'", "    xgamma = 0.89 ", "/"]
 
         inp += [
             "&pseudos",
-            "    filecore = '../../Core.wfc'",
-            "    r_paw(1) = 1.79",  # hard-coded to Ti w/ core-hole
+            f"    filecore = '../../Core_{element}.wfc'",
             "/",
             "&cut_occ",
             "    cut_desmooth = " + str(XSparams["cut_occ"]["cut_desmooth"]),
@@ -370,11 +331,11 @@ class XSpectraParameters(MSONable, _BaseParameters):
             structure[index_mapping[site]].specie.symbol for site in sites
         ]
         element = species[0]
-        self._cards["XS_controls"]["element"] = element
-        self._cards["XS_controls"]["edge"] = self._edge
-        symTarg = self._cards["XS_controls"]["element"]
+        self._cards["XS"]["element"] = element
+        self._cards["XS"]["input_xspectra"]["edge"] = self._edge
+        symTarg = element
         # Estimate number of kpoints
-        if float(self._cards["XS_controls"]["Rmin"]) >= 9:
+        if len(structure.get_primitive_structure()) != len(structure):
             # use Gamma point for ground state calculations (es.in and gs.in)
             kpoints_scf = [1, 1, 1]
         else:
@@ -391,8 +352,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
         ] = self._defaultConvPerAtom * len(structure)
         # Get the psp data ready for the GS calculations; similar to SCF (neutral) calculations in VASP
         module_path = Path(lightshow.parameters.__path__[0])
-        pspDatabaseRoot = self._cards["XS_controls"]["psp_json"]
-        DatabaseDir = module_path / "pseudos" / "data"
+        pspDatabaseRoot = self._cards["XS"]["psp_json"]
+        DatabaseDir = module_path / "pseudos"
         ecutwfc = self._cards["QE"]["system"]["ecutwfc"]
         ecutrho = self._cards["QE"]["system"]["ecutrho"]
         psp, ecutwfc, ecutrho = self._unpackPsps(
@@ -420,25 +381,45 @@ class XSpectraParameters(MSONable, _BaseParameters):
         )
         gs_in.write_file(path / "gs.in")
         # Get the psp data read for ES calculations
-        pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
-        try:
-            psp2, ecutwfc, ecutrho = self._unpackPsps(
-                ecutwfc,
-                ecutrho,
-                pspDatabaseRoot,
-                DatabaseDir,
-                [self._cards["XS_controls"]["element"]],
-                target_directory,
-                needWfn=True,
-            )
-        except KeyError:
-            # throw a warning here
-            warn("take care of the core-hole psp for absorber by yourself")
-            psp2 = {element: f"{element}.fch.upf"}
-            ecutwfc = 100
-            ecutrho = 800
-        for i in psp2:
-            psp[i + "+"] = psp2[i]
+        # pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
+        # try:
+        #    psp2, ecutwfc, ecutrho = self._unpackPsps(
+        #        ecutwfc,
+        #        ecutrho,
+        #        pspDatabaseRoot,
+        #        DatabaseDir,
+        #        [self._cards["XS_controls"]["element"]],
+        #        target_directory,
+        #        needWfn=True,
+        #    )
+        # except KeyError:
+        # throw a warning here
+        # warn("take care of the core-hole psp for absorber by yourself")
+
+        # give a name to the pseudo potential
+        # set relatively large cutoff as default
+        # psp2 = {element: f"{element}.fch.upf"}
+        # ecutwfc = 100
+        # ecutrho = 800
+        # for i in psp2:
+
+        psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
+        # copy core-hole potential and core wfn to target folder
+        if self._psp_directory is not None:
+            try:
+                shutil.copyfile(
+                    self._psp_directory + f"{element}.fch.upf",
+                    target_directory / f"/{element}.fch.upf",
+                )
+                shutil.copyfile(
+                    self._psp_directory + f"Core_{element}.wfc",
+                    target_directory / f"/Core_{element}.wfc",
+                )
+            except FileNotFoundError:
+                warn(
+                    f"{element}.fch.upf or Core_{element}.wfc not found in {self._psp_directory}"
+                )
+
         # Determine iabs
         psp = OrderedDict(psp)
         for i, j in enumerate(psp.keys()):
@@ -485,7 +466,11 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 with open(xanesfolder / "xanes.in", "w") as f:
                     f.write(
                         self._write_xspectra_in(
-                            mode, iabs, dir1, dir2, self._cards["XS"]
+                            mode,
+                            iabs,
+                            dir1,
+                            dir2,
+                            self._cards["XS"],
                         )
                     )
 
