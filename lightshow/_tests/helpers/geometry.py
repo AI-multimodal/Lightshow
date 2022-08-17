@@ -318,6 +318,8 @@ def consistency_check(
         xx.name for xx in atom_dirs_VASP
     ]
 
+    print(f"Testing path {path}: {len(atom_dirs_FEFF)}")
+
     for path_FEFF, path_VASP, path_XSpectra in zip(
         atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_Xspectra
     ):
