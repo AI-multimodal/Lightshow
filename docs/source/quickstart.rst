@@ -230,11 +230,18 @@ Advanced
 Customize k-points
 ------------------
 
+Due to the number of computational spectroscopy packages that require it, **Lightshow** offers a common way of defining the structure of the k-points grid as a function of the structure itself.
+
+The abstraction is derived from the base class :class:`lightshow.common.kpoints._BaseKpointsMethod`. Such a class requires a ``__call__`` dunder method that takes as input the Pymatgen Structure and returns a tuple containing the k-points density along the x, y and z axes.
+
 .. _customize-n-bands:
 
 Customize the number of bands
 -----------------------------
 
+A similar abstraction to the methods used for determining the k-points grids is used for determining the number of bands required for a calculation. Instead of ``__call__`` returning a tuple, it returns an integer for the number of conduction bands to use in the calculation. Such objects inherit from :class:`lightshow.common.nbands._BaseNbandsMethod`.
 
+.. note::
 
+    As with everything else in **Lightshow**, we provide sensible defaults to the user when using any of the parameter objects. 
 
