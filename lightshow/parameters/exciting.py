@@ -112,6 +112,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         number of valence bands to use in the calculation.
     gqmax : float
         :math:`|G+q|` cutoff of the plane wave expansion
+    name : str
+        The name of the calculation. Should likely always be ``"EXCITING"``.
     """
 
     @property
