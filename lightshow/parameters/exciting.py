@@ -8,6 +8,7 @@ from pymatgen.io.exciting import ExcitingInput
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
+from lightshow import _get_SPECIES_DIRECTORY_from_environ
 
 EXCITING_DEFAULT_GQMAX = 4.0
 
@@ -144,15 +145,18 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._cards = cards
 
         #species directory
-        self._species_directory = species_directory
-        if species_directory is not None:
-            self._cards["structure"]["speciespath"] = self._species_directory
-        else:
+        if species_directory is None:
+            species_directory = _get_SPECIES_DIRECTORY_from_environ()
+        if species_directory is None:
             warn(
-                "Species directory not set, the current/working folder "
-                "will be used as default. Please make sure you copy all "
-                "the corresponding species file into the default folder."
+                "species_directory not set, and SPECIES_DIRECTORY not in "
+                "the current environment variables. The current/working "
+                "folder will be used as default. Please make sure you copy "
+                "all the corresponding species file into the working folder, 
+                e.g. where the input.xml file is generated."
             )
+            species_directory = './'
+        self._species_directory = species_directory
 
         # Update plan
         self._plan = plan

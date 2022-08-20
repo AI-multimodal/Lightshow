@@ -212,8 +212,58 @@ TODO
 
 EXCITING
 --------
+.. note::
 
-TODO
+    See `here <http://exciting.wikidot.com/ref:input>`__ for the EXCITING documentation.
+
+There are three required primary arguments for the ``EXCITINGParameters`` object: the ``cards``, ``species_directory`` and ``edge``. For example, the general ``VASPParameter`` object structure looks something like this:
+
+.. code-block:: python
+
+    exciting_params = EXCITINGParameters(
+        cards={
+                "structure": {"speciespath": "./", "autormt": "true"},
+                "groundstate": {
+                    "xctype": "GGA_PBE",
+                    "nempty": "200",
+                    "rgkmax": "9.0",
+                    "do": "fromscratch",
+                    "gmaxvr": "25",
+                    "lmaxmat": "10",
+                    "lmaxvr": "10",
+                    "lmaxapw": "10",
+                },
+                "xs": {
+                    "xstype": "BSE",
+                    "vkloff": "0.05 0.03 0.13",
+                    "nempty": "150",
+                    "gqmax": 4.0,
+                    "broad": "0.0327069",
+                    "tevout": "true",
+                    "tappinfo": "true",
+                    "energywindow": {"intv": "178.2 180.5", "points": "1000"},
+                    "screening": {"screentype": "full", "nempty": "150"},
+                    "BSE": {
+                        "xas": "true",
+                        "bsetype": "singlet",
+                        "nstlxas": "1 20",
+                        "distribute": "true",
+                        "eecs": "1000",
+                    },
+                    "qpointset": {"qpoint": {"text()": "0.0 0.0 0.0"}},
+                },
+             
+        },
+        species_directory = 'this/is/not/a/directory'
+        edge="K",
+    )
+
+
+``cards`` is a catch-all input which is written directly to the preamble of the ``input.xml`` file. Essentially, any parameter can be provided here, and should be provided as strings (both keys and values). Note that certain cards, while required, are not directly passed using ``cards`` above. An example is the ``species_directory`` discussed below.
+
+``species_directory`` lets the user to specify where the species files are located. Usually, one can find these files in the exciting souce code under the ``species`` directory. If ``species_directory`` is not set, a warning will show up indicating the users should copy the corresponding species files to the working directory, e.g. where the ``input.xml`` file is generated.
+
+``edge`` sets the x-ray absorption edge. See :ref:`feff-reference`.
 
 
 XSpectra
