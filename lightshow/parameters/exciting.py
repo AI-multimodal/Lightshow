@@ -1,5 +1,6 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.exciting import ExcitingInput
@@ -49,7 +50,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     for an Exciting calculation. This class is a lightweight wrapper for the
     ``ExcitingInput``, containing some extra information and methods used for
     writing the appropriate input files. Like most Pymatgen objects, the
-    class is serializable via e.g. ``feff_parameters.as_dict()``. !! TODO
+    class is serializable via e.g. ``exciting_parameters.as_dict()``. 
 
     Parameters
     ----------
@@ -95,8 +96,10 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             }
     edge : str
         The XAS edge for the calculation
-    species_path : str
-        A string contains the absolute path for species files.
+    species_directory : str
+        A string contains the absolute path for species files. Usually, this 
+        folder comes with the exciting package, which can be obtained at 
+        http://exciting.wikidot.com/
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing the kpoints file from the structure. Should
         be a class with a ``__call__`` method defined. This method should take
@@ -118,7 +121,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards=EXCITING_DEFAULT_CARDS,
-        species_path="./",
+        species_directory = None,
         plan=[
             "xsgeneigvec",
             "writepmatxs",
@@ -137,9 +140,18 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     ):
         # Default cards
         self._cards = cards
-        # Update speciespath
-        self._species_path = species_path
-        self._cards["structure"]["speciespath"] = self._species_path
+
+        #species directory
+        self._species_directory = species_directory
+        if species_directory is not None:
+            self._cards["structure"]["speciespath"] = self._species_directory
+        else:
+            warn(
+                "Species directory not set, the current/working folder "
+                "will be used as default. Please make sure you copy all "
+                "the corresponding species file into the default folder."
+            )
+
         # Update plan
         self._plan = plan
 
@@ -159,10 +171,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._name = name
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and sites. In the
-        case of FEFF, if sites is None (usually indicating a global calculation
-        such as a neutral potential electronic relaxation method in VASP), then
-        write does nothing. # TODO
+        """Writes the input files for the provided structures and sites. 
 
         Parameters
         ----------
