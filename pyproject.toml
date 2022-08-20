@@ -1,23 +1,51 @@
-[tool.black]
-line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | versioneer.py
-  | lightshow/_version.py
-  | docs/source/conf.py
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
 
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
-)/
-'''
+[project]
+name = "lightshow"
+description = "A one-stop-shop for writing computational spectroscopy input files"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {"file" = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "numpy",
+    "tqdm",
+    "monty",
+    "pymatgen",
+    "ase"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "codecov",
+    "coverage",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "sphinx",
+    "twine",
+    "pre-commit",
+    "black",
+    "nbstripout",
+    "ipython",
+    "matplotlib",
+    "numpydoc",
+    "sphinx-copybutton",
+    "sphinx_rtd_theme"
+]
+
+[tool.setuptools]
+packages = ["lightshow"]
+
+# [tool.setuptools.packages.find]
+# where = ["lightshow"]
+# include = ["lightshow/*"]
+# exclude = ["lightshow/_tests/*"]
+
+# [project.scripts]
+# my-script = "my_package.module:function"
