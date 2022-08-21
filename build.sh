@@ -24,22 +24,10 @@ reverse_replace_version_in_init () {
 }
 
 build_docs () {
-
-    if [[ "${GITHUB_ACTION_IS_RUNNING}" = 1 ]]; then
-        flit install --deps=production --extras=doc
-    fi
-
     make -C docs/ html
-
     if [[ -z "${GITHUB_ACTION_IS_RUNNING}" ]]; then
         open docs/build/html/index.html
     fi
-    
-}
-
-install_flit_dunamai () {
-    pip install flit~=3.7
-    pip install dunamai~=1.12
 }
 
 echo "Running build script with CLI args:" "$@"
@@ -52,21 +40,20 @@ else
     echo "GitHub Action is not running - assuming local behavior"
 fi
 
-# Replace the version string placeholder in the __init__ with the real thing
-replace_version_in_init
-
 # Iterate over all arguments in order
 for var in "$@"
 do
     echo "Found" "$var"
     if [ "$var" = "docs" ]; then
+        replace_version_in_init
         build_docs
+        reverse_replace_version_in_init
     elif [ "$var" = "test" ]; then
         flit install --deps=production --extras=test
     # elif [ "$var" = "publish" ]; then
+    #     replace_version_in_init
     #     flit_publish
+    #     reverse_replace_version_in_init
     fi
 done
 
-# Put the version string placeholder back
-reverse_replace_version_in_init
