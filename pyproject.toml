@@ -56,18 +56,19 @@ test = [
     "pytest",
     "pytest-cov",
     "black",
-    "nbstripout"
+    "nbstripout",
+    "pre-commit",
 ]
 doc = [
     "sphinx",
     "numpydoc",
     "sphinx-copybutton",
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
+    "ipython",
 ]
 dev = [
-    "pre-commit",
-    "ipython",
-    "matplotlib"
+    "matplotlib",
+    "jupyterlab"
 ]
 
 [tool.setuptools]
