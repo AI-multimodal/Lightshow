@@ -1,0 +1,22 @@
+name: Check version sed line exist in __init__
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Check lines exist
+      shell: bash -l {0}
+      run: |
+        grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
