@@ -41,17 +41,27 @@ install_flit_dunamai () {
     pip install dunamai~=1.12
 }
 
-build_flit_dev () {
+# Builds the docs from scratch
+build_CI_docs () {
     install_flit_dunamai
     replace_version_in_init
-    flit install --deps=develop
+    flit install --deps=production --extras=doc
     reverse_replace_version_in_init
+    build_docs
+}
+
+build_CI_tests () {
+    install_flit_dunamai
+    replace_version_in_init
+    flit install --deps=production --extras=test
+    reverse_replace_version_in_init
+    build_docs
 }
 
 flit_publish () {
     install_flit_dunamai
     replace_version_in_init
-    flit publish
+    flit publish --deps=production
     reverse_replace_version_in_init
 }
 
@@ -60,10 +70,10 @@ for var in "$@"
 do
     echo "Found" "$var"
     if [ "$var" = "docs" ]; then
-        build_docs
-    elif [ "$var" = "install-dev" ]; then
-        build_flit_dev
-    elif [ "$var" = "publish" ]; then
-        flit_publish
+        build_CI_docs
+    elif [ "$var" = "test" ]; then
+        build_CI_tests
+    # elif [ "$var" = "publish" ]; then
+    #     flit_publish
     fi
 done
