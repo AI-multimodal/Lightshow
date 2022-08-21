@@ -1,12 +1,10 @@
-name: Build and deploy
+name: CI/deploy
 
 on:
-  push:
-    branches:
-      - 'deploy'
   pull_request:
-    branches:
-      - 'deploy'
+  push:
+    branches: ['deploy', 'master']
+
 
 jobs:
 
@@ -110,18 +108,18 @@ jobs:
     #https://coderefinery.github.io/documentation/gh_workflow/
     # - name: Deploy
     #   uses: peaceiris/actions-gh-pages@v3
-    #   if: ${{ github.event_name == 'push' }}
+    #   if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.ref == 'refs/heads/deploy'}}
     #   with:
     #     publish_branch: gh-pages
     #     github_token: ${{ secrets.GITHUB_TOKEN }}
     #     publish_dir: _build/
     #     force_orphan: true
 
-  build:
+  publish:
     name: Publish to PyPi
     needs: [tests, black, flake8_py3, check_semantic_version_placeholder, docs]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.ref == 'refs/heads/deploy'}}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
