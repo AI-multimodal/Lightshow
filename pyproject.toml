@@ -1,15 +1,42 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+# requires = ["setuptools", "setuptools-scm"]
+# build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
 
 [project]
 name = "lightshow"
+authors = [
+    {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
+    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"}
+    # "Deyu Lu <dlu@bnl.gov>",
+    # "Benedikt Maurer <>",
+    # "Fabien Peschel <>",
+    # "Eli Stavitski <>",
+    # "Xiaohui Qu <>",
+    # "John T. Vinson <>",
+    # "Christian Vorwerk <>"
+]
+# maintainers = [
+#     "Matthew R. Carbone <mcarbone@bnl.gov>",
+#     "Fanchen Meng <fcmeng1@bnl.gov>"
+# ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.rst"
 requires-python = ">=3.7"
 license = {"file" = "LICENSE"}
 classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
 ]
 dependencies = [
     "numpy",
@@ -20,27 +47,49 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+
 [project.optional-dependencies]
-dev = [
+test = [
     "codecov",
     "coverage",
     "flake8",
     "pytest",
     "pytest-cov",
-    "sphinx",
-    "twine",
-    "pre-commit",
     "black",
-    "nbstripout",
-    "ipython",
-    "matplotlib",
+    "nbstripout"
+]
+doc = [
+    "sphinx",
     "numpydoc",
     "sphinx-copybutton",
     "sphinx_rtd_theme"
 ]
+dev = [
+    "pre-commit",
+    "ipython",
+    "matplotlib"
+]
 
 [tool.setuptools]
 packages = ["lightshow"]
+
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+exclude = '''
+/(
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | docs/source/conf.py
+)/
+'''
 
 # [tool.setuptools.packages.find]
 # where = ["lightshow"]
