@@ -207,8 +207,27 @@ The directory that ``potcar_directory`` points to should contain files of the fo
 OCEAN
 -----
 
-TODO
+.. note::
 
+    See `here <https://feff.phys.washington.edu/OCEAN/ocean-documentation.html>`__ for the OCEAN documentation.
+
+There are three required primary arguments for the ``OCEANParameters`` object: the cards and edge. For example, the general ``OCEANParameter`` object structure looks something like this:
+
+.. code-block:: python
+
+    ocean_params = OCEANParameters(
+        cards={
+            'dft': 'qe', 
+            'ecut': '-1', 
+            'opf.program': 'hamann', 
+            'para_prefix': 'mpirun -np 24'
+        }
+        edge="K",
+    )
+
+``cards`` is a catch-all input which is written directly to the preamble of the ``ocean.in`` file. Essentially, any parameter can be provided here, and should be provided as strings (both keys and values). Here, we provided a minimal default parameters to run OCEAN the latest versions in which an installation of the pesudo potential database is required. The users are not resticted to this version of OCEAN, but they need to take care of the associated files, such as pseudo potentials, by themselves. ``dft`` parameter determines the code to run the DFT calcualtion. It can be either ``qe`` (for Quantum Espresso)  or ``abinit``. We set ``qe`` as the default, but again this is not restricted and users can switch to ``abinit`` if they prefer. Similar case also applies to other parameters, such as ``para_prefix``, which is highly dependent on the users' computing resources.
+
+``edge`` sets the x-ray absorption edge. See :ref:`feff-reference`. If the input value for ``edge`` is not supported by OCEAN, LightShow will raise an ValueError.
 
 EXCITING
 --------
