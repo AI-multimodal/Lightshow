@@ -1,6 +1,4 @@
 [build-system]
-# requires = ["setuptools", "setuptools-scm"]
-# build-backend = "setuptools.build_meta"
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
@@ -8,19 +6,19 @@ build-backend = "flit_core.buildapi"
 name = "lightshow"
 authors = [
     {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
-    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"}
-    # "Deyu Lu <dlu@bnl.gov>",
-    # "Benedikt Maurer <>",
-    # "Fabien Peschel <>",
-    # "Eli Stavitski <>",
-    # "Xiaohui Qu <>",
-    # "John T. Vinson <>",
-    # "Christian Vorwerk <>"
+    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"},
+    {"name" = "Deyu Lu", "email" = "dlu@bnl.gov"},
+    {"name" = "Benedikt Maurer"},
+    {"name" = "Fabien Peschel"},
+    {"name" = "Eli Stavitski"},
+    {"name" = "Xiaohui Qu"},
+    {"name" = "John T. Vinson"},
+    {"name" = "Christian Vorwerk"}
 ]
-# maintainers = [
-#     "Matthew R. Carbone <mcarbone@bnl.gov>",
-#     "Fanchen Meng <fcmeng1@bnl.gov>"
-# ]
+maintainers = [
+    {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
+    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"}
+]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.rst"
 requires-python = ">=3.7"
@@ -45,6 +43,8 @@ dependencies = [
     "pymatgen",
     "ase"
 ]
+
+# Dynamic version reads __version__ directly from my_package.__init__
 dynamic = ["version"]
 
 
@@ -90,11 +90,3 @@ exclude = '''
   | docs/source/conf.py
 )/
 '''
-
-# [tool.setuptools.packages.find]
-# where = ["lightshow"]
-# include = ["lightshow/*"]
-# exclude = ["lightshow/_tests/*"]
-
-# [project.scripts]
-# my-script = "my_package.module:function"

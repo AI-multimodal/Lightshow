@@ -1,9 +1,12 @@
 from os import environ
 
 
-# from lightshow._version import __version__  # noqa
-
-__version__ = "0.1"
+# DO NOT CHANGE BELOW ---------------------------------------------------------
+# This is replaced at build time automatically during deployment and
+# installation. Replacing anything will mess that up and crash the entire
+# build.
+__version__ = ...  # semantic-version-placeholder
+# DO NOT CHANGE ABOVE ---------------------------------------------------------
 
 
 def _get_API_key_from_environ():
