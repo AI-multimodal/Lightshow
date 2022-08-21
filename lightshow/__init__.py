@@ -5,7 +5,7 @@ from os import environ
 # This is replaced at build time automatically during deployment and
 # installation. Replacing anything will mess that up and crash the entire
 # build.
-__version__ = ...  # semantic-version-placeholder
+__version__ = ...  # semantic-version-placeholde
 # DO NOT CHANGE ABOVE ---------------------------------------------------------
 
 
