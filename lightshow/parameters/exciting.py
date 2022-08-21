@@ -51,7 +51,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     for an Exciting calculation. This class is a lightweight wrapper for the
     ``ExcitingInput``, containing some extra information and methods used for
     writing the appropriate input files. Like most Pymatgen objects, the
-    class is serializable via e.g. ``exciting_parameters.as_dict()``. 
+    class is serializable via e.g. ``exciting_parameters.as_dict()``.
 
     Parameters
     ----------
@@ -98,8 +98,8 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     edge : str
         The XAS edge for the calculation
     species_directory : str
-        A string contains the absolute path for species files. Usually, this 
-        folder comes with the exciting package, which can be obtained at 
+        A string contains the absolute path for species files. Usually, this
+        folder comes with the exciting package, which can be obtained at
         http://exciting.wikidot.com/
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing the kpoints file from the structure. Should
@@ -124,7 +124,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards=EXCITING_DEFAULT_CARDS,
-        species_directory = None,
+        species_directory=None,
         plan=[
             "xsgeneigvec",
             "writepmatxs",
@@ -144,7 +144,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         # Default cards
         self._cards = cards
 
-        #species directory
+        # species directory
         if species_directory is None:
             species_directory = _get_SPECIES_DIRECTORY_from_environ()
         if species_directory is None:
@@ -152,10 +152,10 @@ class EXCITINGParameters(MSONable, _BaseParameters):
                 "species_directory not set, and SPECIES_DIRECTORY not in "
                 "the current environment variables. The current/working "
                 "folder will be used as default. Please make sure you copy "
-                "all the corresponding species file into the working folder, 
-                e.g. where the input.xml file is generated."
+                "all the corresponding species file into the working folder, "
+                "e.g. where the input.xml file is generated."
             )
-            species_directory = './'
+            species_directory = "./"
         self._species_directory = species_directory
 
         # Update plan
@@ -177,7 +177,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._name = name
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structures and sites. 
+        """Writes the input files for the provided structures and sites.
 
         Parameters
         ----------
