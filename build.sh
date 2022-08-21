@@ -35,8 +35,8 @@ reverse_replace_version_in_init () {
 }
 
 build_flit_dev () {
-    pip install flit
-    pip install dunamai
+    pip install flit~=3.7
+    pip install dunamai~=1.12
     replace_version_in_init
     flit install --deps=develop
     reverse_replace_version_in_init

@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - 'master'
+      - 'deploy'
   pull_request:
     branches:
       - 'master'
+      - 'deploy'
 
 jobs:
   build:
@@ -43,3 +45,13 @@ jobs:
     - name: Sphinx build
       run: |
         make -C docs/ html
+
+    # https://coderefinery.github.io/documentation/gh_workflow/
+    # - name: Deploy
+    #   uses: peaceiris/actions-gh-pages@v3
+    #   if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/depoy' }}
+    #   with:
+    #     publish_branch: gh-pages
+    #     github_token: ${{ secrets.GITHUB_TOKEN }}
+    #     publish_dir: _build/
+    #     force_orphan: true
