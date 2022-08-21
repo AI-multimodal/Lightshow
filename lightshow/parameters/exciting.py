@@ -157,7 +157,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             )
             species_directory = "./"
         self._species_directory = species_directory
-
+        self._cards["structure"]["speciespath"] = self._species_directory
         # Update plan
         self._plan = plan
 
