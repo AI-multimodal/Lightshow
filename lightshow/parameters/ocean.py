@@ -22,7 +22,7 @@ Bohr = 0.5291772105638411
 
 class OCEANParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
-    for an OCEAN calculation. !! TODO
+    for an OCEAN calculation.
 
     Parameters
     ----------
@@ -41,6 +41,7 @@ class OCEANParameters(MSONable, _BaseParameters):
                     "opf.program" : "hamann",
                     "para_prefix" : "mpirun -np 24",
             }
+
         The detailed description of the OCEAN parameters can be find at
         its official website. If the user wants to change some parameters,
         they can just add a key-value pair to the cards.
@@ -69,12 +70,16 @@ class OCEANParameters(MSONable, _BaseParameters):
         to determine the ``diemac``. If not provided and the strucutre is from
         pymatgen, the code will use the the data (either band gap or diel)
         stored in the database to get ``diemac``; if not provided and the
-        structure is from a file, the default value of `diemac` in the cards
-        will be used.
+        structure is from a file, the default value 10000 is used for  `diemac`.
     edge: str, optional
-        The edge of the XAS to run in the calculation.
+        The edge of the XAS to run in the calculation. The default is K.
     name : str
         The name of the calculation. Should likely always be ``"OCEAN"``.
+
+    Raises
+    ------
+    ValueError
+        If an invalid ``edge`` argument is provided.
     """
 
     @property
@@ -157,8 +162,22 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     @staticmethod
     def _oceanKptSampling(cell, kpt):
-        # John's method for getting the explicit screen.nkpt
-        # Should normalize each cell dim by Bohr, or we can just do it the once for volume
+        """Method for getting the explicit ``screen.nkpt``. ``screen.nkpt`` accepts a
+        single value as input, which is similar to the idea of effecitve radius and
+        is implemented in the latest version of OCEAN. If a sinlge value is provided,
+        the code will convert it back to the original kmesh, something like ``3 3 2``.
+
+        Parameters
+        ----------
+        cell : (3, 3) numpy array
+            Lattice parameter in the matrix form
+        kpt : float
+
+        Returns
+        -------
+        str
+            a string consisting the kmesh values along three dimentions
+        """
         v = abs(np.dot(np.cross(cell[0], cell[1]), cell[2])) / Bohr
         b1 = 2 * np.pi * np.linalg.norm(np.cross(cell[1], cell[2])) / v
         b2 = 2 * np.pi * np.linalg.norm(np.cross(cell[0], cell[2])) / v
@@ -172,7 +191,21 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     @staticmethod
     def _write_ocean_in(path, structure, input_data: dict):
+        """Methods for writing the OCEAN input file, e.g. ``ocean.in``.
+        The lattice structure and element type are handled here. The user
+        provided input paramters will also be managed.
 
+        Parameters
+        ----------
+        path : os.PathLike
+            the target file where all the input paramters will be written.
+        structure : pymatgen.core.structure.Structure
+            The Pymatgen structure.
+        input_data : dict
+            A dictionary containing all the user defined parameters for
+            OCEAN input file.
+
+        """
         fd = open(path, "w")
 
         input_data_str = []
@@ -225,10 +258,9 @@ class OCEANParameters(MSONable, _BaseParameters):
         )
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and sites. In the
-        case of FEFF, if sites is None (usually indicating a global calculation
-        such as a neutral potential electronic relaxation method in VASP), then
-        write does nothing. # TODO
+        """Writes the input files for the provided structure and sites. Some
+        user defined parameters will also be handled during this stage, such as
+        ``diel`` or ``bandgap``.
 
         Parameters
         ----------
@@ -244,7 +276,7 @@ class OCEANParameters(MSONable, _BaseParameters):
         -------
         dict
             A dictionary containing the status and errors key. In the case of
-            EXCITING, there are no possible errors at this stage other than
+            OCEAN, there are no possible errors at this stage other than
             critical ones that would cause program termination, so the returned
             object is always ``{"pass": True, "errors": dict()}``.
         """
