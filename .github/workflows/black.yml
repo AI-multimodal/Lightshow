@@ -9,7 +9,8 @@ on:
       - 'master'
 
 jobs:
-  linter_name:
+  
+  black:
     name: runner / black formatter
     runs-on: ubuntu-latest
     steps:

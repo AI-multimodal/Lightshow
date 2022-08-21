@@ -4,8 +4,6 @@ exclude =
     __pycache__,
     build,
     dist,
-    versioneer.py,
-    lightshow/_version.py,
     lightshow/defaults.py,
     docs/source/conf.py
 max-line-length = 80
