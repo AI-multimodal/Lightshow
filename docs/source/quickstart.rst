@@ -261,7 +261,7 @@ There are three required primary arguments for the ``EXCITINGParameters`` object
 
 ``cards`` is a catch-all input which is written directly to the preamble of the ``input.xml`` file. Essentially, any parameter can be provided here, and should be provided as strings (both keys and values). Note that certain cards, while required, are not directly passed using ``cards`` above. An example is the ``species_directory`` discussed below.
 
-``species_directory`` lets the user to specify where the species files are located. Usually, one can find these files in the exciting souce code under the ``species`` directory. If ``species_directory`` is not set, a warning will show up indicating the users should copy the corresponding species files to the working directory, e.g. where the ``input.xml`` file is generated.
+``species_directory`` lets the user to specify where the species files are located. The species files, which are in xml format, contain the lapw and lo information for each element. Usually, one can find these files in the exciting souce code under the ``species`` directory. The detailed description of the species files can be found `here <http://exciting.wikidot.com/ref:species>`. If ``species_directory`` is not set, a warning will show up indicating the users should copy the corresponding species files to the working directory, e.g. where the ``input.xml`` file is generated.
 
 ``edge`` sets the x-ray absorption edge. See :ref:`feff-reference`.
 
