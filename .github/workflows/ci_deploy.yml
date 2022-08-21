@@ -8,6 +8,8 @@ on:
 
 env:
   GITHUB_ACTION_IS_RUNNING: 1
+  FLIT_VERSION: "~=3.7"
+  DUNAMAI_VERSION: "~=1.12"
 
 jobs:
 
@@ -25,9 +27,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install testing dependencies
+    - name: Install dependencies
       run: |
-        bash build.sh test
+        pip install flit"$FLIT_VERSION"
+        pip install dunamai"$DUNAMAI_VERSION"
+        flit install --deps=production --extras=test
     - name: Run tests
       run: |
         pytest -v --cov --cov-report xml lightshow/_tests
@@ -74,6 +78,8 @@ jobs:
       run: |
         grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
 
+  # TODO: docs builds more than it needs to
+  # Refactor the flit install line to just install the --extras=doc
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -82,7 +88,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install dependencies and build the docs
+    - name: Install dependencies
+      run: |
+        pip install flit"$FLIT_VERSION"
+        pip install dunamai"$DUNAMAI_VERSION"
+        flit install --deps=production --extras=doc
+    - name: Build the docs
       run: |
         bash build.sh docs
 
@@ -109,7 +120,7 @@ jobs:
         python-version: 3.9
     - name: Build and publish
       run: | # CHANGE THIS TO USE `bash build.sh publish` LATER!
-        bash build.sh test
+        echo "PLACEHOLDER!"
       # env:
       #   FLIT_USERNAME: __token__
       #   FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
