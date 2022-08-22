@@ -41,8 +41,21 @@ def _get_CHPSP_DIRECTORY_from_environ():
 
     return environ.get("XS_CHPSP_DIRECTORY", None)
 
+
+def _get_PSP_DIRECTORY_from_environ():
+    """Checks for an environment variable XS_PSP_DIRECTORY. If does not
+    exist, returns None.
+
+    Returns
+    -------
+    str
+    """
+
+    return environ.get("XS_PSP_DIRECTORY", None)
+
+
 def _get_SPECIES_DIRECTORY_from_environ():
-    """Checks for an environment varialble SPECIES_DIRECRORY. If does not 
+    """Checks for an environment varialble SPECIES_DIRECRORY. If does not
     exist, returns None.
 
     Returns

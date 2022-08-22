@@ -12,9 +12,10 @@ from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
-from lightshow import _get_CHPSP_DIRECTORY_from_environ
-import lightshow
-
+from lightshow import (
+    _get_CHPSP_DIRECTORY_from_environ,
+    _get_PSP_DIRECTORY_from_environ,
+)
 
 XSPECTRA_DEFAULT_CARDS = {
     "QE": {
@@ -47,7 +48,8 @@ XSPECTRA_DEFAULT_CARDS = {
             "xemin": -15.0,
             "xnepoint": 400,
         },
-        "psp_json": "SSSP_precision",
+        "psp_cutoff_table": None,
+        "psp_json": None,
     },
 }
 
@@ -130,25 +132,39 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self,
         cards=XSPECTRA_DEFAULT_CARDS,
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        chpsp_directory=None,
         psp_directory=None,
         defaultConvPerAtom=1e-10,
         edge="K",
         name="XSpectra",
     ):
+        # Default cards
+        self._cards = cards
 
         # psp information
-        if psp_directory is None:
-            psp_directory = _get_CHPSP_DIRECTORY_from_environ()
-        if psp_directory is None:
+        if chpsp_directory is None:
+            chpsp_directory = _get_CHPSP_DIRECTORY_from_environ()
+        if chpsp_directory is None:
             warn(
-                "psp_directory not provided, and XS_CHPSPS_DIRECTORY not in "
+                "chpsp_directory not provided, and XS_CHPSP_DIRECTORY not in "
                 "the current environment variables. core-hole pseudo "
                 "potential files will not be written."
             )
-        self._psp_directory = psp_directory
+        self._chpsp_directory = chpsp_directory
 
-        # Default cards
-        self._cards = cards
+        if psp_directory is None:
+            psp_directory = _get_PSP_DIRECTORY_from_environ()
+
+        if self._cards["XS"]["psp_cutoff_table"] is None:
+            psp_directory = None
+
+        if psp_directory is None:
+            warn(
+                "psp_directory not provided XS_PSP_DIRECTORY not in the current "
+                "environment variables OR cards['XS']['psp_cutoff_table'] not provided. "
+                "neutral pseudo potential files will not be written."
+            )
+        self._psp_directory = psp_directory
 
         # Method for determining the kmesh
         self._kpoints = kpoints
@@ -160,15 +176,15 @@ class XSpectraParameters(MSONable, _BaseParameters):
     def _unpackPsps(
         ecutwfc,
         ecutrho,
-        pspDatabaseRoot,
+        cutofftable,
+        jsondatabese,
         DatabaseDir,
         symbols,
         folder,
         needWfn=False,
     ):
         psp = {}
-        pspDatabaseName = pspDatabaseRoot + ".json"
-        sssp_fn = os.path.join(DatabaseDir, pspDatabaseName)
+        sssp_fn = os.path.join(DatabaseDir, cutofftable)
         with open(sssp_fn, "r") as pspDatabaseFile:
             pspDatabase = json.load(pspDatabaseFile)
         minSymbols = set(symbols)
@@ -180,13 +196,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 ecutwfc = pspDatabase[symbol]["cutoff"]
             if ecutrho < pspDatabase[symbol]["rho_cutoff"]:
                 ecutrho = pspDatabase[symbol]["rho_cutoff"]
-        #        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
-        #            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
-        #        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
-        #            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
 
-        pspDatabaseName = pspDatabaseRoot + "_pseudos.json"
-        sssp_fn = Path(DatabaseDir) / Path(pspDatabaseName)
+        sssp_fn = os.path.join(DatabaseDir, jsondatabese)
         with open(sssp_fn, "r") as p:
             pspJSON = json.load(p)
         for symbol in minSymbols:
@@ -196,24 +207,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
             # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
             with open(folder / fileName, "w") as f:
                 f.write(pspString.decode("utf-8"))
-
-        if needWfn:
-            for symbol in minSymbols:
-                if "wfc" not in pspDatabase[symbol]:
-                    print(
-                        "WFC not stored corectly in "
-                        + pspDatabaseRoot
-                        + " for element "
-                        + symbol
-                    )
-                    return False
-                fileName = pspDatabase[symbol]["wfc"]
-                pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
-                # print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
-                # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
-                element = symbol.split("+")[0]
-                with open(folder / f"Core_{element}.wfc", "w") as f:
-                    f.write(pspString.decode("utf-8"))
 
         return psp, ecutwfc, ecutrho
 
@@ -351,19 +344,54 @@ class XSpectraParameters(MSONable, _BaseParameters):
             "conv_thr"
         ] = self._defaultConvPerAtom * len(structure)
         # Get the psp data ready for the GS calculations; similar to SCF (neutral) calculations in VASP
-        module_path = Path(lightshow.parameters.__path__[0])
-        pspDatabaseRoot = self._cards["XS"]["psp_json"]
-        DatabaseDir = module_path / "pseudos"
+        # need to treat three different cases here
+
         ecutwfc = self._cards["QE"]["system"]["ecutwfc"]
         ecutrho = self._cards["QE"]["system"]["ecutrho"]
-        psp, ecutwfc, ecutrho = self._unpackPsps(
-            ecutwfc,
-            ecutrho,
-            pspDatabaseRoot,
-            DatabaseDir,
-            symbols,
-            target_directory,
-        )
+
+        if self._psp_directory is not None:
+            try:
+                psp_dict = json.load(
+                    open(
+                        self._psp_directory
+                        + "/"
+                        + self._cards["XS"]["psp_cutoff_table"]
+                    )
+                )
+                psp = dict()
+                for symbol in symbols:
+                    psp_filename = psp_dict[symbol]["filename"]
+                    psp[symbol] = psp_filename
+                    shutil.copyfile(
+                        self._psp_directory + "/" + psp_filename,
+                        target_directory / psp_filename,
+                    )
+                    if psp_dict[symbol]["cutoff_wfc"] > ecutwfc:
+                        ecutwfc = psp_dict[symbol]["cutoff_wfc"]
+                    if psp_dict[symbol]["cutoff_rho"] > ecutrho:
+                        ecutrho = psp_dict[symbol]["cutoff_rho"]
+            except FileNotFoundError:
+                try:
+                    cutofftable = self._cards["XS"]["psp_cutoff_table"]
+                    jsondatabase = self._cards["XS"]["psp_json"]
+                    DatabaseDir = self._psp_directory
+                    psp, ecutwfc, ecutrho = self._unpackPsps(
+                        ecutwfc,
+                        ecutrho,
+                        cutofftable,
+                        jsondatabase,
+                        DatabaseDir,
+                        symbols,
+                        target_directory,
+                    )
+                except FileNotFoundError:
+                    warn(
+                        f"Some pseudo potential files are not present in f{self._psp_directory}"
+                    )
+                    self._psp_directory = None
+
+        if self._psp_directory is None:
+            psp = {symbol: symbol + ".upf" for symbol in symbols}
 
         self._cards["QE"]["system"]["ecutwfc"] = ecutwfc
         self._cards["QE"]["system"]["ecutrho"] = ecutrho
@@ -405,19 +433,19 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
         # copy core-hole potential and core wfn to target folder
-        if self._psp_directory is not None:
+        if self._chpsp_directory is not None:
             try:
                 shutil.copyfile(
-                    self._psp_directory + f"{element}.fch.upf",
+                    self._chpsp_directory + f"{element}.fch.upf",
                     target_directory / f"/{element}.fch.upf",
                 )
                 shutil.copyfile(
-                    self._psp_directory + f"Core_{element}.wfc",
+                    self._chpsp_directory + f"Core_{element}.wfc",
                     target_directory / f"/Core_{element}.wfc",
                 )
             except FileNotFoundError:
                 warn(
-                    f"{element}.fch.upf or Core_{element}.wfc not found in {self._psp_directory}"
+                    f"{element}.fch.upf or Core_{element}.wfc not found in {self._chpsp_directory}"
                 )
 
         # Determine iabs
