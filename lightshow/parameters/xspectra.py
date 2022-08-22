@@ -55,7 +55,7 @@ XSPECTRA_DEFAULT_CARDS = {
 
 class XSpectraParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
-    for an XSpectra calculation. !! TODO
+    for an XSpectra calculation.
 
     Parameters
     ----------
@@ -66,44 +66,41 @@ class XSpectraParameters(MSONable, _BaseParameters):
         .. code-block:: python
 
            cards = {
-               "QE": {
-                   "control": {
-                       "restart_mode": "from_scratch",
-                       "wf_collect": ".true."
-                   },
-                   "electrons": {
-                       "conv_thr": 1e-08,
-                       "mixing_beta": 0.4
-                   },
-                   "system": {
-                       "degauss": 0.002,
-                       "ecutrho": 320,
-                       "ecutwfc": 40,
-                       "nspin": 1,
-                       "occupations": "smearing",
-                       "smearing": "gauss",
-                   },
-               },
-               "XS": {
-                   "cut_occ": {"cut_desmooth": 0.3},
-                   "input_xspectra": {
-                       "outdir": "../",
-                       "prefix": "pwscf",
-                       "xcheck_conv": 200,
-                       "xerror": 0.01, #
-                       "xniter": 5000,
-                       "xcoordcrys": ".false.",
-                   },
-                   "plot": {
-                       "cut_occ_states": ".true.",
-                       "terminator": ".true.",
-                       "xemax": 70,
-                       "xemin": -15.0,
-                       "xnepoint": 400,
-                   },
-                   "psp_json": "SSSP_precision"
-               },
-           }
+                    "QE": {
+                        "control": {"restart_mode": "from_scratch", "wf_collect": ".true."},
+                        "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
+                        "system": {
+                            "degauss": 0.002,
+                            "ecutrho": 320,
+                            "ecutwfc": 40,
+                            "nspin": 1,
+                            "occupations": "smearing",
+                            "smearing": "gauss",
+                        },
+                    },
+                    "XS": {
+                        "cut_occ": {"cut_desmooth": 0.3},
+                        "input_xspectra": {
+                            "outdir": "../",
+                            "prefix": "pwscf",
+                            "xcheck_conv": 200,
+                            "xerror": 0.01,  #
+                            "xniter": 5000,
+                            "xcoordcrys": ".false.",
+                        },
+                        "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
+                        "plot": {
+                            "cut_occ_states": ".true.",
+                            "terminator": ".true.",
+                            "xemax": 70,
+                            "xemin": -15.0,
+                            "xnepoint": 400,
+                        },
+                        "psp_cutoff_table": None,
+                        "psp_json": None,
+
+                    },
+            }
 
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing he kpoints file from the structure. Should
@@ -111,12 +108,19 @@ class XSpectraParameters(MSONable, _BaseParameters):
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
     psp_directory : os.PathLike, optional
+        The location in which the neutral potential files for absorption atoms
+        are stored. In the psp_directory, a cutoff table should also be provided.
+        The cutoff table should have similar structure as the one for SSSP database.
+        The name of the cutoff table needs to be given in
+        cards['XS']['psp_cutoff_table']. If None, checks the  environment for
+        ``XS_PSP_DIRECTORY``.
+    chpsp_directory : os.PathLike, optional
         The location in which the core-hole potential files for absorption atoms
         are stored. Each element should have two files, e.g. "Ti.fch.upf" and
         "Core_Ti.wfc". "Ti.fch.upf" is the core-hole pesuodo potetial file and
         "Core_Ti.wfc" is the core electron wavefunction. The naming of the
         pseudopotentials and core electron wavefunction should follow the exact
-        specific structure.If None, checks the environment for ``XS_CHPSP_DIRECTORY``.
+        specific structure. If None, checks the environment for ``XS_CHPSP_DIRECTORY``.
     """
 
     @property
@@ -188,8 +192,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
             pspDatabase = json.load(pspDatabaseFile)
         minSymbols = set(symbols)
         for symbol in minSymbols:
-            # print(symbol)
-            # print(pspDatabase[symbol]["filename"])
             psp[symbol] = pspDatabase[symbol]["filename"]
             if ecutwfc < pspDatabase[symbol]["cutoff"]:
                 ecutwfc = pspDatabase[symbol]["cutoff"]
@@ -217,18 +219,17 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         Parameters
         ----------
-        mode : str, mandatory
+        mode : str
             "dipole" or "quadrupole"
-        iabs : int, mandatory
+        iabs : int
             the index of the absorbing element in scf calculation
-        dirs : str, mandatory
-            TODO
-        xkvec : tuple, mandatory
-            TODO
-        XSparams : dict, mandatory
+        dirs : list
+            description of the polarization direction, e.g. [1,0,0]
+            corresponds to the x direction
+        xkvec : list
+            description of the k vectors for quadrupole calculation
+        XSparams : dict
             paramers parsed to XSpectra calculation
-        plot : boolen, optional
-            controls xonly_plot
 
         Returns
         -------
@@ -287,26 +288,24 @@ class XSpectraParameters(MSONable, _BaseParameters):
         return "\n".join(inp) + "\n"
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and sites. In the
-        case of FEFF, if sites is None (usually indicating a global calculation
-        such as a neutral potential electronic relaxation method in VASP), then
-        write does nothing. # TODO
+        """Writes the input files for the provided structure and sites.
 
         Parameters
         ----------
         target_directory : os.PathLike
             The target directory to which to save the FEFF input files.
         **kwargs
-            Must contain the ``structure_uc`` key (the
-            :class:`pymatgen.core.structure.Structure` of interest) and the
+            Must contain the ``structure_sc`` key (the
+            :class:`pymatgen.core.structure.Structure` of interest), the
             ``sites`` key (a list of int, where each int corresponds to the
-            site index of the site to write).
+            site index in the supercell structure) and the ``index_mapping``
+            key (a dictionary mapping the index between unit cell and supercell)
 
         Returns
         -------
         dict
             A dictionary containing the status and errors key. In the case of
-            EXCITING, there are no possible errors at this stage other than
+            XSpectra, there are no possible errors at this stage other than
             critical ones that would cause program termination, so the returned
             object is always ``{"pass": True, "errors": dict()}``.
         """
@@ -406,28 +405,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
             kpoints_grid=kpoints_scf,
         )
         gs_in.write_file(path / "gs.in")
-        # Get the psp data read for ES calculations
-        # pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
-        # try:
-        #    psp2, ecutwfc, ecutrho = self._unpackPsps(
-        #        ecutwfc,
-        #        ecutrho,
-        #        pspDatabaseRoot,
-        #        DatabaseDir,
-        #        [self._cards["XS_controls"]["element"]],
-        #        target_directory,
-        #        needWfn=True,
-        #    )
-        # except KeyError:
-        # throw a warning here
-        # warn("take care of the core-hole psp for absorber by yourself")
-
-        # give a name to the pseudo potential
-        # set relatively large cutoff as default
-        # psp2 = {element: f"{element}.fch.upf"}
-        # ecutwfc = 100
-        # ecutrho = 800
-        # for i in psp2:
 
         psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
         # copy core-hole potential and core wfn to target folder
