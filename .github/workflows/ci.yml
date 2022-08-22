@@ -1,4 +1,4 @@
-name: CI/deploy
+name: ci
 
 # Run on all PR's and on pushes/merges to deploy and master
 on:
@@ -96,11 +96,31 @@ jobs:
     #     publish_dir: docs/build
     #     force_orphan: true
 
+  # Debugging
+  check_if_push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    - name: Output
+      run: |
+        echo "Is push: True"
+  check_if_tag:
+    runs-on: ubuntu-latest
+    if: github.event.ref_type == 'tag'
+    - name: Output
+      run: |
+        echo "Is tag: True"
+  check_if_master:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    - name: Output
+      run: |
+        echo "Is master: True"
+
   publish:
     name: Publish to PyPi
     needs: [tests, black, flake8_py3, check_semantic_version_placeholder, docs]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.ref == 'refs/heads/deploy'}}
+    if: github.event_name == 'push' && github.event.ref_type == 'tag' && github.ref == 'refs/heads/deploy'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
