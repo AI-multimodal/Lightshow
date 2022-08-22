@@ -53,9 +53,7 @@ def test_from_materials_project(test_structure_names):
         "mp-10734",
     ],
 )
-def test_write(
-    mpid, dummy_potcar_file_directory, database_from_file, tmp_path
-):
+def test_write(mpid, dummy_potcar_file_directory, database_from_file, tmp_path):
 
     # Load it all in
     dat = database_from_file
