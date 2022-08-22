@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 # Run on all PR's and on pushes/merges to deploy and master
 on:
