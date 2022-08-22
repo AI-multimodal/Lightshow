@@ -298,7 +298,14 @@ class OCEANParameters(MSONable, _BaseParameters):
             element_list.append(element)
             cards = copy(self._cards)
 
-            cards["edges"] = f"-{element.number} {self._edge}"
+            cards["edges"] = ""
+            for site in sites:
+                s = structure[site].specie.symbol
+                site += 1
+                if s == specie:
+                    cards["edges"] += f"{site} {self._edge}\n"
+            cards["edges"] = cards["edges"].rstrip()
+
             # ocean use a negative value to represent the number of
             # conduction bands
             cards["nbands"] = -1 * self._nbands(structure)
