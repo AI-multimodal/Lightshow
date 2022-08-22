@@ -176,7 +176,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self._name = name
 
     @staticmethod
-    def _packPsps(cutofftable, pspDir, pspJsonOut):
+    def packPsps(cutofftable, pspDir, pspJsonOut):
         with open(cutofftable, "r") as f:
             inJSON = json.load(f)
 
