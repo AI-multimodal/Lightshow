@@ -176,6 +176,25 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self._name = name
 
     @staticmethod
+    def _packPsps(cutofftable, pspDir, pspJsonOut):
+        with open(cutofftable, "r") as f:
+            inJSON = json.load(f)
+
+        outJSON = dict()
+
+        for element in inJSON:
+            pspFile = Path(pspDir) / Path(inJSON[element]["filename"])
+            with open(pspFile, "r") as f:
+                pspString = f.read()
+
+            outJSON[inJSON[element]["filename"]] = base64.b64encode(
+                bz2.compress(pspString.encode("utf-8"), 9)
+            ).decode("utf-8")
+
+        with open(pspJsonOut, "w") as f:
+            f.write(json.dumps(outJSON))
+
+    @staticmethod
     def _unpackPsps(
         ecutwfc,
         ecutrho,
