@@ -60,7 +60,8 @@ class UnitCellVolumeEstimate(MSONable, _BaseNbandsMethod):
 #     def __call__(self, structure, total_valence_electrons):
 #         """Gets an approximation for the total number of bands to use in the
 #         calculation based on the free electron gas model, such that a range of
-#         ``eRange`` is covered in the spectrum. The method assumes all electrons
+#         ``eRange`` is covered in the spectrum. The method assumes all
+#         electrons
 #         are free electrons, including those in the valence bands. The total
 #         number of electrons will then be calculated as
 #         :math:`N = N_\\mathrm{v} + N_\\mathrm{c}`, where :math:`N_\\mathrm{v}`
@@ -87,7 +88,8 @@ class UnitCellVolumeEstimate(MSONable, _BaseNbandsMethod):
 #         Returns
 #         -------
 #         int
-#             Approximation for the number of bands to use in computing the XANES
+#             Approximation for the number of bands to use in computing the
+#             XANES
 #             spectrum as computed using the (3D) homogeneous electron gas
 #             approximation.
 #         """

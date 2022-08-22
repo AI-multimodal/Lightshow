@@ -162,10 +162,11 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     @staticmethod
     def _oceanKptSampling(cell, kpt):
-        """Method for getting the explicit ``screen.nkpt``. ``screen.nkpt`` accepts a
-        single value as input, which is similar to the idea of effecitve radius and
-        is implemented in the latest version of OCEAN. If a sinlge value is provided,
-        the code will convert it back to the original kmesh, something like ``3 3 2``.
+        """Method for getting the explicit ``screen.nkpt``. ``screen.nkpt``
+        accepts a single value as input, which is similar to the idea of
+        effecitve radius and is implemented in the latest version of OCEAN. If
+        a sinlge value is provided, the code will convert it back to the
+        original kmesh, something like ``3 3 2``.
 
         Parameters
         ----------
@@ -253,7 +254,7 @@ class OCEANParameters(MSONable, _BaseParameters):
         fd.write(
             "rprim {{ {cell[0][0]:.14f} {cell[0][1]:.14f} {cell[0][2]:.14f}\n"
             "        {cell[1][0]:.14f} {cell[1][1]:.14f} {cell[1][2]:.14f}\n"
-            "        {cell[2][0]:.14f} {cell[2][1]:.14f} {cell[2][2]:.14f}  }}\n"
+            "        {cell[2][0]:.14f} {cell[2][1]:.14f} {cell[2][2]:.14f}  }}\n"  # noqa
             "".format(cell=structure.lattice.matrix)
         )
 
@@ -342,7 +343,8 @@ class OCEANParameters(MSONable, _BaseParameters):
             self._write_ocean_in(filepath_xas, structure, cards)
 
             # Deal with the dipole case only
-            # notice I put the photonSymm in the folder, which is created by John
+            # notice I put the photonSymm in the folder, which is created by
+            # John
             photons = list()
             photons.append({"dipole": [1, 0, 0, 1]})
             photons.append({"dipole": [0, 1, 0, 1]})
@@ -372,7 +374,8 @@ class OCEANParameters(MSONable, _BaseParameters):
                     f.write("end\n")
                     f.write("1\n")
                     # 4966 is hard coded for Ti
-                    # NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
+                    # NEED TO FIX THIS (probably by moving it to a lookup
+                    # table inside OCEAN)
                     f.write(str(weight) + "\n")
                     f.close
 
