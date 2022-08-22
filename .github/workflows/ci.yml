@@ -96,22 +96,27 @@ jobs:
     #     publish_dir: docs/build
     #     force_orphan: true
 
-  # Debugging
   check_if_push:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v2
     - name: Output
       run: |
         echo "Is push: True"
   check_if_tag:
     runs-on: ubuntu-latest
     if: github.event.ref_type == 'tag'
+    steps:
+    - uses: actions/checkout@v2
     - name: Output
       run: |
         echo "Is tag: True"
   check_if_master:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v2
     - name: Output
       run: |
         echo "Is master: True"
