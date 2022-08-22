@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import json
 import bz2
 import base64
@@ -184,7 +183,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
         needWfn=False,
     ):
         psp = {}
-        sssp_fn = os.path.join(DatabaseDir, cutofftable)
+        sssp_fn = Path(DatabaseDir) / Path(cutofftable)
         with open(sssp_fn, "r") as pspDatabaseFile:
             pspDatabase = json.load(pspDatabaseFile)
         minSymbols = set(symbols)
@@ -197,7 +196,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
             if ecutrho < pspDatabase[symbol]["rho_cutoff"]:
                 ecutrho = pspDatabase[symbol]["rho_cutoff"]
 
-        sssp_fn = os.path.join(DatabaseDir, jsondatabese)
+        sssp_fn = Path(DatabaseDir) / Path(jsondatabese)
         with open(sssp_fn, "r") as p:
             pspJSON = json.load(p)
         for symbol in minSymbols:
@@ -353,9 +352,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
             try:
                 psp_dict = json.load(
                     open(
-                        self._psp_directory
-                        + "/"
-                        + self._cards["XS"]["psp_cutoff_table"]
+                        Path(self._psp_directory)
+                        / Path(self._cards["XS"]["psp_cutoff_table"])
                     )
                 )
                 psp = dict()
@@ -363,7 +361,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     psp_filename = psp_dict[symbol]["filename"]
                     psp[symbol] = psp_filename
                     shutil.copyfile(
-                        self._psp_directory + "/" + psp_filename,
+                        Path(self._psp_directory) / Path(psp_filename),
                         target_directory / psp_filename,
                     )
                     if psp_dict[symbol]["cutoff_wfc"] > ecutwfc:
