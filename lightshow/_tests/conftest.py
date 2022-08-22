@@ -40,6 +40,16 @@ def dummy_potcar_file_directory():
 
 
 @pytest.fixture
+def dummy_psp_file_directory():
+    return str(Path(__file__).parent.resolve() / Path("dummy_psp_files"))
+
+
+@pytest.fixture
+def dummy_chpsp_file_directory():
+    return str(Path(__file__).parent.resolve() / Path("dummy_chpsp_files"))
+
+
+@pytest.fixture
 def mp_Structure_mp390():
     return Structure.from_file(
         STRUCTURE_FILES_PATH / Path("mp-390") / Path("POSCAR")
