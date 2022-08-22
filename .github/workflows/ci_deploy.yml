@@ -109,7 +109,7 @@ jobs:
         python-version: 3.9
     - name: Build and publish
       run: | # CHANGE THIS TO USE `bash build.sh publish` LATER!
-        bash build.sh test
+        echo "Just testing!"
       # env:
       #   FLIT_USERNAME: __token__
       #   FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
