@@ -6,11 +6,7 @@ on:
   push:
     branches: ['deploy', 'master']
 
-env:
-  GITHUB_ACTION_IS_RUNNING: 1
-
 jobs:
-
   tests:
     env:
         PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
@@ -27,7 +23,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install testing dependencies
       run: |
-        bash build.sh test
+        bash build.sh _CI-test-requirements
     - name: Run tests
       run: |
         pytest -v --cov --cov-report xml lightshow/_tests
@@ -82,50 +78,23 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install dependencies and build the docs
+    - name: Install dependencies
+      run: |
+        bash build.sh _CI-docs-requirements
+    - name: Build
       run: |
         bash build.sh docs
 
-    #https://coderefinery.github.io/documentation/gh_workflow/
-    # - name: Deploy the docs
-    #   uses: peaceiris/actions-gh-pages@v3
-    #   if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.ref == 'refs/heads/deploy'}}
-    #   with:
-    #     publish_branch: gh-pages
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
-    #     publish_dir: docs/build
-    #     force_orphan: true
-
-  check_if_push:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-    - uses: actions/checkout@v2
-    - name: Output
-      run: |
-        echo "Is push: True"
-  check_if_tag:
-    runs-on: ubuntu-latest
-    if: github.event.ref_type == 'tag'
-    steps:
-    - uses: actions/checkout@v2
-    - name: Output
-      run: |
-        echo "Is tag: True"
-  check_if_master:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-    - uses: actions/checkout@v2
-    - name: Output
-      run: |
-        echo "Is master: True"
-
   publish:
     name: Publish to PyPi
-    needs: [tests, black, flake8_py3, check_semantic_version_placeholder, docs]
+    needs:
+      - tests
+      - black
+      - flake8_py3
+      - check_semantic_version_placeholder
+      - docs
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.event.ref_type == 'tag' && github.ref == 'refs/heads/deploy'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
