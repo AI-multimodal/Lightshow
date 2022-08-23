@@ -51,10 +51,6 @@ It is highly recommended that you also install the pre-commit hooks. This will h
     bash build.sh install-dev-requirements
 
 
-
-.. - Setup the pre-commit hooks ``pre-commit install``
-
-
 .. inclusion-marker-LIGHTSHOW-installation-end
 
 .. inclusion-marker-LIGHTSHOW-funding-begin
