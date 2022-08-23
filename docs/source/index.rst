@@ -11,8 +11,7 @@
    installation
    quickstart
    modules
-   authors
-   license
+   project
 
 
 Overview

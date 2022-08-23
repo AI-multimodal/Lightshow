@@ -192,7 +192,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
         files is better than copying them from self._psp_directory to the
         working directory.
 
-        Papameters
+        Parameters
         ----------
         pspJsonOut : str
             Name of the output json file. Extension should be included.
