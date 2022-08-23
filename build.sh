@@ -95,10 +95,12 @@ do
 
     elif [ "$var" = "_CI-test-requirements" ]; then
         pip install toml
+        install_requirements
         install_test_requirements_only
 
     elif [ "$var" = "_CI-docs-requirements" ]; then
         pip install toml
+        install_requirements
         install_doc_requirements_only
 
     # elif [ "$var" = "publish" ]; then
