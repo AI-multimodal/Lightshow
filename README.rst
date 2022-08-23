@@ -53,7 +53,7 @@ It is highly recommended that you also install the pre-commit hooks. This will h
 
 
 .. - Setup the pre-commit hooks ``pre-commit install``
-.. - If you want to install the package to your default paths, you can do this in "developer mode" by running ``pip install -e ".[dev]"``
+
 
 .. inclusion-marker-LIGHTSHOW-installation-end
 
