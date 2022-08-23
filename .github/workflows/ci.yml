@@ -19,7 +19,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -42,7 +42,7 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: rickstaa/action-black@v1
         with:
           black_args: "lightshow/ --check"
@@ -51,7 +51,7 @@ jobs:
   flake8_py3:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -68,7 +68,7 @@ jobs:
   check_semantic_version_placeholder:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Check lines exist
       run: |
         grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
@@ -76,7 +76,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
