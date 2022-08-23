@@ -6,6 +6,9 @@ on:
   push:
     branches: ['deploy', 'master']
 
+env:
+  GITHUB_ACTION_IS_RUNNING: 1
+
 jobs:
   tests:
     env:
