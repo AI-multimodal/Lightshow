@@ -66,10 +66,6 @@ doc = [
     "sphinx_rtd_theme",
     "ipython",
 ]
-dev = [
-    "matplotlib",
-    "jupyterlab"
-]
 
 [tool.setuptools]
 packages = ["lightshow"]
