@@ -32,14 +32,34 @@ Developers
 ^^^^^^^^^^
 If you wish to help us improve **Lightshow**, you should fork a copy of our repository, clone to your local machine, and then proceed with setting up the following:
 
-- Create a fresh virtual environment, e.g. ``conda create -n py3.9 python=3.9``.
-- Install the development requirements, ``pip install -r requirements-dev.txt``
-- Setup the pre-commit hooks ``pre-commit install``
-- If you want to install the package to your default paths, you can do this in "developer mode" by running ``pip install -e ".[dev]"``
+Create and activate a fresh virtual environment, e.g.
+
+.. code-block:: bash
+    
+    conda create -n py3.9 python=3.9 && conda activate py3.9
+
+It is highly recommended that you also install the pre-commit hooks. This will help you avoid failing the black and flake8 tests that are required as part of our CI testing suite.
+
+.. code-block:: bash
+
+    pre-commit install
+
+`Install the development requirements <https://github.com/pypa/pip/issues/8049#issuecomment-633845028>`_. We use the helper script ``build.sh`` to parse the ``pyproject.toml`` file and only install the specified packages needed for development (note this does not actually install **Lightshow**).
+
+.. code-block:: bash
+    
+    bash build.sh install-dev-requirements
+
+
+
+.. - Setup the pre-commit hooks ``pre-commit install``
+.. - If you want to install the package to your default paths, you can do this in "developer mode" by running ``pip install -e ".[dev]"``
 
 .. inclusion-marker-LIGHTSHOW-installation-end
 
 .. inclusion-marker-LIGHTSHOW-funding-begin
+
+tests
 
 Funding acknowledgement
 -----------------------

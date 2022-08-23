@@ -1,7 +1,8 @@
 #!/bin/bash
 
 replace_version_in_init () {
-    version="$(dunamai from any)"
+    version="$(dunamai from git --no-metadata --style semver)"
+    dunamai check "$version" --style semver
     sed_command="s/...  # semantic-version-placeholder/'$version'/g"
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "$sed_command" lightshow/__init__.py
@@ -21,6 +22,27 @@ reverse_replace_version_in_init () {
     fi
     echo "__init__ version" "$version" "reset to placeholder"
     unset _TMP_VERSION
+}
+
+# Good stuff. The poor man's toml parser
+# https://github.com/pypa/pip/issues/8049
+
+install_doc_requirements_only () {
+    python3 -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["optional-dependencies"]["doc"]))' | pip install -r /dev/stdin
+}
+
+install_test_requirements_only () {
+    python3 -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["optional-dependencies"]["test"]))' | pip install -r /dev/stdin
+}
+
+install_requirements() {
+    python3 -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["dependencies"]))' | pip install -r /dev/stdin
+}
+
+install_development_requirements () {
+    install_requirements
+    install_test_requirements_only
+    install_doc_requirements_only
 }
 
 build_docs () {
@@ -52,21 +74,36 @@ else
     echo "GitHub Action is not running - assuming local behavior"
 fi
 
-# Replace the version string placeholder in the __init__ with the real thing
-replace_version_in_init
 
 # Iterate over all arguments in order
 for var in "$@"
 do
     echo "Found" "$var"
+
     if [ "$var" = "docs" ]; then
+        replace_version_in_init
         build_docs
+        reverse_replace_version_in_init
+
     elif [ "$var" = "test" ]; then
         flit install --deps=production --extras=test
+
+    elif [ "$var" = "install-dev-requirements" ]; then
+        pip install toml
+        install_flit_dunamai
+        install_development_requirements
+
+    elif [ "$var" = "_CI-test-requirements" ]; then
+        pip install toml
+        install_test_requirements_only
+
+    elif [ "$var" = "_CI-docs-requirements" ]; then
+        pip install toml
+        install_doc_requirements_only
+
     # elif [ "$var" = "publish" ]; then
     #     flit_publish
     fi
 done
 
-# Put the version string placeholder back
-reverse_replace_version_in_init
+
