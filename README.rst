@@ -59,8 +59,6 @@ It is highly recommended that you also install the pre-commit hooks. This will h
 
 .. inclusion-marker-LIGHTSHOW-funding-begin
 
-tests
-
 Funding acknowledgement
 -----------------------
 This research is based upon work supported by the U.S. Department of Energy, Office of Science, Office Basic Energy Sciences, under Award Number FWP PS-030. This research used resources of the Center for Functional Nanomaterials (CFN), which is a U.S. Department of Energy Office of Science User Facility, at Brookhaven National Laboratory under Contract No. DE-SC0012704.
