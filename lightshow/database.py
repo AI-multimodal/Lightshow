@@ -4,6 +4,7 @@ the `Materials Project Database <https://materialsproject.org/>`_, as well as
 utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 from pathlib import Path
@@ -54,12 +55,16 @@ def _fetch_from_MP(mpr, mpid, metadata_keys):
 
     Returns
     -------
-    tuple
+    dict
         The structure (:class:`pymatgen.core.structure.Structure`) of interest
-        and the specified metadata.
+        and the specified metadata, as well as the mpid for reference.
     """
 
-    metadata = mpr.get_doc(mpid)
+    try:
+        metadata = mpr.get_doc(mpid)
+    except MPRestError as error:
+        warn(f"MPRestError pulling mpid={mpid}, error: {error}")
+        return {"mpid": mpid, "structure": None, "metadata": None}
 
     if metadata_keys is not None:
         metadata = {key: metadata[key] for key in metadata_keys}
@@ -68,10 +73,12 @@ def _fetch_from_MP(mpr, mpid, metadata_keys):
     # The structure is precisely in the data pulled from get_doc:
     structure = Structure.from_dict(metadata.pop("structure"))
 
-    return structure, metadata
+    return {"mpid": mpid, "structure": structure, "metadata": metadata}
 
 
-def _from_mpids_list(mpids, api_key, metadata_keys, verbose=True):
+def _from_mpids_list(
+    mpids, api_key, metadata_keys, verbose=True, concurrent_threads=20
+):
     """Makes one large API call to the Materials Project database and pulls the
     relevant structural files given a list of Materials Project ID's (mpids).
 
@@ -93,17 +100,21 @@ def _from_mpids_list(mpids, api_key, metadata_keys, verbose=True):
         metadata (with the same keys).
     """
 
-    structures = dict()
-    metadatas = dict()
+    # Safely fetch all of the Materials Project structures matching the query
     with MPRester(api_key) as mpr:
-        for mpid in tqdm(mpids, disable=not verbose):
-            try:
-                structure, metadata = _fetch_from_MP(mpr, mpid, metadata_keys)
-            except MPRestError as error:
-                warn(f"MPRestError pulling mpid={mpid}, error: {error}")
-                continue
-            structures[mpid] = structure.get_primitive_structure()
-            metadatas[mpid] = metadata
+        with ThreadPoolExecutor(max_workers=concurrent_threads) as executor:
+            futures = [
+                executor.submit(_fetch_from_MP, mpr, mpid, metadata_keys)
+                for mpid in mpids
+            ]
+            results = [future.result() for future in as_completed(futures)]
+
+    structures = {
+        x["mpid"]: x["structure"] for x in results if x["structure"] is not None
+    }
+    metadatas = {
+        x["mpid"]: x["metadata"] for x in results if x["structure"] is not None
+    }
 
     return {"structures": structures, "metadata": metadatas}
 
