@@ -336,11 +336,14 @@ Currently, the code can handle three cases when dealing with neutral pseudo pote
    NOTE: ``psp_cutoff_table`` should ALWAYS be provided in this case. The cutoff table should have silimar structures as the on for SSSP pseudo potential database (https://archive.materialscloud.org/record/file?record_id=862&filename=SSSP_1.1.2_PBE_efficiency.json&file_id=a5642f40-74af-4073-8dfd-706d2c7fccc2), which looks like:
 
 .. code-block:: python
-        cutoff_table = {
-                'Ag': {'filename': 'Ag.upf',
-                'cutoff_wfc': 50.0,
-                'cutoff_rho': 200.0},
-        }
+
+    cutoff_table = {
+        'Ag': {
+            'filename': 'Ag.upf',
+            'cutoff_wfc': 50.0,
+            'cutoff_rho': 200.0
+        },
+    }
 
 It can also contain some other keys, but the element name, cutoff_wfc, cutoff_rho should always be in the keys. Lightshow will find the corresponding pseudo potential files and copy it to the working directory. It will also set the correct pseudo potential filename and recommended cutoff energy automatically.
 
