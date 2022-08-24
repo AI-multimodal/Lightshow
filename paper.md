@@ -52,7 +52,7 @@ bibliography: paper.bib
 
 # Summary
 
-Spectroscopy simulations are a critical tool for the interpretation of experiment, the development of new theoretical understanding, and fast screening of new molecules and materials. Systematically setting up input files for different simulation codes and multiple materials can be a time-consuming task with a relatively high barrier-to-entry, given the complexities and nuances of each individual simulation package. `Lightshow` solves this problem by providing a uniform abstraction for writing computational x-ray spectroscopy input files for multiple popular codes, including FEFF, VASP, OCEAN, EXCITING and XSpectra. Its extendable framework will also allow for the community to easily make future additions, and add new simulation code.
+Spectroscopy simulations are a critical tool for the interpretation of experiment, the development of new theoretical understanding, and fast screening of new molecules and materials. Systematically setting up input files for different simulation codes and multiple materials can be a time-consuming task with a relatively high barrier-to-entry, given the complexities and nuances of each individual simulation package. `Lightshow` solves this problem by providing a uniform abstraction for writing computational x-ray spectroscopy input files for multiple popular codes, including FEFF, VASP, {\sc ocean}, EXCITING and XSpectra. Its extendable framework will also allow for the community to easily make future additions, and add new simulation code.
 
 # Statement of need
 
@@ -64,7 +64,7 @@ Despite the growing demand in first-principles XAS spectroscopy, carrying out pr
 
 # Brief software description
 
-![Graphical representation of the organization of the Lightshow repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
+![Graphical representation of the organization of the `Lightshow` repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
 
 We summarize the structure of `Lightshow` application programming interface (API) in Fig. \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design philosophy is built around two principal objects, the `Database` class, and objects that inherit the `_BaseParameters` class. At a high-level, the `Database` class interfaces primarily with Pymatgen and the Materials Project [@Jain2013], allowing the user to easily utilize Pymatgen and pull large numbers of materials structures quickly. Functionality is also available for instantiating a `Database` via loading e.g. `POSCAR`-style structure files from disk. Once a database has been created, code-specific simulation parameters inheriting the `_BaseParameters` base class interface with various methods in Pymatgen as well as in-house built software for systematically writing input files for multiple XAS simulation programs, including FEFF [@rehr2010parameter], XSpectra [@taillefumier2002x; @gougoussis2009first; bunuau2013projector], OCEAN [@vinson2011bethe; @ocean-3], Exciting [@exciting] and VASP [@vasp-xas]. We highlight the `_tests` directory, in which we maintain a suite of unit tests for individual functions and methods, as well as integration tests for the entire workflow. `Lightshow` is fully documented, and contains a simple example notebook for users to get started.
 
