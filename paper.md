@@ -29,6 +29,8 @@ authors:
     affiliation: 6
   - name: Deyu Lu
     affiliation: 2
+  - name: Claudia Draxl
+    affiliation: 4
 affiliations:
  - name: Computational Science Initiative, Brookhaven National Laboratory, Upton, New York 11973, United States
    index: 1
@@ -71,6 +73,6 @@ We summarize the structure of `Lightshow` application programming interface (API
 
 # Acknowledgements
 
-This material is based upon work partially supported by the U.S. Department of Energy, Office of Science, Office of Basic Energy Sciences, under Award Numbers FWP PS-030. The research used the theory and computation resources of the Center for Functional Nanomaterials, which is a U.S. DOE Office of Science Facility, and the Scientific Data and Computing Center, a component of the Computational Science Initiative, at Brookhaven National Laboratory under Contract No. DE-SC0012704.
+This material is based upon work partially supported by the U.S. Department of Energy, Office of Science, Office of Basic Energy Sciences, under Award Numbers FWP PS-030. The research used the theory and computation resources of the Center for Functional Nanomaterials, which is a U.S. DOE Office of Science Facility, and the Scientific Data and Computing Center, a component of the Computational Science Initiative, at Brookhaven National Laboratory under Contract No. DE-SC0012704. This work received partial funding by the German Research Foundation (DFG) through the CRC 1404 (FONDA), Projektnummer 414984028, and the NFDI consortium FAIRmat – project 460197019.
 
 # References
