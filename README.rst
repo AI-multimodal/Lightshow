@@ -2,6 +2,10 @@
 
 .. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
     :align: center
+    :alt: sysfs line plot
+    :width: 600px
+
+=============
 
 **Lightshow** is a Python library for easily generating computational spectroscopy input files.
 
