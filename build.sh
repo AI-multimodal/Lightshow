@@ -110,7 +110,7 @@ do
 
     elif [ "$var" = "test-publish" ]; then
         replace_version_in_init
-        flit_publish --repository testpypi
+        flit publish --repository testpypi
         reverse_replace_version_in_init
     fi
 done
