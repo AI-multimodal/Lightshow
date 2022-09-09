@@ -3,7 +3,7 @@
 .. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
     :align: right
     :alt: sysfs line plot
-    :width: 700px
+    :width: 1000px
 
 =============
 
