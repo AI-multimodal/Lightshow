@@ -69,7 +69,9 @@ master_doc = "index"
 
 # General information about the project.
 project = "lightshow"
-copyright = "2022, Brookhaven National Laboratory"
+copyright = (
+    "2022, Brookhaven Science Associates, LLC, Brookhaven National Laboratory"
+)
 author = "Brookhaven National Laboratory"
 
 # The version info for the project you're documenting, acts as replacement for
