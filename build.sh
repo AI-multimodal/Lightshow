@@ -118,6 +118,11 @@ do
         replace_version_in_init
         flit publish --repository testpypi
         reverse_replace_version_in_init
+
+    elif [ "$var" = "publish" ]; then
+        replace_version_in_init
+        flit publish --repository pypi
+        reverse_replace_version_in_init
     fi
 done
 

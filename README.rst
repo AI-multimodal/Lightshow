@@ -35,7 +35,12 @@ Installation
 
 Users
 ^^^^^
-To simply use the software, install it as you would any Python package: `pip install lightshow`. **COMING SOON!**
+To simply use the software, install it as you would any Python package: 
+
+.. code-block:: bash
+
+    pip install lightshow
+
 
 Developers
 ^^^^^^^^^^
