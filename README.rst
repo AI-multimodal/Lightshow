@@ -5,8 +5,6 @@
     :alt: sysfs line plot
     :width: 600px
 
-====
-
 **Lightshow** is a Python library for easily generating computational spectroscopy input files.
 
 .. inclusion-marker-LIGHTSHOW-end
