@@ -10,6 +10,9 @@
 
 .. image:: https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7 
  :target: https://codecov.io/gh/AI-multimodal/Lightshow
+ 
+.. image:: https://app.codacy.com/project/badge/Grade/d31a4e18672c4d71bbaafa719181c140
+ :target: https://www.codacy.com/gh/AI-multimodal/Lightshow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AI-multimodal/Lightshow&amp;utm_campaign=Badge_Grade
 
 =============
 
