@@ -5,6 +5,9 @@
     :alt: sysfs line plot
     :width: 1000px
 
+.. image:: https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml/badge.svg
+ :target: https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml
+
 .. image:: https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7 
  :target: https://codecov.io/gh/AI-multimodal/Lightshow
 
