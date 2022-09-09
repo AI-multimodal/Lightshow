@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "lightshow"
 authors = [
     {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
-    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"},
+    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"},
     {"name" = "Deyu Lu", "email" = "dlu@bnl.gov"},
     {"name" = "Benedikt Maurer"},
     {"name" = "Fabien Peschel"},
