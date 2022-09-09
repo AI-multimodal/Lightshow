@@ -1,7 +1,7 @@
 .. inclusion-marker-LIGHTSHOW-begin
 
 .. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
-    :align: center
+    :align: right
     :alt: sysfs line plot
     :width: 600px
 
