@@ -93,6 +93,12 @@ do
         flit build
         reverse_replace_version_in_init
 
+    elif [ "$var" == "install" ]; then
+        install_flit_dunamai
+        replace_version_in_init
+        flit install
+        reverse_replace_version_in_init
+
     elif [ "$var" = "install-dev-requirements" ]; then
         pip install toml
         install_flit_dunamai

@@ -21,7 +21,7 @@ maintainers = [
 ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.7"
 license = {"file" = "LICENSE"}
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -37,11 +37,11 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "numpy~=1.23.3",
-    "tqdm~=4.64.1",
-    "monty~=2022.9.9",
-    "pymatgen~=2022.9.8",
-    "ase~=3.22.1"
+    "numpy",
+    "tqdm",
+    "monty",
+    "pymatgen",
+    "ase"
 ]
 
 # Dynamic version reads __version__ directly from my_package.__init__
