@@ -4,7 +4,6 @@ import bz2
 import base64
 import shutil
 from warnings import warn
-from collections import OrderedDict
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
@@ -479,8 +478,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
                 )
 
         # Determine iabs
-        psp = OrderedDict(psp)
-        for i, j in enumerate(psp.keys()):
+        for i, j in enumerate(sorted(psp.keys())):
             if j == symTarg + "+":
                 iabs = i + 1
         for site, specie in zip(sites, species):
