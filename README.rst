@@ -1,6 +1,7 @@
 .. inclusion-marker-LIGHTSHOW-begin
 
 .. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
+    :align: center
 
 **Lightshow** is a Python library for easily generating computational spectroscopy input files.
 
