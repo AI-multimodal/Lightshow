@@ -4,7 +4,7 @@
 
     <p align="center">
         <a href="#readmeLogo">
-            <img alt="Loguru logo" src="https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg">
+            <img alt="Lightshow Banner" src="https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg">
         </a>
     </p>
 
