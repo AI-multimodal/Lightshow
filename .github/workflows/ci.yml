@@ -32,13 +32,12 @@ jobs:
       run: |
         pytest -v --cov --cov-report xml lightshow/_tests
 
-    # Code coverage when the repo is public
-    # - name: Upload code coverage
-    #   uses: codecov/codecov-action@v2
-    #   timeout-minutes: 10
-    #   with:
-    #     token: ${{ secrets.CODECOV_TOKEN }}
-    #     fail_ci_if_error: false
+    - name: Upload code coverage
+      uses: codecov/codecov-action@v2
+      timeout-minutes: 10
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
 
   black:
     runs-on: ubuntu-latest
