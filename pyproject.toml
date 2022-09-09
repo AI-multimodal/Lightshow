@@ -21,7 +21,7 @@ maintainers = [
 ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = {"file" = "LICENSE"}
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
