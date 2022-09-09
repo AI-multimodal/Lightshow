@@ -5,6 +5,9 @@
     :alt: sysfs line plot
     :width: 1000px
 
+.. image:: https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7 
+ :target: https://codecov.io/gh/AI-multimodal/Lightshow
+
 =============
 
 **Lightshow** is a Python library for easily generating computational spectroscopy input files.
