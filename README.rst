@@ -1,9 +1,18 @@
-Lightshow
-=========
-
 .. inclusion-marker-LIGHTSHOW-begin
 
-**Lightshow** is a Python library meant for easily generating computational spectroscopy input files.
+.. raw:: html
+
+    <p align="center">
+        <a href="#readmeLogo">
+            <img alt="Loguru logo" src="https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg">
+        </a>
+    </p>
+
+**Lightshow** is a Python library for easily generating computational spectroscopy input files.
+
+.. inclusion-marker-LIGHTSHOW-end
+
+.. inclusion-marker-LIGHTSHOW-overview-begin
 
 Often, it can be a daunting task to create comprehensive, well documented databases of materials structures and their x-ray absorption spectra. **Lightshow** solves this problem, allowing new users to choose sensible defaults for their calculations, while simultaneously exposing all functionality for experts.
 
@@ -17,7 +26,8 @@ Often, it can be a daunting task to create comprehensive, well documented databa
 
 with more on the way! The software is intended to be user-friendly, completely documented and tested, and extendable for those users who wish to add additional spectroscopy functionalities. There are also a few comprehensive tutorials to help you get started.
 
-.. inclusion-marker-LIGHTSHOW-end
+.. inclusion-marker-LIGHTSHOW-overview-end
+
 
 Installation
 ------------
