@@ -1,8 +1,8 @@
 #!/bin/bash
 
 replace_version_in_init () {
-    version="$(dunamai from git --no-metadata --style semver)"
-    dunamai check "$version" --style semver
+    version="$(dunamai from git --no-metadata --style pep440)"
+    dunamai check "$version" --style pep440
     sed_command="s/...  # semantic-version-placeholder/'$version'/g"
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "$sed_command" lightshow/__init__.py
@@ -88,6 +88,11 @@ do
     elif [ "$var" = "test" ]; then
         flit install --deps=production --extras=test
 
+    elif [ "$var" == "build" ]; then
+        replace_version_in_init
+        flit build
+        reverse_replace_version_in_init
+
     elif [ "$var" = "install-dev-requirements" ]; then
         pip install toml
         install_flit_dunamai
@@ -103,8 +108,10 @@ do
         install_requirements
         install_doc_requirements_only
 
-    # elif [ "$var" = "publish" ]; then
-    #     flit_publish
+    elif [ "$var" = "test-publish" ]; then
+        replace_version_in_init
+        flit_publish --repository testpypi
+        reverse_replace_version_in_init
     fi
 done
 

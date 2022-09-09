@@ -17,7 +17,7 @@ authors = [
 ]
 maintainers = [
     {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
-    {"name" = "Fanchen Meng", "email" = "fcmeng1@bnl.gov"}
+    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"}
 ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.rst"
@@ -47,6 +47,11 @@ dependencies = [
 # Dynamic version reads __version__ directly from my_package.__init__
 dynamic = ["version"]
 
+# [tool.flit.sdist]
+# exclude = [
+#     "lightshow/_tests",
+#     "docs"
+# ]
 
 [project.optional-dependencies]
 test = [

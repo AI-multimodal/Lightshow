@@ -1,12 +1,11 @@
 .. inclusion-marker-LIGHTSHOW-begin
 
-.. raw:: html
+.. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
+    :align: center
+    :alt: sysfs line plot
+    :width: 600px
 
-    <p align="center">
-        <a href="#readmeLogo">
-            <img alt="Loguru logo" src="https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg">
-        </a>
-    </p>
+====
 
 **Lightshow** is a Python library for easily generating computational spectroscopy input files.
 
