@@ -226,9 +226,7 @@ def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
     assert qpoints[0].text == "0.0 0.0 0.0"
 
 
-def test_exciting_own_parameters(
-    tmp_path: Path, mp_Structure_mp390: Structure
-):
+def test_exciting_own_parameters(tmp_path: Path, mp_Structure_mp390: Structure):
     own_cards = {
         "structure": {},
         "groundstate": {
@@ -253,23 +251,17 @@ def test_exciting_own_parameters(
     assert write_results == {"pass": True, "errors": {}}
 
     o1_path = tmp_path / "002_O"
-    assert (
-        o1_path.exists()
-    ), "Directory for absorbing site 2 was not generated."
+    assert o1_path.exists(), "Directory for absorbing site 2 was not generated."
     input_file_o1 = o1_path / "input.xml"
     assert input_file_o1.exists(), "Input file not found."
 
     o2_path = tmp_path / "003_O"
-    assert (
-        o2_path.exists()
-    ), "Directory for absorbing site 3 was not generated."
+    assert o2_path.exists(), "Directory for absorbing site 3 was not generated."
     input_file_o2 = o2_path / "input.xml"
     assert input_file_o2.exists(), "Input file not found."
 
     ti_path = tmp_path / "001_Ti"
-    assert (
-        ti_path.exists()
-    ), "Directory for absorbing site 1 was not generated."
+    assert ti_path.exists(), "Directory for absorbing site 1 was not generated."
     input_file_ti = ti_path / "input.xml"
     assert input_file_ti.exists(), "Input file not found."
 

@@ -4,9 +4,11 @@ exclude =
     __pycache__,
     build,
     dist,
-    versioneer.py,
-    lightshow/_version.py,
     lightshow/defaults.py,
     docs/source/conf.py
-max-line-length = 115
+max-line-length = 80
+show-source = True
+statistics = True
+count = True
+verbose = 1
 ignore = E203, W503  # Ignore some style 'errors' produced while formatting by 'black'

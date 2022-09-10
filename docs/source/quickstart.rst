@@ -6,6 +6,9 @@ Quickstart
 
     In addition to the quickstart guide below, we also have tutorial notebooks under the ``notebooks`` directory in the Lightshow GitHub repository.
 
+Welcome to the **Lightshow** quickstart guide! In the text to follow, we will provide overviews of each type of code and how to use them in the context of **Lightshow**. We will also provide a bird's eye example of using the software.
+
+
 The database
 ============
 
@@ -207,8 +210,27 @@ The directory that ``potcar_directory`` points to should contain files of the fo
 OCEAN
 -----
 
-TODO
+.. note::
 
+    See `here <https://feff.phys.washington.edu/OCEAN/ocean-documentation.html>`__ for the OCEAN documentation.
+
+There are three required primary arguments for the ``OCEANParameters`` object: the cards and edge. For example, the general ``OCEANParameter`` object structure looks something like this:
+
+.. code-block:: python
+
+    ocean_params = OCEANParameters(
+        cards={
+            'dft': 'qe', 
+            'ecut': '-1', 
+            'opf.program': 'hamann', 
+            'para_prefix': 'mpirun -np 24'
+        }
+        edge="K",
+    )
+
+``cards`` is a catch-all input which is written directly to the preamble of the ``ocean.in`` file. Essentially, any parameter can be provided here, and should be provided as strings (both keys and values). Here, we provided a minimal default parameters to run OCEAN the latest versions in which an installation of the pesudo potential database is required. The users are not resticted to this version of OCEAN, but they need to take care of the associated files, such as pseudo potentials, by themselves. ``dft`` parameter determines the code to run the DFT calcualtion. It can be either ``qe`` (for Quantum Espresso)  or ``abinit``. We set ``qe`` as the default, but again this is not restricted and users can switch to ``abinit`` if they prefer. Similar case also applies to other parameters, such as ``para_prefix``, which is highly dependent on the users' computing resources.
+
+``edge`` sets the x-ray absorption edge. See :ref:`feff-reference`. If the input value for ``edge`` is not supported by OCEAN, LightShow will raise an ValueError.
 
 EXCITING
 --------
@@ -216,7 +238,7 @@ EXCITING
 
     See `here <http://exciting.wikidot.com/ref:input>`__ for the EXCITING documentation.
 
-There are three required primary arguments for the ``EXCITINGParameters`` object: the ``cards``, ``species_directory`` and ``edge``. For example, the general ``VASPParameter`` object structure looks something like this:
+There are three required primary arguments for the ``EXCITINGParameters`` object: the ``cards``, ``species_directory`` and ``edge``. For example, the general ``EXCITINGParameter`` object structure looks something like this:
 
 .. code-block:: python
 
@@ -269,7 +291,81 @@ There are three required primary arguments for the ``EXCITINGParameters`` object
 XSpectra
 --------
 
-TODO
+.. note::
+
+    See `here <https://www.quantum-espresso.org/Doc/INPUT_XSpectra.txt>`__ for the OCEAN documentation.
+
+The required primary arguments for the ``XSpectraParameters`` object are the ``cards`` and ``edge``. For example, the general ``XSpectraParameter`` object structure looks something like this:
+ 
+.. code-block:: python
+
+    xspectra_params = XSpectraParameters(
+         cards={'QE': {'control': {'restart_mode': 'from_scratch', 'wf_collect': '.true.'},
+                       'electrons': {'conv_thr': 1e-08, 'mixing_beta': 0.4},
+                       'system': {'degauss': 0.002, 'ecutrho': 320, 'ecutwfc': 40,
+                                  'nspin': 1, 'occupations': 'smearing', 'smearing': 'gauss'}
+               },
+                'XS': {'cut_occ': {'cut_desmooth': 0.3},
+                       'input_xspectra': {'outdir': '../',
+                       'prefix': 'pwscf',
+                       'xcheck_conv': 200,
+                       'xerror': 0.01,
+                       'xniter': 5000,
+                       'xcoordcrys': '.false.'},
+                       'kpts': {'kpts': '2 2 2', 'shift': '0 0 0'},
+                       'plot': {'cut_occ_states': '.true.',
+                       'terminator': '.true.',
+                       'xemax': 70,
+                       'xemin': -15.0,
+                       'xnepoint': 400}
+               }
+         }
+         edge="K",
+    )
+
+``cards`` is a catch-all input which is written directly to the preamble of the necessary input files for xspectra such as ``es..in``, ``gs.in``, ``xanes.in``. Notice three are actually two parts of the calculations for run the xspectra calculation: 1) Quantum Espresso SCF calculation (``es.in``) and 2) XSpectra calcualtion (``xanes.in``). ``cards['QE']`` governs the parameters for Quantum Espresso calcalcutions. And ``cards['XS']`` governs the parameters for XANES calculations. Essentially, any parameter can be provided here for Quantum Espresso calculations using ``cards['QE']``, and should be provided as strings (both keys and values). But the keys for ``cards['XS']`` are relatively fixed. If you introduce new keys, they will be ignored. Some parameters, such as, ``cards['kpts']['kpts']`` will be overwritten during the writing process. 
+
+``edge`` sets the x-ray absorption edge. See :ref:`feff-reference`.
+
+Neutral Pseudopotentials
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Currently, the code can handle three cases when dealing with neutral pseudo potentials. 
+
+1. ``psp_directory`` is not given or ``psp_cutoff_table`` is not given 
+   The code will use placeholders like ``Ti.upf`` and ``O.upf`` to put into the input files. In this case, the users need to take care of the pseudo potential files by themselves, such as the correct pseudo potential filename and locations,  and the correpsonding cutoff energy. 
+
+2. ``psp_directory`` is given and the corresponding pseudo potentials are inside the ``psp_directory``
+
+    .. warning::
+
+        ``psp_cutoff_table`` should _always_ be provided in this case. The cutoff table should have silimar structures as the on for `SSSP pseudo potential database <https://archive.materialscloud.org/record/file?record_id=862&filename=SSSP_1.1.2_PBE_efficiency.json&file_id=a5642f40-74af-4073-8dfd-706d2c7fccc2>`_, which looks like:
+
+        .. code-block:: python
+
+            cutoff_table = {
+                'Ag': {
+                    'filename': 'Ag.upf',
+                    'cutoff_wfc': 50.0,
+                    'cutoff_rho': 200.0
+                },
+            }
+
+        It can also contain some other keys, but the element name, cutoff_wfc, cutoff_rho should always be in the keys. Lightshow will find the corresponding pseudo potential files and copy it to the working directory. It will also set the correct pseudo potential filename and recommended cutoff energy automatically.
+
+3. ``psp_directory`` is given and the corresponding pseudo potentials are not include the ``psp_directory``
+
+    .. warning::
+
+        ``psp_cutoff_table`` should _always_ be provided in this case. The structure is the same as the one discussed above.
+
+        In this case, we offer a method (:class:`lightshow.parameters.xspectra.XSpectraParameters.packPsps`) to condense all the pseudo potential files into a single json file. The code will recover all the necessary pseudo potential files from the json file without copying the pseudo potential file from the ``psp_directory`` folder to the working directory. The performance of using the json file to recover pseudo potential files is better, especially for high throughput calcualtions. If user want to use this feature, they need to delete all the pseudo potential files in the ``psp_directory``, e.g. only ``psp_cutoff_table`` and ``psp_json`` should be present in the ``psp_directory``.
+
+Core-hole Pseudopotentials
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Lightshow will copy the corresponding core-hole pseudo potential as well as the core wave function in ``chpsp_directory`` to the working directory. The naming of the potential and wave function is strict: element.fch.upf and Core_element.wfc. The users need to generate these two files by themselves.
+
 
 
 Advanced

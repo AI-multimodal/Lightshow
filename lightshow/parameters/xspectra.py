@@ -1,20 +1,19 @@
 from pathlib import Path
-import os
 import json
 import bz2
 import base64
 import shutil
 from warnings import warn
-from collections import OrderedDict
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
-from lightshow import _get_CHPSP_DIRECTORY_from_environ
-import lightshow
-
+from lightshow import (
+    _get_CHPSP_DIRECTORY_from_environ,
+    _get_PSP_DIRECTORY_from_environ,
+)
 
 XSPECTRA_DEFAULT_CARDS = {
     "QE": {
@@ -47,14 +46,13 @@ XSPECTRA_DEFAULT_CARDS = {
             "xemin": -15.0,
             "xnepoint": 400,
         },
-        "psp_json": "SSSP_precision",
     },
 }
 
 
 class XSpectraParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
-    for an XSpectra calculation. !! TODO
+    for an XSpectra calculation.
 
     Parameters
     ----------
@@ -65,44 +63,41 @@ class XSpectraParameters(MSONable, _BaseParameters):
         .. code-block:: python
 
            cards = {
-               "QE": {
-                   "control": {
-                       "restart_mode": "from_scratch",
-                       "wf_collect": ".true."
-                   },
-                   "electrons": {
-                       "conv_thr": 1e-08,
-                       "mixing_beta": 0.4
-                   },
-                   "system": {
-                       "degauss": 0.002,
-                       "ecutrho": 320,
-                       "ecutwfc": 40,
-                       "nspin": 1,
-                       "occupations": "smearing",
-                       "smearing": "gauss",
-                   },
-               },
-               "XS": {
-                   "cut_occ": {"cut_desmooth": 0.3},
-                   "input_xspectra": {
-                       "outdir": "../",
-                       "prefix": "pwscf",
-                       "xcheck_conv": 200,
-                       "xerror": 0.01, #
-                       "xniter": 5000,
-                       "xcoordcrys": ".false.",
-                   },
-                   "plot": {
-                       "cut_occ_states": ".true.",
-                       "terminator": ".true.",
-                       "xemax": 70,
-                       "xemin": -15.0,
-                       "xnepoint": 400,
-                   },
-                   "psp_json": "SSSP_precision"
-               },
-           }
+                    "QE": {
+                        "control": {
+                            "restart_mode": "from_scratch",
+                            "wf_collect": ".true."
+                        },
+                        "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
+                        "system": {
+                            "degauss": 0.002,
+                            "ecutrho": 320,
+                            "ecutwfc": 40,
+                            "nspin": 1,
+                            "occupations": "smearing",
+                            "smearing": "gauss",
+                        },
+                    },
+                    "XS": {
+                        "cut_occ": {"cut_desmooth": 0.3},
+                        "input_xspectra": {
+                            "outdir": "../",
+                            "prefix": "pwscf",
+                            "xcheck_conv": 200,
+                            "xerror": 0.01,  #
+                            "xniter": 5000,
+                            "xcoordcrys": ".false.",
+                       },
+                        "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
+                        "plot": {
+                            "cut_occ_states": ".true.",
+                            "terminator": ".true.",
+                            "xemax": 70,
+                            "xemin": -15.0,
+                            "xnepoint": 400,
+                        },
+                    },
+            }
 
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing he kpoints file from the structure. Should
@@ -110,12 +105,28 @@ class XSpectraParameters(MSONable, _BaseParameters):
         the structure as input and return a tuple corresponding to the kpoints
         density along each axis.
     psp_directory : os.PathLike, optional
+        The location in which the neutral potential files for absorption atoms
+        are stored. In the psp_directory, a cutoff table should also be
+        provided. The cutoff table should have similar structure as the one for
+        SSSP database. The name of the cutoff table needs to be given in
+        cards['XS']['psp_cutoff_table']. If None, checks the  environment for
+        ``XS_PSP_DIRECTORY``.
+    chpsp_directory : os.PathLike, optional
         The location in which the core-hole potential files for absorption atoms
         are stored. Each element should have two files, e.g. "Ti.fch.upf" and
         "Core_Ti.wfc". "Ti.fch.upf" is the core-hole pesuodo potetial file and
         "Core_Ti.wfc" is the core electron wavefunction. The naming of the
         pseudopotentials and core electron wavefunction should follow the exact
-        specific structure.If None, checks the environment for ``XS_CHPSP_DIRECTORY``.
+        specific structure. If None, checks the environment for
+        ``XS_CHPSP_DIRECTORY``.
+    psp_cutoff_table  : str
+        The name of the cutoff table to loop around the pseudo potentials, the
+        format should be the same as the one for SSSP database. The cutoff
+        table shoyld be placed under the psp_directory.
+    psp_json : str
+        The name of the compact pseudo potential database in a single json
+        file, which can be generated by the packPsps method. If not None, the
+        json file should be placed under the psp_directory.
     """
 
     @property
@@ -130,25 +141,42 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self,
         cards=XSPECTRA_DEFAULT_CARDS,
         kpoints=GenericEstimatorKpoints(cutoff=16.0, max_radii=50.0),
+        chpsp_directory=None,
         psp_directory=None,
+        psp_cutoff_table=None,
+        psp_json=None,
         defaultConvPerAtom=1e-10,
         edge="K",
         name="XSpectra",
     ):
+        # Default cards
+        self._cards = cards
 
-        # psp information
-        if psp_directory is None:
-            psp_directory = _get_CHPSP_DIRECTORY_from_environ()
-        if psp_directory is None:
+        # chpsp information
+        if chpsp_directory is None:
+            chpsp_directory = _get_CHPSP_DIRECTORY_from_environ()
+        if chpsp_directory is None:
             warn(
-                "psp_directory not provided, and XS_CHPSPS_DIRECTORY not in "
+                "chpsp_directory not provided, and XS_CHPSP_DIRECTORY not in "
                 "the current environment variables. core-hole pseudo "
                 "potential files will not be written."
             )
+        self._chpsp_directory = chpsp_directory
+        # psp information
+        self._psp_cutoff_table = psp_cutoff_table
+        self._psp_json = psp_json
+
+        if psp_directory is None:
+            psp_directory = _get_PSP_DIRECTORY_from_environ()
+
         self._psp_directory = psp_directory
 
-        # Default cards
-        self._cards = cards
+        if psp_directory is None or self._psp_cutoff_table is None:
+            warn(
+                "psp_directory not provided XS_PSP_DIRECTORY not in the "
+                "current environment variables OR psp_cutoff_table not "
+                "provided. neutral pseudo potential files will not be written."
+            )
 
         # Method for determining the kmesh
         self._kpoints = kpoints
@@ -156,37 +184,83 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self._edge = edge
         self._name = name
 
-    @staticmethod
+    def packPsps(self, pspJsonOut):
+        """This method packs all the pseudo potentials the self._psp_directory
+        into a single json file, whose name is given by ``pspJsonOut``. By using
+        the condensed json file, the performance for writing pseudo potentials
+        files is better than copying them from self._psp_directory to the
+        working directory.
+
+        Parameters
+        ----------
+        pspJsonOut : str
+            Name of the output json file. Extension should be included.
+        """
+        cutofftable = Path(self._psp_directory) / Path(self._psp_cutoff_table)
+        with open(cutofftable, "r") as f:
+            inJSON = json.load(f)
+
+        outJSON = dict()
+
+        for element in inJSON:
+            pspFile = Path(self._psp_directory) / Path(
+                inJSON[element]["filename"]
+            )
+            with open(pspFile, "r") as f:
+                pspString = f.read()
+
+            outJSON[inJSON[element]["filename"]] = base64.b64encode(
+                bz2.compress(pspString.encode("utf-8"), 9)
+            ).decode("utf-8")
+
+        with open(pspJsonOut, "w") as f:
+            f.write(json.dumps(outJSON))
+
     def _unpackPsps(
+        self,
         ecutwfc,
         ecutrho,
-        pspDatabaseRoot,
-        DatabaseDir,
         symbols,
         folder,
-        needWfn=False,
     ):
+        """Used to generate the pseudo potential files from the compact json
+        file.
+
+        Parameters
+        ----------
+        ecutwfc : float
+            Energy cutoff for wave function
+        ecutrho : float
+            Energy cutoff for charge density
+        symbols : list
+            List of symbols for the element in the strcuture
+        folder : str
+            Name of the folder where the pseudo potential files will be
+            recovered
+
+        Returns
+        -------
+        psp : dict
+            A dictionary with key as the name of element and value as the name
+            of the pseudo potential file name.
+        ecutwfc : float
+            Energy cutoff for wave function
+        ecutrho : float
+            Energy cutoff for charge density
+        """
         psp = {}
-        pspDatabaseName = pspDatabaseRoot + ".json"
-        sssp_fn = os.path.join(DatabaseDir, pspDatabaseName)
+        sssp_fn = Path(self._psp_directoy) / Path(self._psp_cutoff_table)
         with open(sssp_fn, "r") as pspDatabaseFile:
             pspDatabase = json.load(pspDatabaseFile)
         minSymbols = set(symbols)
         for symbol in minSymbols:
-            # print(symbol)
-            # print(pspDatabase[symbol]["filename"])
             psp[symbol] = pspDatabase[symbol]["filename"]
             if ecutwfc < pspDatabase[symbol]["cutoff"]:
                 ecutwfc = pspDatabase[symbol]["cutoff"]
             if ecutrho < pspDatabase[symbol]["rho_cutoff"]:
                 ecutrho = pspDatabase[symbol]["rho_cutoff"]
-        #        if xsJSON['QE']['system']['ecutwfc'] < pspDatabase[ symbol ]['cutoff']:
-        #            xsJSON['QE']['system']['ecutwfc'] = pspDatabase[ symbol ]['cutoff']
-        #        if xsJSON['QE']['system']['ecutrho'] < pspDatabase[ symbol ]['rho_cutoff']:
-        #            xsJSON['QE']['system']['ecutrho'] = pspDatabase[ symbol ]['rho_cutoff']
 
-        pspDatabaseName = pspDatabaseRoot + "_pseudos.json"
-        sssp_fn = Path(DatabaseDir) / Path(pspDatabaseName)
+        sssp_fn = Path(self._psp_directory) / Path(self._psp_json)
         with open(sssp_fn, "r") as p:
             pspJSON = json.load(p)
         for symbol in minSymbols:
@@ -197,51 +271,28 @@ class XSpectraParameters(MSONable, _BaseParameters):
             with open(folder / fileName, "w") as f:
                 f.write(pspString.decode("utf-8"))
 
-        if needWfn:
-            for symbol in minSymbols:
-                if "wfc" not in pspDatabase[symbol]:
-                    print(
-                        "WFC not stored corectly in "
-                        + pspDatabaseRoot
-                        + " for element "
-                        + symbol
-                    )
-                    return False
-                fileName = pspDatabase[symbol]["wfc"]
-                pspString = bz2.decompress(base64.b64decode(pspJSON[fileName]))
-                # print("Expected hash:  " + pspDatabase[symbol]["wfc_md5"])
-                # print("Resultant hash: " + hashlib.md5(pspString).hexdigest())
-                element = symbol.split("+")[0]
-                with open(folder / f"Core_{element}.wfc", "w") as f:
-                    f.write(pspString.decode("utf-8"))
-
         return psp, ecutwfc, ecutrho
 
-    @staticmethod
-    def _write_xspectra_in(
-        mode, iabs, dirs, xkvec, XSparams: dict, plot=False
-    ):
+    def _write_xspectra_in(self, mode, iabs, dirs, xkvec):
         """construct input file for XSpectra calculation
 
         Parameters
         ----------
-        mode : str, mandatory
+        mode : str
             "dipole" or "quadrupole"
-        iabs : int, mandatory
-            the index of the absorbing element in scf calculation
-        dirs : str, mandatory
-            TODO
-        xkvec : tuple, mandatory
-            TODO
-        XSparams : dict, mandatory
-            paramers parsed to XSpectra calculation
-        plot : boolen, optional
-            controls xonly_plot
+        iabs : int
+            The index of the absorbing element in scf calculation
+        dirs : list
+            Description of the polarization direction, e.g. [1,0,0]
+            corresponds to the x direction
+        xkvec : list
+            Description of the k vectors for quadrupole calculation
 
         Returns
         -------
         string of the XSpectra input file
         """
+        XSparams = self._cards["XS"]
         element = XSparams["element"]
         inp = [
             "&input_xspectra",
@@ -295,26 +346,24 @@ class XSpectraParameters(MSONable, _BaseParameters):
         return "\n".join(inp) + "\n"
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and sites. In the
-        case of FEFF, if sites is None (usually indicating a global calculation
-        such as a neutral potential electronic relaxation method in VASP), then
-        write does nothing. # TODO
+        """Writes the input files for the provided structure and sites.
 
         Parameters
         ----------
         target_directory : os.PathLike
             The target directory to which to save the FEFF input files.
         **kwargs
-            Must contain the ``structure_uc`` key (the
-            :class:`pymatgen.core.structure.Structure` of interest) and the
+            Must contain the ``structure_sc`` key (the
+            :class:`pymatgen.core.structure.Structure` of interest), the
             ``sites`` key (a list of int, where each int corresponds to the
-            site index of the site to write).
+            site index in the supercell structure) and the ``index_mapping``
+            key (a dictionary mapping the index between unit cell and supercell)
 
         Returns
         -------
         dict
             A dictionary containing the status and errors key. In the case of
-            EXCITING, there are no possible errors at this stage other than
+            XSpectra, there are no possible errors at this stage other than
             critical ones that would cause program termination, so the returned
             object is always ``{"pass": True, "errors": dict()}``.
         """
@@ -350,20 +399,49 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self._cards["QE"]["electrons"][
             "conv_thr"
         ] = self._defaultConvPerAtom * len(structure)
-        # Get the psp data ready for the GS calculations; similar to SCF (neutral) calculations in VASP
-        module_path = Path(lightshow.parameters.__path__[0])
-        pspDatabaseRoot = self._cards["XS"]["psp_json"]
-        DatabaseDir = module_path / "pseudos"
+        # Get the psp data ready for the GS calculations; similar to SCF
+        # (neutral) calculations in VASP
+        # need to treat three different cases here
+
         ecutwfc = self._cards["QE"]["system"]["ecutwfc"]
         ecutrho = self._cards["QE"]["system"]["ecutrho"]
-        psp, ecutwfc, ecutrho = self._unpackPsps(
-            ecutwfc,
-            ecutrho,
-            pspDatabaseRoot,
-            DatabaseDir,
-            symbols,
-            target_directory,
-        )
+
+        if self._psp_directory is not None:
+            try:
+                psp_dict = json.load(
+                    open(
+                        Path(self._psp_directory) / Path(self._psp_cutoff_table)
+                    )
+                )
+                psp = dict()
+                for symbol in symbols:
+                    psp_filename = psp_dict[symbol]["filename"]
+                    psp[symbol] = psp_filename
+                    shutil.copyfile(
+                        Path(self._psp_directory) / Path(psp_filename),
+                        target_directory / psp_filename,
+                    )
+                    if psp_dict[symbol]["cutoff_wfc"] > ecutwfc:
+                        ecutwfc = psp_dict[symbol]["cutoff_wfc"]
+                    if psp_dict[symbol]["cutoff_rho"] > ecutrho:
+                        ecutrho = psp_dict[symbol]["cutoff_rho"]
+            except FileNotFoundError:
+                try:
+                    psp, ecutwfc, ecutrho = self._unpackPsps(
+                        ecutwfc,
+                        ecutrho,
+                        symbols,
+                        target_directory,
+                    )
+                except FileNotFoundError:
+                    warn(
+                        "Some pseudo potential files are not present in "
+                        f"f{self._psp_directory}"
+                    )
+                    self._psp_directory = None
+
+        if self._psp_directory is None:
+            psp = {symbol: symbol + ".upf" for symbol in symbols}
 
         self._cards["QE"]["system"]["ecutwfc"] = ecutwfc
         self._cards["QE"]["system"]["ecutrho"] = ecutrho
@@ -380,49 +458,27 @@ class XSpectraParameters(MSONable, _BaseParameters):
             kpoints_grid=kpoints_scf,
         )
         gs_in.write_file(path / "gs.in")
-        # Get the psp data read for ES calculations
-        # pspDatabaseRoot = self._cards["XS_controls"]["core_psp_json"]
-        # try:
-        #    psp2, ecutwfc, ecutrho = self._unpackPsps(
-        #        ecutwfc,
-        #        ecutrho,
-        #        pspDatabaseRoot,
-        #        DatabaseDir,
-        #        [self._cards["XS_controls"]["element"]],
-        #        target_directory,
-        #        needWfn=True,
-        #    )
-        # except KeyError:
-        # throw a warning here
-        # warn("take care of the core-hole psp for absorber by yourself")
-
-        # give a name to the pseudo potential
-        # set relatively large cutoff as default
-        # psp2 = {element: f"{element}.fch.upf"}
-        # ecutwfc = 100
-        # ecutrho = 800
-        # for i in psp2:
 
         psp[f"{element}+"] = f"{element}.fch.upf"  # psp2[i]
         # copy core-hole potential and core wfn to target folder
-        if self._psp_directory is not None:
+        if self._chpsp_directory is not None:
             try:
                 shutil.copyfile(
-                    self._psp_directory + f"{element}.fch.upf",
-                    target_directory / f"/{element}.fch.upf",
+                    self._chpsp_directory + f"/{element}.fch.upf",
+                    target_directory / Path("{element}.fch.upf"),
                 )
                 shutil.copyfile(
-                    self._psp_directory + f"Core_{element}.wfc",
-                    target_directory / f"/Core_{element}.wfc",
+                    self._chpsp_directory + f"/Core_{element}.wfc",
+                    target_directory / Path("Core_{element}.wfc"),
                 )
             except FileNotFoundError:
                 warn(
-                    f"{element}.fch.upf or Core_{element}.wfc not found in {self._psp_directory}"
+                    f"{element}.fch.upf or Core_{element}.wfc not found "
+                    f"in {self._chpsp_directory}"
                 )
 
         # Determine iabs
-        psp = OrderedDict(psp)
-        for i, j in enumerate(psp.keys()):
+        for i, j in enumerate(sorted(psp.keys())):
             if j == symTarg + "+":
                 iabs = i + 1
         for site, specie in zip(sites, species):
@@ -443,7 +499,8 @@ class XSpectraParameters(MSONable, _BaseParameters):
             structure[index_mapping[site]] = element
 
             # Deal with the dipole case only
-            # notice I put the photonSymm in the folder, which is created by John
+            # notice I put the photonSymm in the folder, which is created by
+            # John
             photons = list()
             photons.append({"dipole": [1, 0, 0, 1]})
             photons.append({"dipole": [0, 1, 0, 1]})
@@ -470,7 +527,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
                             iabs,
                             dir1,
                             dir2,
-                            self._cards["XS"],
                         )
                     )
 

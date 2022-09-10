@@ -1,9 +1,26 @@
-Lightshow
-=========
-
 .. inclusion-marker-LIGHTSHOW-begin
 
-**Lightshow** is a Python library meant for easily generating computational spectroscopy input files.
+.. image:: https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg
+    :align: right
+    :alt: sysfs line plot
+    :width: 1000px
+
+.. image:: https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml/badge.svg
+ :target: https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml
+
+.. image:: https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7 
+ :target: https://codecov.io/gh/AI-multimodal/Lightshow
+ 
+.. image:: https://app.codacy.com/project/badge/Grade/d31a4e18672c4d71bbaafa719181c140
+ :target: https://www.codacy.com/gh/AI-multimodal/Lightshow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AI-multimodal/Lightshow&amp;utm_campaign=Badge_Grade
+
+=============
+
+**Lightshow** is a Python library for easily generating computational spectroscopy input files.
+
+.. inclusion-marker-LIGHTSHOW-end
+
+.. inclusion-marker-LIGHTSHOW-overview-begin
 
 Often, it can be a daunting task to create comprehensive, well documented databases of materials structures and their x-ray absorption spectra. **Lightshow** solves this problem, allowing new users to choose sensible defaults for their calculations, while simultaneously exposing all functionality for experts.
 
@@ -17,7 +34,8 @@ Often, it can be a daunting task to create comprehensive, well documented databa
 
 with more on the way! The software is intended to be user-friendly, completely documented and tested, and extendable for those users who wish to add additional spectroscopy functionalities. There are also a few comprehensive tutorials to help you get started.
 
-.. inclusion-marker-LIGHTSHOW-end
+.. inclusion-marker-LIGHTSHOW-overview-end
+
 
 Installation
 ------------
@@ -26,16 +44,35 @@ Installation
 
 Users
 ^^^^^
-To simply use the software, install it as you would any Python package: `pip install lightshow`. **COMING SOON!**
+To simply use the software, install it as you would any Python package: 
+
+.. code-block:: bash
+
+    pip install lightshow
+
 
 Developers
 ^^^^^^^^^^
 If you wish to help us improve **Lightshow**, you should fork a copy of our repository, clone to your local machine, and then proceed with setting up the following:
 
-- Create a fresh virtual environment, e.g. ``conda create -n py3.9 python=3.9``.
-- Install the development requirements, ``pip install -r requirements-dev.txt``
-- Setup the pre-commit hooks ``pre-commit install``
-- If you want to install the package to your default paths, you can do this in "developer mode" by running ``pip install -e ".[dev]"``
+Create and activate a fresh virtual environment, e.g.
+
+.. code-block:: bash
+    
+    conda create -n py3.9 python=3.9 && conda activate py3.9
+
+It is highly recommended that you also install the pre-commit hooks. This will help you avoid failing the black and flake8 tests that are required as part of our CI testing suite.
+
+.. code-block:: bash
+
+    pre-commit install
+
+`Install the development requirements <https://github.com/pypa/pip/issues/8049#issuecomment-633845028>`_. We use the helper script ``build.sh`` to parse the ``pyproject.toml`` file and only install the specified packages needed for development (note this does not actually install **Lightshow**).
+
+.. code-block:: bash
+    
+    bash build.sh install-dev-requirements
+
 
 .. inclusion-marker-LIGHTSHOW-installation-end
 

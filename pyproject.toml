@@ -1,9 +1,87 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "lightshow"
+authors = [
+    {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
+    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"},
+    {"name" = "Deyu Lu", "email" = "dlu@bnl.gov"},
+    {"name" = "Benedikt Maurer"},
+    {"name" = "Fabien Peschel"},
+    {"name" = "Eli Stavitski"},
+    {"name" = "Xiaohui Qu"},
+    {"name" = "John T. Vinson"},
+    {"name" = "Christian Vorwerk"}
+]
+maintainers = [
+    {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
+    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"}
+]
+description = "A one-stop-shop for writing computational spectroscopy input files"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {"file" = "LICENSE"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "numpy",
+    "tqdm",
+    "monty",
+    "pymatgen",
+    "ase"
+]
+
+# Dynamic version reads __version__ directly from my_package.__init__
+dynamic = ["version"]
+
+# [tool.flit.sdist]
+# exclude = [
+#     "lightshow/_tests",
+#     "docs"
+# ]
+
+[project.optional-dependencies]
+test = [
+    "codecov",
+    "coverage",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "black",
+    "nbstripout",
+    "pre-commit",
+]
+doc = [
+    "sphinx",
+    "numpydoc",
+    "sphinx-copybutton",
+    "sphinx_rtd_theme",
+    "ipython",
+    "matplotlib"
+]
+
+[tool.setuptools]
+packages = ["lightshow"]
+
 [tool.black]
-line-length = 79
+line-length = 80
 include = '\.pyi?$'
 exclude = '''
 /(
-    \.git
+  | \.git
   | \.hg
   | \.mypy_cache
   | \.tox
@@ -12,12 +90,6 @@ exclude = '''
   | buck-out
   | build
   | dist
-  | versioneer.py
-  | lightshow/_version.py
   | docs/source/conf.py
-
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
 )/
 '''

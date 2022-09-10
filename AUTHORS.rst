@@ -2,8 +2,7 @@
 Authors
 =======
 
-The **Lightshow** software package was developed as part of the `Integrated Platform for Multimodal Data Capture, Exploration and Discovery Driven by AI Tools` (AIMM) project. Maintainers and core contributors are listed below in alphabetical order.
-
+Maintainers and core contributors are listed below in alphabetical order.
 
 Maintainers
 -----------
@@ -11,6 +10,7 @@ Maintainers
 
 Core contributors
 -----------------
+
 Deyu Lu [#f2]_, Benedikt Maurer [#f3]_, Fabian Peschel [#f3]_, Eli Stavitski [#f4]_, Xiaohui Qu [#f2]_, John T. Vinson [#f5]_ & Christian Vorwerk [#f6]_
 
 ----
@@ -20,4 +20,4 @@ Deyu Lu [#f2]_, Benedikt Maurer [#f3]_, Fabian Peschel [#f3]_, Eli Stavitski [#f
 .. [#f3] Physics Department and IRIS Adlershof, Humboldt-Universitaet zu Berlin, D-12489 Berlin, Germany
 .. [#f4] National Synchrotron Light Source II, Brookhaven National Laboratory, Upton, New York 11973, United States
 .. [#f5] Material Measurement Laboratory, National Institute of Standards and Technology, Gaithersburg, Maryland 20899, United States
-.. [#f6] U. Chicago
+.. [#f6] Pritzker School of Molecular Engineering, University of Chicago, Chicago, IL 60637, United States

@@ -54,7 +54,12 @@ def test_from_materials_project(test_structure_names):
     ],
 )
 def test_write(
-    mpid, dummy_potcar_file_directory, database_from_file, tmp_path
+    mpid,
+    dummy_potcar_file_directory,
+    dummy_psp_file_directory,
+    dummy_chpsp_file_directory,
+    database_from_file,
+    tmp_path,
 ):
 
     # Load it all in
@@ -92,7 +97,12 @@ def test_write(
     )
     ocean_params = OCEANParameters(edge="K")
     exciting_params = EXCITINGParameters(edge="K")
-    xspectra_params = XSpectraParameters(edge="K")
+    xspectra_params = XSpectraParameters(
+        psp_directory=dummy_psp_file_directory,
+        psp_cutoff_table="mock_cutoff_table.json",
+        chpsp_directory=dummy_chpsp_file_directory,
+        edge="K",
+    )
 
     dat.write(
         target,

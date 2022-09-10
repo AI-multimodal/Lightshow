@@ -10,30 +10,41 @@ from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
 
 
-OCEAN_DEFAULT_CARDS = {}
+OCEAN_DEFAULT_CARDS = {
+    "dft": "qe",
+    "ecut": "-1",
+    "opf.program": "hamann",
+    "para_prefix": "mpirun -np 24",
+}
+
 Bohr = 0.5291772105638411
 
 
 class OCEANParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
-    for an OCEAN calculation. !! TODO
+    for an OCEAN calculation.
 
     Parameters
     ----------
     cards : dict
         A dictionary of of the cards to be control the parameters in the
-        OCEAN calculations. Default is empty, which means that users will
-        use most default parameters stored at self._cards. If users want to
-        change some default parameters, for example, one might wish to abinit
-        rather than qe as DFT package, also they want to use the energy range
-        for DFT to be 50 eV, they can something like
+        OCEAN calculations. The key of the dictionary corresponds to the
+        parameters in OCEAN; the values are the correspongding values.
+        In LightShow, minimum parameters to run ocean is provided in
+        ``OCEAN_DEFAULT_CARDS``, which looks something like
 
         .. code-block:: python
 
             cards = {
-                "dft": "qe",
-                "dft_energy_range": 50,
+                    "dft" : "qe",
+                    "ecut" : "-1",
+                    "opf.program" : "hamann",
+                    "para_prefix" : "mpirun -np 24",
             }
+
+        The detailed description of the OCEAN parameters can be find at
+        its official website. If the user wants to change some parameters,
+        they can just add a key-value pair to the cards.
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing he kpoints file from the structure. Should
         be a class with a ``__call__`` method defined. This method should take
@@ -59,12 +70,16 @@ class OCEANParameters(MSONable, _BaseParameters):
         to determine the ``diemac``. If not provided and the strucutre is from
         pymatgen, the code will use the the data (either band gap or diel)
         stored in the database to get ``diemac``; if not provided and the
-        structure is from a file, the default value of `diemac` in the cards
-        will be used.
+        structure is from a file, the default value 10000 is used for  `diemac`.
     edge: str, optional
-        The edge of the XAS to run in the calculation.
+        The edge of the XAS to run in the calculation. The default is K.
     name : str
         The name of the calculation. Should likely always be ``"OCEAN"``.
+
+    Raises
+    ------
+    ValueError
+        If an invalid ``edge`` argument is provided.
     """
 
     @property
@@ -147,8 +162,23 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     @staticmethod
     def _oceanKptSampling(cell, kpt):
-        # John's method for getting the explicit screen.nkpt
-        # Should normalize each cell dim by Bohr, or we can just do it the once for volume
+        """Method for getting the explicit ``screen.nkpt``. ``screen.nkpt``
+        accepts a single value as input, which is similar to the idea of
+        effecitve radius and is implemented in the latest version of OCEAN. If
+        a sinlge value is provided, the code will convert it back to the
+        original kmesh, something like ``3 3 2``.
+
+        Parameters
+        ----------
+        cell : (3, 3) numpy array
+            Lattice parameter in the matrix form
+        kpt : float
+
+        Returns
+        -------
+        str
+            a string consisting the kmesh values along three dimentions
+        """
         v = abs(np.dot(np.cross(cell[0], cell[1]), cell[2])) / Bohr
         b1 = 2 * np.pi * np.linalg.norm(np.cross(cell[1], cell[2])) / v
         b2 = 2 * np.pi * np.linalg.norm(np.cross(cell[0], cell[2])) / v
@@ -162,7 +192,21 @@ class OCEANParameters(MSONable, _BaseParameters):
 
     @staticmethod
     def _write_ocean_in(path, structure, input_data: dict):
+        """Methods for writing the OCEAN input file, e.g. ``ocean.in``.
+        The lattice structure and element type are handled here. The user
+        provided input paramters will also be managed.
 
+        Parameters
+        ----------
+        path : os.PathLike
+            the target file where all the input paramters will be written.
+        structure : pymatgen.core.structure.Structure
+            The Pymatgen structure.
+        input_data : dict
+            A dictionary containing all the user defined parameters for
+            OCEAN input file.
+
+        """
         fd = open(path, "w")
 
         input_data_str = []
@@ -210,15 +254,14 @@ class OCEANParameters(MSONable, _BaseParameters):
         fd.write(
             "rprim {{ {cell[0][0]:.14f} {cell[0][1]:.14f} {cell[0][2]:.14f}\n"
             "        {cell[1][0]:.14f} {cell[1][1]:.14f} {cell[1][2]:.14f}\n"
-            "        {cell[2][0]:.14f} {cell[2][1]:.14f} {cell[2][2]:.14f}  }}\n"
+            "        {cell[2][0]:.14f} {cell[2][1]:.14f} {cell[2][2]:.14f}  }}\n"  # noqa
             "".format(cell=structure.lattice.matrix)
         )
 
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and sites. In the
-        case of FEFF, if sites is None (usually indicating a global calculation
-        such as a neutral potential electronic relaxation method in VASP), then
-        write does nothing. # TODO
+        """Writes the input files for the provided structure and sites. Some
+        user defined parameters will also be handled during this stage, such as
+        ``diel`` or ``bandgap``.
 
         Parameters
         ----------
@@ -234,7 +277,7 @@ class OCEANParameters(MSONable, _BaseParameters):
         -------
         dict
             A dictionary containing the status and errors key. In the case of
-            EXCITING, there are no possible errors at this stage other than
+            OCEAN, there are no possible errors at this stage other than
             critical ones that would cause program termination, so the returned
             object is always ``{"pass": True, "errors": dict()}``.
         """
@@ -255,7 +298,14 @@ class OCEANParameters(MSONable, _BaseParameters):
             element_list.append(element)
             cards = copy(self._cards)
 
-            cards["edges"] = f"-{element.number} {self._edge}"
+            cards["edges"] = ""
+            for site in sites:
+                s = structure[site].specie.symbol
+                site += 1
+                if s == specie:
+                    cards["edges"] += f"{site} {self._edge}\n"
+            cards["edges"] = cards["edges"].rstrip()
+
             # ocean use a negative value to represent the number of
             # conduction bands
             cards["nbands"] = -1 * self._nbands(structure)
@@ -300,7 +350,8 @@ class OCEANParameters(MSONable, _BaseParameters):
             self._write_ocean_in(filepath_xas, structure, cards)
 
             # Deal with the dipole case only
-            # notice I put the photonSymm in the folder, which is created by John
+            # notice I put the photonSymm in the folder, which is created by
+            # John
             photons = list()
             photons.append({"dipole": [1, 0, 0, 1]})
             photons.append({"dipole": [0, 1, 0, 1]})
@@ -330,7 +381,8 @@ class OCEANParameters(MSONable, _BaseParameters):
                     f.write("end\n")
                     f.write("1\n")
                     # 4966 is hard coded for Ti
-                    # NEED TO FIX THIS (probably by moving it to a lookup table inside OCEAN)
+                    # NEED TO FIX THIS (probably by moving it to a lookup
+                    # table inside OCEAN)
                     f.write(str(weight) + "\n")
                     f.close
 
