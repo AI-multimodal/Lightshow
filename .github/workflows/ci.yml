@@ -12,6 +12,8 @@ env:
 
 jobs:
   tests:
+    name: Run unit testing suite
+
     env:
         PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
     runs-on: ${{ matrix.os }}
@@ -40,6 +42,8 @@ jobs:
         fail_ci_if_error: false
 
   black:
+    name: Run Black code quality check
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -49,6 +53,8 @@ jobs:
           fail_on_error: "true"
 
   flake8_py3:
+    name: Run flake8 code quality check
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -66,6 +72,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   check_semantic_version_placeholder:
+    name: Check semantic version placeholder exists in the __init__
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -74,6 +81,8 @@ jobs:
         grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
 
   docs:
+    name: Build documentation
+
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -88,14 +97,16 @@ jobs:
       run: |
         bash build.sh docs
 
-  publish:
-    name: Publish to PyPi
+  publish_code:
+    name: Publish deployment to PyPI
+
     needs:
       - tests
       - black
       - flake8_py3
       - check_semantic_version_placeholder
       - docs
+
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     steps:
@@ -110,3 +121,56 @@ jobs:
       # env:
       #   FLIT_USERNAME: __token__
       #   FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
+
+  publish_docs:
+    name: Publish documentation via GitHub Pages
+
+    needs:
+      - tests
+      - black
+      - flake8_py3
+      - check_semantic_version_placeholder
+      - docs
+      - publish_code
+
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    # Allow one concurrent deployment
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          bash build.sh _CI-docs-requirements
+      - name: Build
+        run: |
+          bash build.sh docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'docs/build/html/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

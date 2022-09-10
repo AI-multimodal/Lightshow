@@ -70,6 +70,7 @@ doc = [
     "sphinx-copybutton",
     "sphinx_rtd_theme",
     "ipython",
+    "matplotlib"
 ]
 
 [tool.setuptools]
