@@ -4,7 +4,7 @@ PACKAGE_NAME="lightshow"
 
 replace_version_in_init () {
     pip install dunamai~=1.12
-    version="$(dunamai from git --no-metadata --style pep440)"
+    version="$(dunamai from git --style pep440)"
     dunamai check "$version" --style pep440
     sed_command="s/...  # semantic-version-placeholder/'$version'/g"
     if [[ "$OSTYPE" == "darwin"* ]]; then
