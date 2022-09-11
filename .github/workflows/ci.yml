@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install testing dependencies
       run: |
-        bash build.sh _CI-test-requirements
+        bash scripts/install.sh test
     - name: Run tests
       run: |
         pytest -v --cov --cov-report xml lightshow/_tests
@@ -68,7 +68,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   check_semantic_version_placeholder:
-    name: Semantic Version
+    name: Semantic version placeholder check
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
       run: |
         grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
   docs:
-    name: Documentation Tests
+    name: Documentation build tests
 
     runs-on: ubuntu-latest
     steps:
@@ -85,25 +85,21 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install dependencies
-      run: |
-        bash build.sh _CI-docs-requirements
-    - name: Build
-      run: |
-        bash build.sh docs
-
-  publish_code:
-    name: Publish deployment to PyPI
-
+    - name: Install and build
+      run: bash scripts/build_docs.sh
+  build_and_publish_test:
+    # Every push to master will deploy the current version to the testing
+    # PyPI server
+    name: Build and publish to test PyPI server
     needs:
       - tests
       - black
       - flake8_py3
       - check_semantic_version_placeholder
       - docs
-
+    environment: test_deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+    if: github.event_name == 'push'
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.9
@@ -111,70 +107,92 @@ jobs:
       with:
         python-version: 3.9
     - name: Build
-      run: |
-
-        ...
-
+      run: bash scripts/build_project.sh
     - name: Publish distribution to Test PyPI
+      if: github.ref == 'refs/heads/master'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
-    - name: Publish distribution to PyPI
-      if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
 
-  publish_docs:
-    name: Publish documentation via GitHub Pages
-
+  build_and_publish:
+    # Only pushes into deploy will deploy the current tagged version to the
+    # real PyPI server
+    name: Build and publish to PyPI server
     needs:
       - tests
       - black
       - flake8_py3
       - check_semantic_version_placeholder
       - docs
-      - publish_code
-
-    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    # Allow one concurrent deployment
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
+    environment: deploy
     runs-on: ubuntu-latest
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
-
+    if: github.event_name == 'push'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: |
-          bash build.sh _CI-docs-requirements
-      - name: Build
-        run: |
-          bash build.sh docs
-      - name: Setup Pages
-        uses: actions/configure-pages@v2
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'docs/build/html/'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build
+      run: bash scripts/build_project.sh
+    - name: Publish distribution to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        # STILL TESTING!!
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+
+  # publish_docs:
+  #   name: Publish documentation via GitHub Pages
+
+  #   needs:
+  #     - tests
+  #     - black
+  #     - flake8_py3
+  #     - check_semantic_version_placeholder
+  #     - docs
+  #     - build_and_publish
+
+  #   # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+  #   permissions:
+  #     contents: read
+  #     pages: write
+  #     id-token: write
+
+  #   # Allow one concurrent deployment
+  #   concurrency:
+  #     group: "pages"
+  #     cancel-in-progress: true
+
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
+
+  #   runs-on: ubuntu-latest
+
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Set up Python 3.9
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
+  #     - name: Install dependencies
+  #       run: |
+  #         bash build.sh _CI-docs-requirements
+  #     - name: Build
+  #       run: |
+  #         bash build.sh docs
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v2
+  #     - name: Upload artifact
+  #       uses: actions/upload-pages-artifact@v1
+  #       with:
+  #         path: 'docs/build/html/'
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v1
