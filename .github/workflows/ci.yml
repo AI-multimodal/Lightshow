@@ -12,7 +12,7 @@ env:
 
 jobs:
   tests:
-    name: Run unit testing suite
+    name: Tests
 
     env:
         PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
@@ -40,9 +40,8 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
-
   black:
-    name: Run Black code quality check
+    name: Black
 
     runs-on: ubuntu-latest
     steps:
@@ -51,9 +50,8 @@ jobs:
         with:
           black_args: "lightshow/ --check"
           fail_on_error: "true"
-
   flake8_py3:
-    name: Run flake8 code quality check
+    name: flake8
 
     runs-on: ubuntu-latest
     steps:
@@ -70,18 +68,16 @@ jobs:
           checkName: 'flake8_py3'   # NOTE: this needs to be the same as the job name
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   check_semantic_version_placeholder:
-    name: Check semantic version placeholder exists in the __init__
+    name: Semantic Version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Check lines exist
       run: |
         grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
-
   docs:
-    name: Build documentation
+    name: Documentation Tests
 
     runs-on: ubuntu-latest
     steps:
