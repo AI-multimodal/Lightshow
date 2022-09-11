@@ -17,6 +17,7 @@ install_requirements() {
 }
 
 
+pip install toml
 if [ "$1" = "doc" ]; then
     install_doc_requirements_only
 elif [ "$1" = "test" ]; then
