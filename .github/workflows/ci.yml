@@ -28,10 +28,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install testing dependencies
       run: |
+        bash scripts/install.sh
         bash scripts/install.sh test
     - name: Run tests
-      run: |
-        pytest -v --cov --cov-report xml lightshow/_tests
+      run: pytest -v --cov --cov-report xml lightshow/_tests
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v2
