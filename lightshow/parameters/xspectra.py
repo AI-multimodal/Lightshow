@@ -10,7 +10,7 @@ from pymatgen.io.pwscf import PWInput
 
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
-from lightshow import (
+from lightshow.environment_utils import (
     _get_CHPSP_DIRECTORY_from_environ,
     _get_PSP_DIRECTORY_from_environ,
 )

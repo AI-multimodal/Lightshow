@@ -10,7 +10,7 @@ from pymatgen.io.vasp.inputs import Incar as pmgIncar
 from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 
-from lightshow import _get_POTCAR_DIRECTORY_from_environ
+from lightshow.environment_utils import _get_POTCAR_DIRECTORY_from_environ
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate

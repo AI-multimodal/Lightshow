@@ -15,7 +15,7 @@ from pymatgen.core.structure import Structure
 from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
-from lightshow import _get_API_key_from_environ
+from lightshow.environment_utils import _get_API_key_from_environ
 from lightshow import pymatgen_utils
 
 

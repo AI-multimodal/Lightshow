@@ -8,7 +8,7 @@ from pymatgen.io.exciting import ExcitingInput
 from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
-from lightshow import _get_SPECIES_DIRECTORY_from_environ
+from lightshow.environment_utils import _get_SPECIES_DIRECTORY_from_environ
 
 EXCITING_DEFAULT_GQMAX = 4.0
 
