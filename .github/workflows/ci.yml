@@ -88,6 +88,22 @@ jobs:
   #   - name: Install and build
   #     run: bash scripts/build_docs.sh
 
+  # example:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.7'
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         # This is necessary so that we have the tags.
+  #         fetch-depth: 0
+  #     - uses: mtkennerly/dunamai-action@v1
+  #       with:
+  #         env-var: MY_VERSION
+  #         args: --style semver
+  #     - run: echo $MY_VERSION
+
   build_and_publish_test:
     # Every push to master will deploy the current version to the testing
     # PyPI server
@@ -107,6 +123,14 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+        fetch-depth: 0
+    - name: Semver
+      uses: mtkennerly/dunamai-action@v1
+      with:
+        env-var: MY_VERSION
+        args: --style semver
+    - name: Check version
+      run: echo $MY_VERSION
     - name: Build
       run: bash scripts/build_project.sh
     # - name: Publish distribution to Test PyPI
