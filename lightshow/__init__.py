@@ -5,8 +5,14 @@ from os import environ
 # This is replaced at build time automatically during deployment and
 # installation. Replacing anything will mess that up and crash the entire
 # build.
-__version__ = ...  # semantic-version-placeholder
+# __version__ = ...  # semantic-version-placeholder
 # DO NOT CHANGE ABOVE ---------------------------------------------------------
+
+
+from ._version import get_versions
+
+__version__ = get_versions()["version"]
+del get_versions
 
 
 def _get_API_key_from_environ():
@@ -75,3 +81,7 @@ from lightshow.parameters.vasp import VASPParameters  # noqa
 from lightshow.parameters.exciting import EXCITINGParameters  # noqa
 from lightshow.parameters.ocean import OCEANParameters  # noqa
 from lightshow.parameters.xspectra import XSpectraParameters  # noqa
+
+from . import _version
+
+__version__ = _version.get_versions()["version"]

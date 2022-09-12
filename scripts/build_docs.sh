@@ -20,6 +20,4 @@ build_docs () {
 pip install toml
 bash scripts/install.sh
 bash scripts/install.sh doc
-bash scripts/update_version.sh set
 build_docs
-bash scripts/update_version.sh reset
