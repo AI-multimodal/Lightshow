@@ -98,7 +98,7 @@ jobs:
       - flake8_py3
       - check_semantic_version_placeholder
       - docs
-    environment: test_deploy
+    # environment: test_deploy
     runs-on: ubuntu-latest
     # if: github.event_name == 'push'
     steps:
