@@ -4,7 +4,7 @@ import pytest
 
 from pymatgen.core.structure import Structure
 
-from lightshow import Database
+from lightshow.database import Database
 
 STRUCTURE_FILES_PATH = (
     Path.cwd() / Path("lightshow") / Path("_tests") / Path("structure_files")

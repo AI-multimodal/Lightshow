@@ -5,14 +5,12 @@ import sys
 from pymatgen.ext.matproj import MPRestError
 from warnings import warn
 
-from lightshow import (
-    Database,
-    FEFFParameters,
-    VASPParameters,
-    OCEANParameters,
-    XSpectraParameters,
-    EXCITINGParameters,
-)
+from lightshow.database import Database
+from lightshow.parameters.feff import FEFFParameters
+from lightshow.parameters.vasp import VASPParameters
+from lightshow.parameters.ocean import OCEANParameters
+from lightshow.parameters.xspectra import XSpectraParameters
+from lightshow.parameters.exciting import EXCITINGParameters
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
 
 # Helper testing files

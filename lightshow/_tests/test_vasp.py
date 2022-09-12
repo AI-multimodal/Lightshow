@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 import sys
 
-from lightshow import VASPParameters
+from lightshow.parameters.vasp import VASPParameters
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
 
 # Helper testing files
