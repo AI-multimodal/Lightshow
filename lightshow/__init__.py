@@ -8,14 +8,6 @@ from os import environ
 # __version__ = ...  # semantic-version-placeholder
 # DO NOT CHANGE ABOVE ---------------------------------------------------------
 
-from .database import Database  # noqa
-from .parameters.feff import FEFFParameters  # noqa
-from .parameters.vasp import VASPParameters  # noqa
-from .parameters.exciting import EXCITINGParameters  # noqa
-from .parameters.ocean import OCEANParameters  # noqa
-from .parameters.xspectra import XSpectraParameters  # noqa
-
-
 from ._version import get_versions
 
 __version__ = get_versions()["version"]
@@ -80,3 +72,11 @@ def _get_SPECIES_DIRECTORY_from_environ():
     """
 
     return environ.get("SPECIES_DIRECTORY", None)
+
+
+from .database import Database  # noqa
+from .parameters.feff import FEFFParameters  # noqa
+from .parameters.vasp import VASPParameters  # noqa
+from .parameters.exciting import EXCITINGParameters  # noqa
+from .parameters.ocean import OCEANParameters  # noqa
+from .parameters.xspectra import XSpectraParameters  # noqa
