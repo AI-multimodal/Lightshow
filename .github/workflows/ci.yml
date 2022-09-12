@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v3
@@ -30,6 +30,8 @@ jobs:
       run: |
         bash scripts/install.sh
         bash scripts/install.sh test
+    - name: Build project (just a test)
+      run: bash scripts/build_project.sh
     - name: Run tests
       run: pytest -v --cov --cov-report xml lightshow/_tests
 
