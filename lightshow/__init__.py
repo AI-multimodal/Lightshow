@@ -81,7 +81,3 @@ from lightshow.parameters.vasp import VASPParameters  # noqa
 from lightshow.parameters.exciting import EXCITINGParameters  # noqa
 from lightshow.parameters.ocean import OCEANParameters  # noqa
 from lightshow.parameters.xspectra import XSpectraParameters  # noqa
-
-from . import _version
-
-__version__ = _version.get_versions()["version"]
