@@ -92,12 +92,12 @@ jobs:
     # Every push to master will deploy the current version to the testing
     # PyPI server
     name: Build and publish to test PyPI server
-    needs:
-      - tests
-      - black
-      - flake8_py3
-      - check_semantic_version_placeholder
-      - docs
+    # needs:
+    #   - tests
+    #   - black
+    #   - flake8_py3
+    #   - check_semantic_version_placeholder
+    #   - docs
     # environment: test_deploy
     runs-on: ubuntu-latest
     # if: github.event_name == 'push'
