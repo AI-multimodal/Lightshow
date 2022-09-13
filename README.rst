@@ -67,12 +67,13 @@ It is highly recommended that you also install the pre-commit hooks. This will h
 
     pre-commit install
 
-`Install the development requirements <https://github.com/pypa/pip/issues/8049#issuecomment-633845028>`_. We use the helper script ``build.sh`` to parse the ``pyproject.toml`` file and only install the specified packages needed for development (note this does not actually install **Lightshow**).
+We use helper scripts to parse the ``pyproject.toml`` file and install only specific packages required for certain parts of development. For development, we recommend installing all dependencies:
 
 .. code-block:: bash
     
-    bash build.sh install-dev-requirements
-
+    bash scripts/install.sh       # Install Lightshow's core dependencies
+    bash scripts/install.sh test  # Install the test requirements only
+    bash scripts/install.sh doc   # Install requirements for building the docs
 
 .. inclusion-marker-LIGHTSHOW-installation-end
 
