@@ -3,9 +3,9 @@ name: CI
 # Run on all PR's and on pushes/merges to deploy and master
 on:
   pull_request:
-    branches: ['deploy', 'master', '!paper.md']
+    branches: ['master', '!paper.md']
   push:
-    branches: ['deploy', 'master', '!paper.md']
+    branches: ['master', '!paper.md']
 
 env:
   GITHUB_ACTION_IS_RUNNING: 1
