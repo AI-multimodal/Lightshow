@@ -194,8 +194,8 @@ jobs:
     ###########################################################################
     # Getting the tags like this is REQUIRED for the dynamic versioning
     # system to work properly
-    - name: Get tags
-      run: git fetch --unshallow --tags
+    # - name: Get tags
+    #   run: git fetch --unshallow --tags
     ###########################################################################
 
     - name: Set up Python 3.9
@@ -251,8 +251,8 @@ jobs:
     ###########################################################################
     # Getting the tags like this is REQUIRED for the dynamic versioning
     # system to work properly
-    - name: Get tags
-      run: git fetch --unshallow --tags
+    # - name: Get tags
+    #   run: git fetch --unshallow --tags
     ###########################################################################
 
     - name: Set up Python 3.9
