@@ -214,8 +214,9 @@ jobs:
   build_and_publish_docs:
     name: Build and publish documentation via GitHub Pages
 
-    # Only allow on deploy, requires review before workflow executes
-    environment: deploy
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     # Only allow tagged commits
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
@@ -238,10 +239,6 @@ jobs:
     concurrency:
       group: "pages"
       cancel-in-progress: true
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     runs-on: ubuntu-latest
 
