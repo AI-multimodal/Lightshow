@@ -110,7 +110,10 @@ jobs:
     runs-on: ubuntu-latest
     # if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Get tags
+      run: git fetch --tags origin
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
