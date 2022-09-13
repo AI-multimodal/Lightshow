@@ -53,7 +53,7 @@ To simply use the software, install it as you would any Python package:
 
 Developers
 ^^^^^^^^^^
-If you wish to help us improve **Lightshow**, you should fork a copy of our repository, clone to your local machine, and then proceed with setting up the following: 
+If you wish to help us improve **Lightshow**, you should fork a copy of our repository, clone to your local machine, and then proceed with setting up the following:
 
 Create and activate a fresh virtual environment, e.g.
 
