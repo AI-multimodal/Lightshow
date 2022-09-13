@@ -6,6 +6,7 @@ on:
     branches: ['master', '!paper.md']
   push:
     branches: ['master', '!paper.md']
+    tags: ["v*"]
 
 env:
   GITHUB_ACTION_IS_RUNNING: 1
