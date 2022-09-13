@@ -113,7 +113,7 @@ jobs:
     # Getting the tags like this is REQUIRED for the dynamic versioning
     # system to work properly
     - name: Get tags
-      if: ! startsWith(github.ref, 'refs/tags')
+      if: "! startsWith(github.ref, 'refs/tags')"
       run: git fetch --unshallow --tags
     ###########################################################################
 
@@ -152,7 +152,7 @@ jobs:
     # Getting the tags like this is REQUIRED for the dynamic versioning
     # system to work properly
     - name: Get tags
-      if: ! startsWith(github.ref, 'refs/tags')
+      if: "! startsWith(github.ref, 'refs/tags')"
       run: git fetch --unshallow --tags
     ###########################################################################
 
