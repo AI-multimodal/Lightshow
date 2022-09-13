@@ -11,104 +11,104 @@ env:
   GITHUB_ACTION_IS_RUNNING: 1
 
 jobs:
-  tests:
-    name: Run unit testing suite
+  # tests:
+  #   name: Run unit testing suite
 
-    env:
-        PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest]
-        python-version: [3.7, 3.8, 3.9]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install testing dependencies
-      run: |
-        bash build.sh _CI-test-requirements
-    - name: Run tests
-      run: |
-        pytest -v --cov --cov-report xml lightshow/_tests
+  #   env:
+  #       PMG_API_KEY: ${{ secrets.PMG_API_KEY }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     matrix:
+  #       os: [ubuntu-latest, macOS-latest]
+  #       python-version: [3.7, 3.8, 3.9]
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Set up Python ${{ matrix.python-version }}
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: ${{ matrix.python-version }}
+  #   - name: Install testing dependencies
+  #     run: |
+  #       bash build.sh _CI-test-requirements
+  #   - name: Run tests
+  #     run: |
+  #       pytest -v --cov --cov-report xml lightshow/_tests
 
-    - name: Upload code coverage
-      uses: codecov/codecov-action@v2
-      timeout-minutes: 10
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
+  #   - name: Upload code coverage
+  #     uses: codecov/codecov-action@v2
+  #     timeout-minutes: 10
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       fail_ci_if_error: false
 
-  black:
-    name: Run Black code quality check
+  # black:
+  #   name: Run Black code quality check
 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: rickstaa/action-black@v1
-        with:
-          black_args: "lightshow/ --check"
-          fail_on_error: "true"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: rickstaa/action-black@v1
+  #       with:
+  #         black_args: "lightshow/ --check"
+  #         fail_on_error: "true"
 
-  flake8_py3:
-    name: Run flake8 code quality check
+  # flake8_py3:
+  #   name: Run flake8 code quality check
 
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install flake8
-        run: pip install flake8
-      - name: Run flake8
-        uses: suo/flake8-github-action@releases/v1
-        with:
-          checkName: 'flake8_py3'   # NOTE: this needs to be the same as the job name
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
+  #     - name: Install flake8
+  #       run: pip install flake8
+  #     - name: Run flake8
+  #       uses: suo/flake8-github-action@releases/v1
+  #       with:
+  #         checkName: 'flake8_py3'   # NOTE: this needs to be the same as the job name
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  check_semantic_version_placeholder:
-    name: Check semantic version placeholder exists in the __init__
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Check lines exist
-      run: |
-        grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
+  # check_semantic_version_placeholder:
+  #   name: Check semantic version placeholder exists in the __init__
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Check lines exist
+  #     run: |
+  #       grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
 
-  docs:
-    name: Build documentation
+  # docs:
+  #   name: Build documentation
 
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install dependencies
-      run: |
-        bash build.sh _CI-docs-requirements
-    - name: Build
-      run: |
-        bash build.sh docs
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Set up Python 3.9
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.9
+  #   - name: Install dependencies
+  #     run: |
+  #       bash build.sh _CI-docs-requirements
+  #   - name: Build
+  #     run: |
+  #       bash build.sh docs
 
   publish_code:
     name: Publish deployment to PyPI
 
-    needs:
-      - tests
-      - black
-      - flake8_py3
-      - check_semantic_version_placeholder
-      - docs
+    # needs:
+    #   - tests
+    #   - black
+    #   - flake8_py3
+    #   - check_semantic_version_placeholder
+    #   - docs
 
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.9
@@ -117,60 +117,60 @@ jobs:
         python-version: 3.9
     - name: Build and publish
       run: | # CHANGE THIS TO USE `bash build.sh publish` LATER!
-        echo "Just testing!"
+        bash build.sh build
       # env:
       #   FLIT_USERNAME: __token__
       #   FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
 
-  publish_docs:
-    name: Publish documentation via GitHub Pages
+  # publish_docs:
+  #   name: Publish documentation via GitHub Pages
 
-    needs:
-      - tests
-      - black
-      - flake8_py3
-      - check_semantic_version_placeholder
-      - docs
-      - publish_code
+  #   needs:
+  #     - tests
+  #     - black
+  #     - flake8_py3
+  #     - check_semantic_version_placeholder
+  #     - docs
+  #     - publish_code
 
-    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+  #   # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+  #   permissions:
+  #     contents: read
+  #     pages: write
+  #     id-token: write
 
-    # Allow one concurrent deployment
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
+  #   # Allow one concurrent deployment
+  #   concurrency:
+  #     group: "pages"
+  #     cancel-in-progress: true
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: |
-          bash build.sh _CI-docs-requirements
-      - name: Build
-        run: |
-          bash build.sh docs
-      - name: Setup Pages
-        uses: actions/configure-pages@v2
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'docs/build/html/'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Set up Python 3.9
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
+  #     - name: Install dependencies
+  #       run: |
+  #         bash build.sh _CI-docs-requirements
+  #     - name: Build
+  #       run: |
+  #         bash build.sh docs
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v2
+  #     - name: Upload artifact
+  #       uses: actions/upload-pages-artifact@v1
+  #       with:
+  #         path: 'docs/build/html/'
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v1
