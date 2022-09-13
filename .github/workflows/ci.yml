@@ -123,11 +123,14 @@ jobs:
     - name: Install and build
       run: bash scripts/build_docs.sh
 
-  build_and_test_publish:
-    name: Publish deployment to PyPI
+  build_and_publish_to_test_server:
+    name: Build and publish to testing PyPI
 
     # Only allow on master, requires review before workflow executes
     environment: test_deploy
+
+    # Only allow on pushes
+    if: github.event_name == 'push'
 
     needs:
       - tests
@@ -155,7 +158,52 @@ jobs:
       with:
         python-version: 3.9
 
-    - name: Build, apply version and publish
+    - name: Build and apply version
+      run: bash scripts/build_project.sh
+
+    - name: Publish distribution to Test PyPI
+      # if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+
+  build_and_publish:
+    name: Build and publish to PyPI
+
+    # Only allow on deploy, requires review before workflow executes
+    environment: deploy
+
+    # Only allow tagged commits
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+
+    needs:
+      - tests
+      - black
+      - flake8_py3
+      - check_semantic_version_placeholder
+      - docs
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    ###########################################################################
+    # Getting the tags like this is REQUIRED for the dynamic versioning
+    # system to work properly
+    - name: Get tags
+      run: git fetch --unshallow --tags
+    ###########################################################################
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Build and apply version
       run: bash scripts/build_project.sh
 
     - name: Publish distribution to Test PyPI
@@ -164,55 +212,69 @@ jobs:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
 
-  # publish_docs:
-  #   name: Publish documentation via GitHub Pages
+  build_and_publish_docs:
+    name: Build and publish documentation via GitHub Pages
 
-  #   needs:
-  #     - tests
-  #     - black
-  #     - flake8_py3
-  #     - check_semantic_version_placeholder
-  #     - docs
-  #     - publish_code
+    # Only allow on deploy, requires review before workflow executes
+    environment: deploy
+    
+    # Only allow tagged commits
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
 
-  #   # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-  #   permissions:
-  #     contents: read
-  #     pages: write
-  #     id-token: write
+    needs:
+      - tests
+      - black
+      - flake8_py3
+      - check_semantic_version_placeholder
+      - docs
+      - build_and_publish
 
-  #   # Allow one concurrent deployment
-  #   concurrency:
-  #     group: "pages"
-  #     cancel-in-progress: true
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
+    # Allow one concurrent deployment
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
 
-  #   runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/deploy'
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Set up Python 3.9
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.9
-  #     - name: Install dependencies
-  #       run: |
-  #         bash build.sh _CI-docs-requirements
-  #     - name: Build
-  #       run: |
-  #         bash build.sh docs
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v2
-  #     - name: Upload artifact
-  #       uses: actions/upload-pages-artifact@v1
-  #       with:
-  #         path: 'docs/build/html/'
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v1
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    ###########################################################################
+    # Getting the tags like this is REQUIRED for the dynamic versioning
+    # system to work properly
+    - name: Get tags
+      run: git fetch --unshallow --tags
+    ###########################################################################
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Build and apply version
+      run: |
+        bash scripts/build_docs.sh
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v2
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: 'docs/build/html/'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
