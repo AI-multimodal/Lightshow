@@ -105,7 +105,7 @@ system. A general purpose software package for generating XAS simulation input
 files for multiple codes does not exist. `Lightshow` has been developed to
 fill this gap. It provides not only sets of default input parameters based on
 a careful multi-code XAS benchmark project [@xanesbench], but also exposes the
-entire suite of possible parameter choices for expert users to tune. Our goal
+entire suite of possible parameter choices to expert users to tune. Our goal
 is to provide an easy-to-use tool to the XAS community (for both newcomers
 and experts) for XAS simulation and analysis.
 
@@ -116,7 +116,7 @@ repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
 
 We summarize the structure of `Lightshow` application programming interface
 (API) in Fig. \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design
-philosophy is built around two principal objects, the `Database` class, and
+philosophy is built around two principal objects: the `Database` class and
 the `_BaseParameters` class. At a high-level, the `Database` class 
 interfaces primarily with Pymatgen and the Materials Project [@Jain2013], 
 allowing the user to easily utilize Pymatgen and pull large number of materials 
