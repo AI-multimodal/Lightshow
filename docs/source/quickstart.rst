@@ -293,7 +293,7 @@ XSpectra
 
 .. note::
 
-    See `here <https://www.quantum-espresso.org/Doc/INPUT_XSpectra.txt>`__ for the OCEAN documentation.
+    See `here <https://www.quantum-espresso.org/Doc/INPUT_XSpectra.txt>`__ for the XSpectra documentation.
 
 The required primary arguments for the ``XSpectraParameters`` object are the ``cards`` and ``edge``. For example, the general ``XSpectraParameter`` object structure looks something like this:
  
