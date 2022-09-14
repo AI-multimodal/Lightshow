@@ -132,7 +132,7 @@ jobs:
     environment: test_deploy
 
     # Only allow on pushes
-    if: github.event_name == 'push' && "! startsWith(github.ref, 'refs/tags')"
+    if: github.event_name == 'push' && ! startsWith(github.ref, 'refs/tags')
 
     needs:
       - tests
