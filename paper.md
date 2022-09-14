@@ -54,34 +54,32 @@ bibliography: paper.bib
 
 # Summary
 
-Spectroscopy simulations are a critical tool for the interpretation of
-experiment, the development of new theoretical understanding, and fast
-screening of new molecules and materials. Systematically setting up input files
-for different simulation codes and multiple materials can be a time-consuming
-task with a relatively high barrier-to-entry, given the complexities and
-nuances of each individual simulation package. `Lightshow` solves this problem
-by providing a uniform abstraction for writing computational x-ray spectroscopy
-input files for multiple popular codes, including FEFF, VASP, OCEAN, EXCITING
-and XSpectra. Its extendable framework will also allow for the community to
-easily make future additions, and add new simulation code.
+Spectroscopy simulations are a critical tool for interpreting experiment, 
+developing new theoretical understanding, and fast screening of new molecules 
+and materials. Systematically setting up input files for different simulation 
+codes and multiple materials can be a time-consuming task with a relatively high 
+barrier-to-entry, given the complexities and nuances of each individual simulation 
+package. `Lightshow` solves this problem by providing a uniform abstraction for 
+writing computational x-ray spectroscopy input files for multiple popular codes
+, including FEFF, VASP, OCEAN, EXCITING and XSpectra. Its extendable framework 
+will also allow the community to easily add new functions, and to incorporate 
+new simulation code.
 
 # Statement of need
 
-First-principles computer simulations of material and molecular properties are
-now a powerful tool at the forefront of leading-edge scientific research.
-Fundamental quantum mechanical equations can be solved numerically on
-high-performance computing systems, and the results interpreted at the
-microscopic level, something that is not possible otherwise. Thanks to their
-predictive nature, first-principles simulations provide fundamental
-understanding into the physical origins of various phenomena. They are critical
-to accelerating new materials design. Unlike expensive and time-consuming
-experiments, _in silico_ materials design frameworks can quickly screen the
-most promising candidates for target applications by running high-throughput
-calculations, allowing for a systematic down-sampling of the intractably large 
-chemical space. The emergence of high-performance computing hardware
-architecture combined with the development of efficient structure search
-algorithms continue to fuel the advance of first-principles simulations in
-domain science research.
+First-principles simulations explore the material and molecular properties by 
+solving fundamental quantum mechanical equations numerically and interpret the 
+resutls at the microscopic level, making it now a powerful tool at the forefront 
+of leading-edge scientific research. Thanks to their predictive nature, 
+first-principles simulations provide fundamental understanding into the physical 
+origins of various phenomena. They are critical to accelerating new materials 
+design. Unlike expensive and time-consuming experiments, _in silico_ materials 
+design frameworks can quickly screen the most promising candidates for target 
+applications by running high-throughput calculations, allowing for a systematic 
+down-sampling of the intractably large chemical space. The emergence of 
+high-performance computing hardware architecture combined with the development 
+of efficient structure search algorithms continue to fuel the advance of 
+first-principles simulations in domain science research.
 
 Spectroscopy is an important experimental characterization technique that
 probes a sample based on the light-matter interaction. Different types of
@@ -97,10 +95,10 @@ science and biology for materials characterization. Recent instrument
 development at synchrotron light sources further improves the spatial, temporal
 and energy resolution of XAS, which opens new avenues in XAS research.
 
-Despite the growing demand in first-principles XAS spectroscopy, carrying out
+Despite the growing demands in first-principles XAS spectroscopy, carrying out
 practical calculations correctly is far from trivial, and requires a great deal
-of expertise in electronic structure theory, creating a formidable barrier for
-non-expert researchers. Most of the practical challenges boil down to the right
+of expertise in the electronic structure theory, creating a formidable barrier for
+non-expert researchers. Most of the practical challenges boil down to the proper
 choice of input parameters, which depends on the level of theory, details of
 the implementation of the simulation software and the atomic structure of the
 system. A general purpose software package for generating XAS simulation input
@@ -119,17 +117,17 @@ repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
 We summarize the structure of `Lightshow` application programming interface
 (API) in Fig. \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design
 philosophy is built around two principal objects, the `Database` class, and
-objects that inherit the `_BaseParameters` class. At a high-level, the
-`Database` class interfaces primarily with Pymatgen and the Materials Project
-[@Jain2013], allowing the user to easily utilize Pymatgen and pull large
-numbers of materials structures quickly. Functionality is also available for
-instantiating a `Database` via loading, e.g., `POSCAR`-style structure files
-from disk. Once a database has been created, code-specific simulation
-parameters inheriting the `_BaseParameters` base class interface with various
-methods in Pymatgen as well as in-house built software for systematically
-writing input files for multiple XAS simulation programs, including FEFF [@rehr2010parameter],
+the `_BaseParameters` class. At a high-level, the `Database` class 
+interfaces primarily with Pymatgen and the Materials Project [@Jain2013], 
+allowing the user to easily utilize Pymatgen and pull large number of materials 
+structures quickly. Functionality is also available for instantiating a 
+`Database` via loading, e.g., `POSCAR`-style structure files from local 
+storate. Once a database has been created, code-specific simulation parameters 
+inheriting the `_BaseParameters` base class interface with various methods in 
+Pymatgen as well as in-house built software for systematically writing input 
+files for multiple XAS simulation programs, including FEFF [@rehr2010parameter],
 XSpectra [@taillefumier2002x; @gougoussis2009first; @bunuau2013projector],
-OCEAN [@vinson2011bethe; @ocean-3], Exciting [@exciting] and VASP [@vasp-xas].
+OCEAN [@vinson2011bethe; @ocean-3], EXCITING [@exciting] and VASP [@vasp-xas].
 We highlight the `_tests` directory, in which we maintain a suite of unit tests
 for individual functions and methods, as well as integration tests for the
 entire workflow. `Lightshow` is fully documented, and contains a simple example
