@@ -300,7 +300,7 @@ The required primary arguments for the ``XSpectraParameters`` object are the ``c
 .. code-block:: python
 
     xspectra_params = XSpectraParameters(
-         cards={'QE': {'control': {'restart_mode': 'from_scratch', 'wf_collect': '.true.'},
+         cards={'QE': {'control': {'restart_mode': 'from_scratch'},
                        'electrons': {'conv_thr': 1e-08, 'mixing_beta': 0.4},
                        'system': {'degauss': 0.002, 'ecutrho': 320, 'ecutwfc': 40,
                                   'nspin': 1, 'occupations': 'smearing', 'smearing': 'gauss'}
