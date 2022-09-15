@@ -17,7 +17,7 @@ from lightshow import (
 
 XSPECTRA_DEFAULT_CARDS = {
     "QE": {
-        "control": {"restart_mode": "from_scratch", "wf_collect": ".true."},
+        "control": {"restart_mode": "from_scratch"},
         "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
         "system": {
             "degauss": 0.002,
@@ -66,7 +66,6 @@ class XSpectraParameters(MSONable, _BaseParameters):
                     "QE": {
                         "control": {
                             "restart_mode": "from_scratch",
-                            "wf_collect": ".true."
                         },
                         "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
                         "system": {
