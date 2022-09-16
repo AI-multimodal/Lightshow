@@ -28,6 +28,7 @@ authors:
     orcid: 0000-0002-7619-7060
     affiliation: 6
   - name: Deyu Lu
+    orcid: 0000-0003-4351-6085
     affiliation: 2
   - name: Claudia Draxl
     affiliation: 4
