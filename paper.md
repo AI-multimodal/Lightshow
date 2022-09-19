@@ -19,6 +19,7 @@ authors:
   - name: Benedikt Maurer
     affiliation: 4
   - name: Fabian Peschel
+    orcid: 0000-0003-0619-6713
     affiliation: 4
   - name: Xiaohui Qu
     affiliation: 2
