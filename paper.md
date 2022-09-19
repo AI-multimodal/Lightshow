@@ -111,7 +111,9 @@ fill this gap. It provides not only sets of default input parameters based on
 a careful multi-code XAS benchmark project [@xanesbench], but also exposes the
 entire suite of possible parameter choices to expert users to tune. Our goal
 is to provide an easy-to-use tool to the XAS community (for both newcomers
-and experts) for XAS simulation and analysis.
+and experts) for XAS simulation and analysis. This tool will also help to improve
+the data consistency and data reproducibility in the computational x-ray spectroscopy field, 
+which are essential to data-driven applications.
 
 # Brief software description
 
