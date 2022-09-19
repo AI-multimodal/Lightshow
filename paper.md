@@ -64,10 +64,10 @@ barrier-to-entry, given the complexities and nuances of each individual simulati
 package. This task is non-trivial even for expert in the electronic structure field and nearly 
 formidable for non-expert researchers.
 `Lightshow` solves this problem by providing a uniform abstraction for 
-writing computational x-ray spectroscopy input files for multiple popular codes
-, including FEFF, VASP, OCEAN, EXCITING and XSpectra. Its extendable framework 
+writing computational x-ray spectroscopy input files for multiple popular codes, including 
+FEFF, VASP, OCEAN, EXCITING and XSpectra. Its extendable framework 
 will also allow the community to easily add new functions and to incorporate 
-new simulation code.
+new simulation codes.
 
 # Statement of need
 
@@ -75,7 +75,7 @@ First-principles simulations explore the material and molecular properties by
 solving fundamental quantum mechanical equations numerically.
 Thanks to their predictive nature, first-principles simulations provide fundamental understanding into the physical 
 origins of various phenomena at the microscopic level, making them a powerful tool at the forefront
-of leading-edge scientific research in physics, chemistry, materials science and biology. 
+of a wide range of scientific research fields, including physics, chemistry, materials science and biology.
 They are also critical to accelerating new materials 
 design. In comparison to experiments, which can be expensive and time-consuming, _in silico_ materials 
 design frameworks can quickly screen the most promising candidates for target 
@@ -83,14 +83,14 @@ applications by running high-throughput calculations, allowing for a systematic
 down-sampling of the intractably large chemical space. The emergence of the
 high-performance computing hardware architecture combined with the development 
 of efficient structure search algorithms continue to fuel the advance of
-first-principles simulations in materials discovery.
+first-principles simulations in materials design.
 
 Spectroscopy is an important experimental characterization technique that
 probes a sample based on the physics of light-matter interaction. Different types of
 spectroscopy can be classified by the energy range they probe, such as X-ray,
-optical and infrared spectroscopy. `Lightshow` currently focuses on writing
+ultraviolet–visible and infrared spectroscopy. `Lightshow` currently focuses on writing
 the input files for one type: X-ray absorption spectroscopy (XAS), in which a
-deeply bound core level electron is excited to empty states into the 
+deeply bound core level electron is excited to empty states in the 
 conduction bands. XAS is particularly useful because it is element-specific
 and very sensitive to the local chemical environment of the absorbing sites,
 such as coordination number, charge state, and local symmetry [@de2008core]. It has been
