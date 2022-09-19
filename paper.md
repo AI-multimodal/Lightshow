@@ -1,5 +1,5 @@
 ---
-title: 'Lightshow: a Python package for writing computational x-ray absorption spectroscopy input files'
+title: 'Lightshow: a Python package for generating computational x-ray absorption spectroscopy input files'
 tags:
   - Python
   - computational spectroscopy
@@ -56,42 +56,44 @@ bibliography: paper.bib
 
 # Summary
 
-Spectroscopy simulations are a critical tool for interpreting experiment, 
-developing new theoretical understanding, and fast screening of new molecules 
-and materials. Systematically setting up input files for different simulation 
-codes and multiple materials can be a time-consuming task with a relatively high 
+First-principles computational spectroscopy is a critical tool for interpreting experiment, 
+performing structure refinement, and developing new physcial understanding.
+Systematically setting up input files for different simulation 
+codes and a diverse class of materials is a challenging task with a very high 
 barrier-to-entry, given the complexities and nuances of each individual simulation 
-package. `Lightshow` solves this problem by providing a uniform abstraction for 
+package. This task is non-trivial even for expert in the electronic structure field and nearly 
+formidable for non-expert researchers.
+`Lightshow` solves this problem by providing a uniform abstraction for 
 writing computational x-ray spectroscopy input files for multiple popular codes
 , including FEFF, VASP, OCEAN, EXCITING and XSpectra. Its extendable framework 
-will also allow the community to easily add new functions, and to incorporate 
+will also allow the community to easily add new functions and to incorporate 
 new simulation code.
 
 # Statement of need
 
 First-principles simulations explore the material and molecular properties by 
-solving fundamental quantum mechanical equations numerically and interpret the 
-resutls at the microscopic level, making it now a powerful tool at the forefront 
-of leading-edge scientific research. Thanks to their predictive nature, 
-first-principles simulations provide fundamental understanding into the physical 
-origins of various phenomena. They are critical to accelerating new materials 
-design. Unlike expensive and time-consuming experiments, _in silico_ materials 
+solving fundamental quantum mechanical equations numerically.
+Thanks to their predictive nature, first-principles simulations provide fundamental understanding into the physical 
+origins of various phenomena at the microscopic level, making them a powerful tool at the forefront
+of leading-edge scientific research in physics, chemistry, materials science and biology. 
+They are also critical to accelerating new materials 
+design. In comparison to experiments, which can be expensive and time-consuming, _in silico_ materials 
 design frameworks can quickly screen the most promising candidates for target 
 applications by running high-throughput calculations, allowing for a systematic 
-down-sampling of the intractably large chemical space. The emergence of 
+down-sampling of the intractably large chemical space. The emergence of the
 high-performance computing hardware architecture combined with the development 
-of efficient structure search algorithms continue to fuel the advance of 
-first-principles simulations in domain science research.
+of efficient structure search algorithms continue to fuel the advance of
+first-principles simulations in materials discovery.
 
 Spectroscopy is an important experimental characterization technique that
-probes a sample based on the light-matter interaction. Different types of
+probes a sample based on the physics of light-matter interaction. Different types of
 spectroscopy can be classified by the energy range they probe, such as X-ray,
 optical and infrared spectroscopy. `Lightshow` currently focuses on writing
 the input files for one type: X-ray absorption spectroscopy (XAS), in which a
-deeply bound core level electron is excited to empty states, usually in the 
+deeply bound core level electron is excited to empty states into the 
 conduction bands. XAS is particularly useful because it is element-specific
 and very sensitive to the local chemical environment of the absorbing sites,
-such as coordination number, charge state, and local symmetry. It has been
+such as coordination number, charge state, and local symmetry [@de2008core]. It has been
 widely used in condensed matter physics, geophysics, chemistry, materials
 science and biology for materials characterization. Recent instrument
 development at synchrotron light sources further improves the spatial, temporal
