@@ -12,6 +12,7 @@ authors:
     corresponding: true
     affiliation: 1 # (Multiple affiliations must be quoted)
   - name: Fanchen Meng
+    orcid: 0000-0001-9869-9005
     equal-contrib: true
     affiliation: 2
   - name: Christian Vorwerk
