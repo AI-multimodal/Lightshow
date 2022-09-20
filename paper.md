@@ -61,7 +61,7 @@ performing structure refinement, and developing new physcial understanding.
 Systematically setting up input files for different simulation 
 codes and a diverse class of materials is a challenging task with a very high 
 barrier-to-entry, given the complexities and nuances of each individual simulation 
-package. This task is non-trivial even for expert in the electronic structure field and nearly 
+package. This task is non-trivial even for experts in the electronic structure field and nearly 
 formidable for non-expert researchers.
 `Lightshow` solves this problem by providing a uniform abstraction for 
 writing computational x-ray spectroscopy input files for multiple popular codes, including 
@@ -71,7 +71,7 @@ new simulation codes.
 
 # Statement of need
 
-First-principles simulations explore the material and molecular properties by 
+First-principles simulations explore the material and molecular properties of a system by 
 solving fundamental quantum mechanical equations numerically.
 Thanks to their predictive nature, first-principles simulations provide fundamental understanding into the physical 
 origins of various phenomena at the microscopic level, making them a powerful tool at the forefront
@@ -88,7 +88,7 @@ first-principles simulations in materials design.
 Spectroscopy is an important experimental characterization technique that
 probes a sample based on the physics of light-matter interaction. Different types of
 spectroscopy can be classified by the energy range they probe, such as X-ray,
-ultraviolet–visible and infrared spectroscopy. `Lightshow` currently focuses on writing
+ultraviolet–visible, and infrared spectroscopy. `Lightshow` currently focuses on writing
 the input files for one type: X-ray absorption spectroscopy (XAS), in which a
 deeply bound core level electron is excited to empty states in the 
 conduction bands. XAS is particularly useful because it is element-specific
@@ -99,12 +99,12 @@ science and biology for materials characterization. Recent instrument
 development at synchrotron light sources further improves the spatial, temporal
 and energy resolution of XAS, which opens new avenues in XAS research.
 
-Despite the growing demands in first-principles XAS spectroscopy, carrying out
-practical calculations correctly is far from trivial, and requires a great deal
+Despite the growing demands for first-principles XAS spectroscopy, carrying out
+practical calculations correctly is far from trivial and requires a great deal
 of expertise in the electronic structure theory, creating a formidable barrier for
 non-expert researchers. Most of the practical challenges boil down to the proper
 choice of input parameters, which depends on the level of theory, details of
-the implementation of the simulation software and the atomic structure of the
+the implementation of the simulation software, and the atomic structure of the
 system. A general purpose software package for generating XAS simulation input
 files for multiple codes does not exist. `Lightshow` has been developed to
 fill this gap. It provides not only sets of default input parameters based on
@@ -125,7 +125,7 @@ We summarize the structure of `Lightshow` application programming interface
 philosophy is built around two principal objects: the `Database` class and
 the `_BaseParameters` class. At a high-level, the `Database` class 
 interfaces primarily with Pymatgen and the Materials Project [@Jain2013], 
-allowing the user to easily utilize Pymatgen and pull large number of materials 
+allowing the user to easily utilize Pymatgen and pull a large number of materials 
 structures quickly. Functionality is also available for instantiating a 
 `Database` via loading, e.g., `POSCAR`-style structure files from local 
 storate. Once a database has been created, code-specific simulation parameters 
