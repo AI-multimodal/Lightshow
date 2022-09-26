@@ -129,7 +129,7 @@ interfaces primarily with Pymatgen and the Materials Project [@Jain2013],
 allowing the user to easily utilize Pymatgen and pull a large number of materials 
 structures quickly. Functionality is also available for instantiating a 
 `Database` via loading, e.g., `POSCAR`-style structure files from local 
-storate. Once a database has been created, code-specific simulation parameters 
+storage. Once a database has been created, code-specific simulation parameters 
 inheriting the `_BaseParameters` base class interface with various methods in 
 Pymatgen as well as in-house built software for systematically writing input 
 files for multiple XAS simulation programs, including FEFF [@rehr2010parameter],
