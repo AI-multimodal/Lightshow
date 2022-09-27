@@ -155,6 +155,10 @@ Contract No. DE-SC0012704. This work received partial funding by the German
 Research Foundation (DFG) through the CRC 1404 (FONDA), Projektnummer
 414984028, and the NFDI consortium FAIRmat – project 460197019.
 
+C.V. acknowlodges support by the Department of Energy, Basic Energy Sciences,
+Materials Science and Engineering Division, through the Midwest Integrated
+Center for Computational Materials (MICCoM)
+
 Certain software is identified in this paper for clarity. Such identification
 is not intended to imply recommendation or endorsement by NIST, nor is it
 intended to imply that the materials or equipment identified are necessarily
