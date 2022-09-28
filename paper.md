@@ -14,6 +14,7 @@ authors:
   - name: Fanchen Meng
     orcid: 0000-0001-9869-9005
     equal-contrib: true
+    corresponding: true
     affiliation: 2
   - name: Christian Vorwerk
     orcid: 0000-0002-2516-9553
@@ -122,7 +123,7 @@ which are essential to data-driven applications.
 # Brief software description
 
 ![Graphical representation of the organization of the `Lightshow` 
-repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram.pdf)
+repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram_2.pdf)
 
 We summarize the structure of `Lightshow`'s application programming interface
 (API) in \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design
