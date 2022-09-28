@@ -23,6 +23,7 @@ authors:
     orcid: 0000-0003-0619-6713
     affiliation: 4
   - name: Xiaohui Qu
+    orcid: 0000-0001-5651-8405
     affiliation: 2
   - name: Eli Stavitski
     affiliation: 5
