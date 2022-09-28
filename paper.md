@@ -19,6 +19,7 @@ authors:
     orcid: 0000-0002-2516-9553
     affiliation: 3
   - name: Benedikt Maurer
+    orcid: 0000-0001-9152-7390
     affiliation: 4
   - name: Fabian Peschel
     orcid: 0000-0003-0619-6713
