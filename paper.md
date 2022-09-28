@@ -16,6 +16,7 @@ authors:
     equal-contrib: true
     affiliation: 2
   - name: Christian Vorwerk
+    orcid: 0000-0002-2516-9553
     affiliation: 3
   - name: Benedikt Maurer
     affiliation: 4
