@@ -66,7 +66,7 @@ package. This task is non-trivial even for experts in the electronic structure f
 formidable for non-expert researchers.
 `Lightshow` solves this problem by providing a uniform abstraction for 
 writing computational x-ray spectroscopy input files for multiple popular codes, including 
-FEFF, VASP, OCEAN, **<span style="font-family: Courier new;">exciting</span>** and XSpectra. 
+FEFF, VASP, `OCEAN`, `exciting` and XSpectra. 
 Its extendable framework will also allow the community to easily add new functions and 
 to incorporate new simulation codes.
 
@@ -134,8 +134,8 @@ inheriting the `_BaseParameters` base class interface with various methods in
 Pymatgen as well as in-house built software for systematically writing input 
 files for multiple XAS simulation programs, including FEFF [@rehr2010parameter],
 XSpectra [@taillefumier2002x; @gougoussis2009first; @bunuau2013projector],
-OCEAN [@vinson2011bethe; @ocean-3], 
-**<span style="font-family: Courier new;">exciting</span>** [@exciting] and 
+`OCEAN` [@vinson2011bethe; @ocean-3], 
+`exciting` [@exciting] and 
 VASP [@vasp-xas].
 We highlight the `_tests` directory, in which we maintain a suite of unit tests
 for individual functions and methods, as well as integration tests for the
