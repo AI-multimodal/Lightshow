@@ -147,7 +147,7 @@ notebook for users to get started.
 
 # Acknowledgements
 
-This material is based upon work partially supported by the U.S. Department of
+This work is partially supported by the U.S. Department of
 Energy, Office of Science, Office of Basic Energy Sciences, under Award Numbers
 FWP PS-030. The research used the theory and computation resources of the
 Center for Functional Nanomaterials, which is a U.S. DOE Office of Science
