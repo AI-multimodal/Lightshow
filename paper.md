@@ -45,7 +45,7 @@ affiliations:
    index: 2
  - name: Pritzker School of Molecular Engineering, University of Chicago, Chicago, IL 60637, United States
    index: 3
- - name: Physics Department and IRIS Adlershof, Humboldt-Universitaet zu Berlin, D-12489 Berlin, Germany
+ - name: Physics Department and IRIS Adlershof, Humboldt-Universität zu Berlin, D-12489 Berlin, Germany
    index: 4
  - name: National Synchrotron Light Source II, Brookhaven National Laboratory, Upton, New York 11973, United States
    index: 5
@@ -128,7 +128,7 @@ repository.\label{fig:WorkflowDiagram}](figures/Lightshow_Workflow_Diagram_2.pdf
 We summarize the structure of `Lightshow`'s application programming interface
 (API) in \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design
 philosophy is built around two principal objects: the `Database` class and
-the `_BaseParameters` class. At a high-level, the `Database` class 
+the `_BaseParameters` class. At a high level, the `Database` class 
 interfaces primarily with Pymatgen and the Materials Project [@Jain2013], 
 allowing the user to easily utilize Pymatgen and pull a large number of materials 
 structures quickly. Functionality is also available for instantiating a 
