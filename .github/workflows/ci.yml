@@ -125,49 +125,49 @@ jobs:
     - name: Install and build
       run: bash scripts/build_docs.sh
 
-  build_and_publish_to_test_server:
-    name: Build and publish to testing PyPI
+#   build_and_publish_to_test_server:
+#     name: Build and publish to testing PyPI
 
-    # Only allow on master, requires review before workflow executes
-    environment: test_deploy
+#     # Only allow on master, requires review before workflow executes
+#     environment: test_deploy
 
-    # Only allow on pushes
-    if: github.event_name == 'push' && ! startsWith(github.ref, 'refs/tags')
+#     # Only allow on pushes
+#     if: github.event_name == 'push' && ! startsWith(github.ref, 'refs/tags')
 
-    needs:
-      - tests
-      - black
-      - flake8_py3
-      - check_semantic_version_placeholder
-      - docs
+#     needs:
+#       - tests
+#       - black
+#       - flake8_py3
+#       - check_semantic_version_placeholder
+#       - docs
 
-    runs-on: ubuntu-latest
+#     runs-on: ubuntu-latest
 
-    steps:
+#     steps:
 
-    - name: Checkout
-      uses: actions/checkout@v3
+#     - name: Checkout
+#       uses: actions/checkout@v3
 
-    ###########################################################################
-    # Getting the tags like this is REQUIRED for the dynamic versioning
-    # system to work properly
-    - name: Get tags
-      run: git fetch --unshallow --tags
-    ###########################################################################
+#     ###########################################################################
+#     # Getting the tags like this is REQUIRED for the dynamic versioning
+#     # system to work properly
+#     - name: Get tags
+#       run: git fetch --unshallow --tags
+#     ###########################################################################
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+#     - name: Set up Python 3.9
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: 3.9
 
-    - name: Build and apply version
-      run: bash scripts/build_project.sh
+#     - name: Build and apply version
+#       run: bash scripts/build_project.sh
 
-    - name: Publish distribution to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
+#     - name: Publish distribution to Test PyPI
+#       uses: pypa/gh-action-pypi-publish@release/v1
+#       with:
+#         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+#         repository_url: https://test.pypi.org/legacy/
 
   build_and_publish:
     name: Build and publish to PyPI
