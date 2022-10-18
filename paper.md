@@ -32,6 +32,7 @@ authors:
     orcid: 0000-0002-3337-2930
     affiliation: 5
   - name: Claudia Draxl
+    orcid: 0000-0003-3523-6657
     affiliation: 4
   - name: John Vinson
     orcid: 0000-0002-7619-7060
