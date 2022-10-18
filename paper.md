@@ -29,6 +29,7 @@ authors:
     orcid: 0000-0001-5651-8405
     affiliation: 2
   - name: Eli Stavitski
+    orcid: 0000-0002-3337-2930
     affiliation: 5
   - name: Claudia Draxl
     affiliation: 4
