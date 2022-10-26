@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: Carbone
+  given-names: Matthew R.
+  orcid: "https://orcid.org/0000-0002-5181-9513"
+- family-names: Meng
+  given-names: Fanchen
+  orcid: "https://orcid.org/0000-0001-9869-9005"
+- family-names: Vorwerk
+  given-names: Christian
+  orcid: "https://orcid.org/0000-0002-2516-9553"
+- family-names: Maurer
+  given-names: Benedikt
+  orcid: "https://orcid.org/0000-0001-9152-7390"
+- family-names: Peschel
+  given-names: Fabian
+  orcid: "https://orcid.org/0000-0003-0619-6713"
+- family-names: Qu
+  given-names: Xiaohui
+  orcid: "https://orcid.org/0000-0001-5651-8405"
+- family-names: Stavitski
+  given-names: Eli
+  orcid: "https://orcid.org/0000-0002-3337-2930"
+- family-names: Draxl
+  given-names: Claudia
+  orcid: "https://orcid.org/0000-0003-3523-6657"
+- family-names: Vinson
+  given-names: John
+  orcid: "https://orcid.org/0000-0002-7619-7060"
+- family-names: Lu
+  given-names: Deyu
+  orcid: "https://orcid.org/0000-0003-4351-6085"
+title: "Lightshow"
+version: 0.0.14
+date-released: 2022-10-04
+url: "https://github.com/AI-multimodal/Lightshow"
