@@ -64,7 +64,7 @@ bibliography: paper.bib
 # Summary
 
 First-principles computational spectroscopy is a critical tool for interpreting experiment, 
-performing structure refinement, and developing new physcial understanding.
+performing structure refinement, and developing new physical understanding.
 Systematically setting up input files for different simulation 
 codes and a diverse class of materials is a challenging task with a very high 
 barrier-to-entry, given the complexities and nuances of each individual simulation 
