@@ -13,6 +13,10 @@
  
 .. image:: https://app.codacy.com/project/badge/Grade/d31a4e18672c4d71bbaafa719181c140
  :target: https://www.codacy.com/gh/AI-multimodal/Lightshow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AI-multimodal/Lightshow&amp;utm_campaign=Badge_Grade
+ 
+.. image:: https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg
+  :target: https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43
+
 
 =============
 
