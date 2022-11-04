@@ -36,7 +36,7 @@ Often, it can be a daunting task to create comprehensive, well documented databa
 - EXCITING
 - Xspectra
 
-with more on the way! The software is intended to be user-friendly, completely documented and tested, and extendable for those users who wish to add additional spectroscopy functionalities. There are also a few comprehensive tutorials to help you get started.
+with more on the way! The software is intended to be user-friendly, extensively documented and tested, and extendable for those users who wish to add additional spectroscopy functionalities. There are also a few comprehensive tutorials to help you get started.
 
 .. inclusion-marker-LIGHTSHOW-overview-end
 
