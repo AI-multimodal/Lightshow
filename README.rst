@@ -17,6 +17,8 @@
 .. image:: https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg
   :target: https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43
 
+.. image:: https://zenodo.org/badge/DOI/10.48550/arXiv.2211.04452.svg
+   :target: https://doi.org/10.48550/arXiv.2211.04452
 
 =============
 
