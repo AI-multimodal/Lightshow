@@ -292,7 +292,7 @@ class Database(MSONable):
             )
         """
         print('starting')
-        # with MPRester("CEvsr9tiYxi6MaxfRnSU7V9FCaIAcAZh") as mpr:
+        # with MPRester(api_key) as mpr:
             # doc = mpr.materials.search(task_ids=['mp-13'], fields=["material_id"])
         # print(doc)
         api_key = _get_api_key(api_key)
