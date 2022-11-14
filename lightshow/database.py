@@ -12,7 +12,9 @@ from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.core.structure import Structure
-from pymatgen.ext.matproj import MPRester, MPRestError
+# from pymatgen.ext.matproj import MPRester, MPRestError
+from pymatgen.ext.matproj import MPRestError
+from mp_api.client import MPRester
 from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ
@@ -39,7 +41,7 @@ def _delete_common_strings(old_list_of_strings):
     ]
 
 
-def _fetch_from_MP(mpr, mpid, metadata_keys):
+def _fetch_from_MP(api_key, mpid, metadata_keys):
     """Uses the provided MPID to fetch the structure data.
 
     Parameters
@@ -59,18 +61,18 @@ def _fetch_from_MP(mpr, mpid, metadata_keys):
         The structure (:class:`pymatgen.core.structure.Structure`) of interest
         and the specified metadata.
     """
+    with MPRester(api_key) as mpr:
+        # The structure is precisely in the data pulled from get_doc:
+       # structure = Structure.from_dict(metadata.pop("structure"))
+        print(mpid)
+        doc = mpr.materials.search(task_ids=[mpid])
+        structure = doc[0].structure
+        if metadata_keys is not None:
+            metadata = {key: dict(doc[0])[key] for key in metadata_keys}
 
-    metadata = mpr.get_doc(mpid)
-
-    if metadata_keys is not None:
-        metadata = {key: metadata[key] for key in metadata_keys}
-    metadata["downloaded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # The structure is precisely in the data pulled from get_doc:
-    structure = Structure.from_dict(metadata.pop("structure"))
-
-    return structure, metadata
-
+        metadata["downloaded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return structure, metadata
+        # return structure
 
 def _from_mpids_list(mpids, api_key, metadata_keys, verbose=True):
     """Makes one large API call to the Materials Project database and pulls the
@@ -96,17 +98,19 @@ def _from_mpids_list(mpids, api_key, metadata_keys, verbose=True):
 
     structures = dict()
     metadatas = dict()
-    with MPRester(api_key) as mpr:
-        for mpid in tqdm(mpids, disable=not verbose):
-            try:
-                structure, metadata = _fetch_from_MP(mpr, mpid, metadata_keys)
-            except MPRestError as error:
-                warn(f"MPRestError pulling mpid={mpid}, error: {error}")
-                continue
-            structures[mpid] = structure.get_primitive_structure()
-            metadatas[mpid] = metadata
+    print('trying + ' + str(api_key))
+    for mpid in tqdm(mpids, disable=not verbose):
+        try:
+            structure, metadata = _fetch_from_MP(api_key, mpid, metadata_keys)
+            # structure = _fetch_from_MP(mpr, mpid, metadata_keys)
+        except MPRestError as error:
+            warn(f"MPRestError pulling mpid={mpid}, error: {error}")
+            continue
+        structures[mpid] = structure.get_primitive_structure()
+        metadatas[mpid] = metadata
 
     return {"structures": structures, "metadata": metadatas}
+    # return {"structures": structures}
 
 
 def _get_api_key(api_key):
@@ -201,17 +205,34 @@ class Database(MSONable):
         query_type="mpids",
         api_key=None,
         metadata_keys=[
-            "created_at",
-            "blessed_tasks",
-            "pseudo_potential",
-            "spacegroup",
-            "_id",
-            "structure",
-            "icsd_ids",
-            "e_above_hull",
-            "formation_energy_per_atom",
-            "band_gap",
-            "diel",
+            'builder_meta',
+            'nsites',
+            'elements',
+            'nelements',
+            'composition',
+            'composition_reduced',
+            'formula_pretty',
+            'formula_anonymous',
+            'chemsys',
+            'volume',
+            'density',
+            'density_atomic',
+            'symmetry',
+            'material_id',
+            'structure',
+            'deprecated',
+            'deprecation_reasons',
+            'initial_structures',
+            'task_ids',
+            'deprecated_tasks',
+            'calc_types',
+            'last_updated',
+            'created_at',
+            'origins',
+            'warnings',
+            'task_types',
+            'run_types',
+            'entries',
         ],
         verbose=True,
     ):
@@ -270,7 +291,10 @@ class Database(MSONable):
                 ["Ti-O", "Ti-O-*"], query_type="patterns"
             )
         """
-
+        print('starting')
+        # with MPRester("CEvsr9tiYxi6MaxfRnSU7V9FCaIAcAZh") as mpr:
+            # doc = mpr.materials.search(task_ids=['mp-13'], fields=["material_id"])
+        # print(doc)
         api_key = _get_api_key(api_key)
 
         # Nothing to do here
@@ -282,13 +306,15 @@ class Database(MSONable):
             mpids = []
             with MPRester(api_key) as mpr:
                 for pattern in query:
-                    data = mpr.get_data(pattern, data_type="vasp")
-                    mpids.extend([xx["material_id"] for xx in data])
+                    docs = mpr.materials.search(formula = pattern)
+                    for doc in docs:
+                        mpids.append(doc.material_id)
 
         # Convert the raw query itself to a list of mpids
         elif query_type == "mp_query":
+            print(query_type)
             with MPRester(api_key) as mpr:
-                materials_list = mpr.query(**query)
+                materials_list = mpr.materials.search(query)
             mpids = [xx["material_id"] for xx in materials_list]
 
         # Otherwise we error and terminate
@@ -296,6 +322,7 @@ class Database(MSONable):
             raise ValueError(f"Unknown query {query_type}")
 
         # Get all of the data as a dictionary
+        print('calling from mpids list')
         data = _from_mpids_list(
             mpids,
             api_key,
