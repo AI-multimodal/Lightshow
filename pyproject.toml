@@ -41,7 +41,8 @@ dependencies = [
     "tqdm",
     "monty",
     "pymatgen<=2022.7.8",
-    "ase"
+    "ase",
+    "mp_api"
 ]
 
 # Dynamic version reads __version__ directly from my_package.__init__
