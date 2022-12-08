@@ -12,8 +12,8 @@ from lightshow.parameters.vasp import (
     VASP_POTCAR_DEFAULT_ELEMENT_MAPPING,
 )
 
-from lightshow.parameters.ocean import OCEAN_DEFAULT_CARDS
+# from lightshow.parameters.ocean import OCEAN_DEFAULT_CARDS
 
-from lightshow.parameters.xspectra import XSPECTRA_DEFAULT_CARDS
+# from lightshow.parameters.xspectra import XSPECTRA_DEFAULT_CARDS
 
-from lightshow.parameters.exciting import EXCITING_DEFAULT_CARDS
+# from lightshow.parameters.exciting import EXCITING_DEFAULT_CARDS
