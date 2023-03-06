@@ -6,7 +6,7 @@ from pymatgen.core.structure import Structure
 
 from lightshow import Database
 
-STRUCTURE_FILES_PATH = Path().resolve() / Path("structure_files")
+STRUCTURE_FILES_PATH = Path(__file__).parent / Path("structure_files")
 
 
 @pytest.fixture
