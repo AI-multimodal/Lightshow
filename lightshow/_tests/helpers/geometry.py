@@ -131,7 +131,6 @@ ATOMIC_NUMBERS = {value: key for key, value in ATOMIC_NUMBERS.items()}
 
 
 def read_FEFF_geometry(path, rounding=4):
-
     path = Path(path) / "feff.inp"
 
     with open(path, "r") as f:
@@ -150,7 +149,6 @@ def read_FEFF_geometry(path, rounding=4):
 
 
 def read_VASP_geometry(path, neighbor_radius=10.0, rounding=4):
-
     path = Path(path) / "POSCAR"
 
     # VASP POSCAR files are easy, only need data after line 8
@@ -169,7 +167,6 @@ def read_VASP_geometry(path, neighbor_radius=10.0, rounding=4):
 
 
 def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
-
     path = Path(path) / "ocean.in"
 
     absorber = str(path.parts[-2])
@@ -229,7 +226,6 @@ def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
 
 
 def read_XSpectra_geometry(path, neighbor_radius=10.0, rounding=4):
-
     path = Path(path) / "es.in"
 
     with open(path, "r") as f:
@@ -289,7 +285,6 @@ def read_XSpectra_geometry(path, neighbor_radius=10.0, rounding=4):
 
 
 def read_EXCITING_geometry(path, neighbor_radius=10.0, rounding=4):
-
     path = Path(path) / "input.xml"
     structure = ExcitingInput.from_file(path).structure
 
@@ -396,7 +391,6 @@ def consistency_check(
 
         ocean_checks = []
         for data_OCEAN in all_data_OCEAN:
-
             if not (
                 data_OCEAN["atoms"][:first_n_distances]
                 == data_VASP["atoms"][:first_n_distances]

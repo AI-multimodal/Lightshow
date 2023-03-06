@@ -20,7 +20,6 @@ from lightshow import pymatgen_utils
 
 
 def _delete_common_strings(old_list_of_strings):
-
     list_of_strings = [str(Path(xx).parent) for xx in old_list_of_strings]
     list_of_names = [str(Path(xx).name) for xx in old_list_of_strings]
 
@@ -553,9 +552,7 @@ class Database(MSONable):
         writer_metadata_path = root / Path("writer_metadata.json")
 
         for key, supercell in tqdm(self._supercells.items(), disable=not pbar):
-
             for absorbing_atom in absorbing_atoms:
-
                 primitive_info = self._metadata[key]["primitive"]
                 supercell_info = self._metadata[key]["supercell"]
 
