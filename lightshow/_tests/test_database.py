@@ -61,7 +61,6 @@ def test_write(
     database_from_file,
     tmp_path,
 ):
-
     # Load it all in
     dat = database_from_file
     dat.initialize_supercells(9.0)

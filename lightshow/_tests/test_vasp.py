@@ -15,7 +15,6 @@ from geometry import consistency_check  # noqa
     ["mp-390", "mvc-11115"],
 )
 def test_write(mpid, dummy_potcar_file_directory, database_from_file, tmp_path):
-
     # Load it all in
     dat = database_from_file
     dat.initialize_supercells(9.0)

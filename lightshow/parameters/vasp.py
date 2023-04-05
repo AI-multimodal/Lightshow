@@ -515,7 +515,6 @@ class PotcarConstructor(MSONable):
 
     @lru_cache(256)
     def _get_element_lines(self, element):
-
         # Get the element directory using the element as a key
         assert isinstance(element, str)
         element_dir = self._element_mapping[element]
@@ -773,7 +772,6 @@ class VASPParameters(MSONable, _BaseParameters):
         force_spin_unpolarized=False,
         name="VASP",
     ):
-
         if "NBANDS" in incar.keys():
             if incar["NBANDS"] is None and nbands is None:
                 raise ValueError(
