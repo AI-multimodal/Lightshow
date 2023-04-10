@@ -6,9 +6,7 @@ from pymatgen.core.structure import Structure
 
 from lightshow import Database
 
-STRUCTURE_FILES_PATH = (
-    Path.cwd() / Path("lightshow") / Path("_tests") / Path("structure_files")
-)
+STRUCTURE_FILES_PATH = Path(__file__).parent / Path("structure_files")
 
 
 @pytest.fixture
@@ -28,6 +26,7 @@ def test_structure_names():
 
 @pytest.fixture
 def database_from_file():
+    print("structure-files-path", STRUCTURE_FILES_PATH)
     dat = Database.from_files(
         STRUCTURE_FILES_PATH, filename="POSCAR", cleanup_paths=True
     )

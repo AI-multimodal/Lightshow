@@ -101,7 +101,6 @@ class OCEANParameters(MSONable, _BaseParameters):
         edge="K",
         name="OCEAN",
     ):
-
         # Default cards for ocean
         self._cards = cards
 
