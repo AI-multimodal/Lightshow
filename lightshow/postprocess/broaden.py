@@ -1,4 +1,4 @@
-"""Using known XAS exprimental spectrum and simulation to optimize the broadening pararmeters for other simulations"""
+"""XAS broadening using manual or empirically optimized parameters"""
 
 
 from scipy.stats import pearsonr as ps
@@ -17,11 +17,11 @@ def gauss_broaden(x, xin, yin, sigma, shift=0.0):
 
     Parameters
     ----------
-    x: Array
+    x: np.ndarray
         The output energy grid.
-    xin: Array
+    xin: np.ndarray
         The input energy grid.
-    yin: Array
+    yin: np.ndarray
         The input spectrum
     sigma: float
         Gaussian broadening sigma
@@ -30,7 +30,7 @@ def gauss_broaden(x, xin, yin, sigma, shift=0.0):
 
     Returns
     -------
-    Array
+    np.ndarray
         Broadened spectrum
 
     """
@@ -46,20 +46,20 @@ def lorentz_broaden(x, xin, yin, gamma, shift=0.0):
 
     Parameters
     ----------
-    x: Array
+    x: np.ndarray
         The output energy grid.
-    xin: Array
+    xin: np.ndarray
         The input energy grid.
-    yin: Array
+    yin: np.ndarray
         The input spectrum
-    gamma:float
+    gamma: float
         Lorentzian broadening gamma
-    shift:float
+    shift: float
         The energy shift
 
     Returns
     -------
-    Array
+    np.ndarray
         Broadened spectrum
 
     """
@@ -75,22 +75,22 @@ def voigt_broaden(x, xin, yin, sigma, gamma, shift=0.0):
 
     Parameters
     ----------
-    x: Array
+    x: np.ndarray
         The output energy grid.
-    xin: Array
+    xin: np.ndarray
         The input energy grid.
-    yin: Array
+    yin: np.ndarray
         The input spectrum
-    sigma:float
+    sigma: float
         Voigt broadening sigma
-    gamma:float
+    gamma: float
         Voigt broadening gamma
-    shift:float
+    shift: float
         The energy shift
 
     Returns
     -------
-    Array
+    np.ndarray
         Broadened spectrum
 
     """
@@ -103,16 +103,16 @@ def voigt_broaden(x, xin, yin, sigma, gamma, shift=0.0):
     )
 
 
-class Site_spectum:
+class SiteSpectum:
     """
     The class that store information about an XAS spectrum at each site, including
     spectrum itself and the fermi energy, site weight.
 
     Parameters
     ----------
-    xin: Array
+    xin: np.ndarray
         The input energy grid.
-    yin: Array
+    yin: np.ndarray
         The input spectrum
 
     fermi: float
@@ -184,18 +184,18 @@ class Broaden:
 
     @property
     def lorentz_divider(self):
-        return self.lorentz_divider
+        return self._lorentz_divider
 
     @lorentz_divider.setter
-    def sigma(self, lorentz_divider):
+    def lorentz_divider(self, lorentz_divider):
         self._lorentz_divider = lorentz_divider
 
     @property
     def shift(self):
-        return self.shift
+        return self._shift
 
     @shift.setter
-    def sigma(self, shift):
+    def shift(self, shift):
         self._shift = shift
 
     # Do energy dependent voigt function broadening
@@ -279,7 +279,7 @@ class Broaden:
         Parameters
         ----------
 
-        x: array
+        x: np.ndarray
             The output energy grid.
 
         site_spectra: list
@@ -321,20 +321,20 @@ class Broaden:
         Parameters
         ----------
 
-        x: array
+        x: np.ndarray
             The output energy grid.
 
         site_spectra: list
             The list of site_spectrum objects
 
-        exp:array
+        exp: np.ndarray
             The experimental spectrum
         bounds: list
             The bounds of the broadening parameters
 
         opt_shift: bool
             If true, the method will optimize energy shift value
-        dmu: boll
+        dmu: bool
             If true, the method will compare the first derivatives of experimental spectrum
             and simulation
 
@@ -353,7 +353,8 @@ class Broaden:
             args=(x, site_spectra, exp, dmu, cross_sec),
         )
 
-        self._broaden_paras = list(result.x)[0:2]
+        self._sigma = result.x[0]
+        self._lorentz_divider = result.x[1]
 
         if opt_shift is True:
             self._shift = result.x[2]
