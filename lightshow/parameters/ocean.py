@@ -311,6 +311,7 @@ class OCEANParameters(MSONable, _BaseParameters):
 
             # Standardized methods for getting the kpoints
             kmesh = self._kpoints(structure)
+            cards["nkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
             cards["ngkpt"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
 
             # Determine the diemac
