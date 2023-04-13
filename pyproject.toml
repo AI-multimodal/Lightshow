@@ -55,7 +55,6 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "codecov",
     "coverage",
     "flake8",
     "pytest",
