@@ -2,8 +2,6 @@
 
 
 from scipy.stats import pearsonr as ps
-from scipy.interpolate import interp1d
-from scipy.stats import spearmanr
 from scipy import optimize
 from scipy.stats import norm
 from scipy.stats import cauchy
@@ -105,8 +103,8 @@ def voigt_broaden(x, xin, yin, sigma, gamma, shift=0.0):
 
 class SiteSpectum:
     """
-    The class that store information about an XAS spectrum at each site, including
-    spectrum itself and the fermi energy, site weight.
+    The class that store information about an XAS spectrum at each site,
+    including spectrum itself and the fermi energy, site weight.
 
     Parameters
     ----------
@@ -154,15 +152,16 @@ class Broaden:
 
     Parameters
     ----------
-    sigma: float
+    sigma : float
         The gaussian broadening sigma.
-    lorentz_divider: float
+    lorentz_divider : float
         The parameter to determine the energy dependent gamma with equation:
-        $\Gamma\left(E\right)=\Gamma_0+(E-E_f)/ld$
-        where $ld$ is the lorentz_divider, and the $\Gamma_0$ is determined by Core hole life time
-    CHlifetime: float
+        $\\Gamma\\left(E\right)=\\Gamma_0+(E-E_f)/ld$
+        where $ld$ is the lorentz_divider, and the $\\Gamma_0$ is determined by
+        Core hole life time
+    CHlifetime : float
         Core hole life time, e.g. Zn K-edge: 1.67, Ti K-edge: 0.89.
-    shift: float
+    shift : float
         The energy shift
     """
 
@@ -245,7 +244,8 @@ class Broaden:
 
         return yout / weight
 
-    # Give the pearson correlation score between broadened simulation and experimental spectrum
+    # Give the pearson correlation score between broadened simulation and
+    # experimental spectrum
     def _broaden_score(
         self,
         broaden_paras,
@@ -273,23 +273,20 @@ class Broaden:
         return -ps(spec, exp)[0]
 
     def broaden(self, x, site_spectra, volume=1.0, cross_sec=True):
-        """
-        Process broadening with the energy dependent voigt function and the stored parameters.
+        """Process broadening with the energy dependent voigt function and the
+        stored parameters.
 
         Parameters
         ----------
-
-        x: np.ndarray
+        x : np.ndarray
             The output energy grid.
-
-        site_spectra: list
+        site_spectra : list
             The list of site_spectrum objects
-
-        volum: float
+        volume : float
             The factor that tune the intensity of broadened spectrum
-
-        cross_sec: bool
-            If true, the spectrum will be converted to be absorption cross section
+        cross_sec : bool
+            If True, the spectrum will be converted to be absorption cross
+            section
         """
 
         return (
@@ -315,31 +312,27 @@ class Broaden:
         cross_sec=True,
     ):
         """
-        Optimize the broadening parameter with simplicial homology global optimization
-        in scipy package
+        Optimize the broadening parameter with simplicial homology global
+        optimization in scipy package
 
         Parameters
         ----------
-
-        x: np.ndarray
+        x : np.ndarray
             The output energy grid.
-
-        site_spectra: list
+        site_spectra : list
             The list of site_spectrum objects
-
-        exp: np.ndarray
+        exp : np.ndarray
             The experimental spectrum
-        bounds: list
+        bound s: list
             The bounds of the broadening parameters
-
-        opt_shift: bool
-            If true, the method will optimize energy shift value
-        dmu: bool
-            If true, the method will compare the first derivatives of experimental spectrum
-            and simulation
-
-        cross_sec: bool
-            If true, the spectrum will be converted to be absorption cross section
+        opt_shift : bool
+            If True, the method will optimize energy shift value
+        dmu : bool
+            If True, the method will compare the first derivatives of
+            experimental spectrum and simulation
+        cross_sec : bool
+            If true, the spectrum will be converted to be absorption cross
+            section
         """
 
         if opt_shift is False:
