@@ -15,23 +15,23 @@ def gauss_broaden(x, xin, yin, sigma, shift=0.0):
 
     Parameters
     ----------
-    x: np.ndarray
+    x : numpy.ndarray
         The output energy grid.
-    xin: np.ndarray
+    xin : numpy.ndarray
         The input energy grid.
-    yin: np.ndarray
-        The input spectrum
-    sigma: float
-        Gaussian broadening sigma
-    shift: float
-        The energy shift
+    yin : numpy.ndarray
+        The input spectrum.
+    sigma : float
+        Gaussian broadening sigma.
+    shift : float
+        The energy shift.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         Broadened spectrum
-
     """
+
     x1, x2 = np.meshgrid(x, xin + shift)
 
     return (
@@ -44,23 +44,23 @@ def lorentz_broaden(x, xin, yin, gamma, shift=0.0):
 
     Parameters
     ----------
-    x: np.ndarray
+    x : numpy.ndarray
         The output energy grid.
-    xin: np.ndarray
+    xin : numpy.ndarray
         The input energy grid.
-    yin: np.ndarray
-        The input spectrum
-    gamma: float
-        Lorentzian broadening gamma
-    shift: float
-        The energy shift
+    yin : numpy.ndarray
+        The input spectrum.
+    gamma : float
+        Lorentzian broadening gamma.
+    shift : float
+        The energy shift.
 
     Returns
     -------
-    np.ndarray
-        Broadened spectrum
-
+    numpy.ndarray
+        Broadened spectrum.
     """
+
     x1, x2 = np.meshgrid(x, xin + shift)
 
     return (
@@ -73,25 +73,25 @@ def voigt_broaden(x, xin, yin, sigma, gamma, shift=0.0):
 
     Parameters
     ----------
-    x: np.ndarray
+    x : numpy.ndarray
         The output energy grid.
-    xin: np.ndarray
+    xin : numpy.ndarray
         The input energy grid.
-    yin: np.ndarray
-        The input spectrum
-    sigma: float
-        Voigt broadening sigma
-    gamma: float
-        Voigt broadening gamma
-    shift: float
-        The energy shift
+    yin : numpy.ndarray
+        The input spectrum.
+    sigma : float
+        Voigt broadening sigma.
+    gamma : float
+        Voigt broadening gamma.
+    shift : float
+        The energy shift.
 
     Returns
     -------
-    np.ndarray
-        Broadened spectrum
-
+    numpy.ndarray
+        Broadened spectrum.
     """
+
     x1, x2 = np.meshgrid(x, xin + shift)
 
     return (
@@ -102,22 +102,19 @@ def voigt_broaden(x, xin, yin, sigma, gamma, shift=0.0):
 
 
 class SiteSpectum:
-    """
-    The class that store information about an XAS spectrum at each site,
-    including spectrum itself and the fermi energy, site weight.
+    """This class stores information about an XAS spectrum at each site,
+    including the spectrum itself, the Fermi energy and site weight.
 
     Parameters
     ----------
-    xin: np.ndarray
+    xin : numpy.ndarray
         The input energy grid.
-    yin: np.ndarray
-        The input spectrum
-
-    fermi: float
-        The fermi energy of the spectrum
-
-    weight: int
-        The weight of the site spectrum
+    yin : numpy.ndarray
+        The input spectrum.
+    fermi : float
+        The fermi energy of the spectrum.
+    weight : int
+        The weight of the site spectrum.
     """
 
     def __init__(
@@ -146,9 +143,8 @@ class SiteSpectum:
 
 
 class Broaden:
-    """
-    The class that store broadening parameters and provide functions to optimize
-    broadening parameters empirically.
+    """The class that store broadening parameters and provide functions to
+    optimize broadening parameters empirically.
 
     Parameters
     ----------
@@ -156,13 +152,13 @@ class Broaden:
         The gaussian broadening sigma.
     lorentz_divider : float
         The parameter to determine the energy dependent gamma with equation:
-        $\\Gamma\\left(E\right)=\\Gamma_0+(E-E_f)/ld$
-        where $ld$ is the lorentz_divider, and the $\\Gamma_0$ is determined by
-        Core hole life time
+        :math:`\\Gamma\\left(E\right)=\\Gamma_0+(E-E_f)/l`,
+        where :math:`l` is the lorentz_divider, and the :math:`\\Gamma_0` is
+        determined by Corehole life time.
     CHlifetime : float
         Core hole life time, e.g. Zn K-edge: 1.67, Ti K-edge: 0.89.
     shift : float
-        The energy shift
+        The energy shift.
     """
 
     def __init__(
@@ -278,15 +274,19 @@ class Broaden:
 
         Parameters
         ----------
-        x : np.ndarray
+        x : numpy.ndarray
             The output energy grid.
         site_spectra : list
             The list of site_spectrum objects
         volume : float
-            The factor that tune the intensity of broadened spectrum
+            The factor that tune the intensity of broadened spectrum.
         cross_sec : bool
             If True, the spectrum will be converted to be absorption cross
-            section
+            section.
+
+        Returns
+        -------
+        numpy.ndarray
         """
 
         return (
@@ -311,28 +311,31 @@ class Broaden:
         dmu=True,
         cross_sec=True,
     ):
-        """
-        Optimize the broadening parameter with simplicial homology global
-        optimization in scipy package
+        """Optimize the broadening parameter with simplicial homology global
+        optimization in scipy package.
 
         Parameters
         ----------
-        x : np.ndarray
+        x : numpy.ndarray
             The output energy grid.
         site_spectra : list
-            The list of site_spectrum objects
-        exp : np.ndarray
-            The experimental spectrum
-        bound s: list
-            The bounds of the broadening parameters
+            The list of site_spectrum objects.
+        exp : numpy.ndarray
+            The experimental spectrum.
+        bounds : list
+            The bounds of the broadening parameters.
         opt_shift : bool
-            If True, the method will optimize energy shift value
+            If True, the method will optimize energy shift value.
         dmu : bool
             If True, the method will compare the first derivatives of
-            experimental spectrum and simulation
+            experimental spectrum and simulation.
         cross_sec : bool
             If true, the spectrum will be converted to be absorption cross
-            section
+            section.
+
+        Returns
+        -------
+        numpy.ndarray
         """
 
         if opt_shift is False:
