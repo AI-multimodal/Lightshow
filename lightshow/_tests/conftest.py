@@ -8,13 +8,12 @@ from lightshow import Database
 
 STRUCTURE_FILES_PATH = Path(__file__).parent / Path("structure_files")
 
-SPECTRA_FILES_PATH = (
-    Path.cwd() / Path("notebooks") / Path("spectra_files")
-)
+SPECTRA_FILES_PATH = Path.cwd() / Path("notebooks") / Path("spectra_files")
 
 SAMPLE_FILES_PATH = (
     Path.cwd() / Path("lightshow") / Path("_tests") / Path("sample_files")
 )
+
 
 @pytest.fixture
 def test_structure_names():
@@ -61,9 +60,11 @@ def mp_Structure_mp390():
         STRUCTURE_FILES_PATH / Path("mp-390") / Path("POSCAR")
     )
 
+
 @pytest.fixture
 def spectra_file_directory():
     return SPECTRA_FILES_PATH
+
 
 @pytest.fixture
 def sample_file_directory():
