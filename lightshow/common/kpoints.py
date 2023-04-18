@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from ase.units import Bohr
 
 from monty.json import MSONable
 import numpy as np
@@ -52,9 +53,9 @@ class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
         Maximum radius used for constructing the lookup table.
     """
 
-    def __init__(self, cutoff=32.0, max_radii=50.0):
-        self._cutoff = cutoff
-        self._max_radii = max_radii
+    def __init__(self, cutoff=60.0, max_radii=80.0):
+        self._cutoff = cutoff*Bohr
+        self._max_radii = max_radii*Bohr
 
     def __call__(self, structure):
         klist = dict()
