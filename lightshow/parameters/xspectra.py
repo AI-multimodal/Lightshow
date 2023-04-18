@@ -462,11 +462,11 @@ class XSpectraParameters(MSONable, _BaseParameters):
             try:
                 shutil.copyfile(
                     self._chpsp_directory + f"/{element}.fch.upf",
-                    target_directory / Path("{element}.fch.upf"),
+                    target_directory / Path(f"{element}.fch.upf"),
                 )
                 shutil.copyfile(
                     self._chpsp_directory + f"/Core_{element}.wfc",
-                    target_directory / Path("Core_{element}.wfc"),
+                    target_directory / Path(f"Core_{element}.wfc"),
                 )
             except FileNotFoundError:
                 warn(
