@@ -120,7 +120,7 @@ def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
     }, "Excpected groundstate keys differ from found keys."
     assert groundstate_xml.get("rgkmax") == "9.0"
     assert groundstate_xml.get("do") == "fromscratch"
-    assert groundstate_xml.get("ngridk") == "5 5 6"
+    assert groundstate_xml.get("ngridk") == "3 3 4"
     assert groundstate_xml.get("xctype") == "GGA_PBE"
     assert groundstate_xml.get("nempty") == "200"
     assert groundstate_xml.get("gmaxvr") == "25"
@@ -143,14 +143,14 @@ def test_default_parameters(mp_Structure_mp390: Structure, tmp_path: Path):
         "ngridq",
     }, "Excpected xs keys differ from found keys."
     assert xs_xml.get("broad") == "0.0327069"
-    assert xs_xml.get("ngridk") == "5 5 6"
+    assert xs_xml.get("ngridk") == "3 3 4"
     assert xs_xml.get("xstype") == "BSE"
     assert xs_xml.get("nempty") == "150"
     assert xs_xml.get("gqmax") == "4.0"
     assert xs_xml.get("vkloff") == "0.05 0.03 0.13"
     assert xs_xml.get("tevout") == "true"
     assert xs_xml.get("tappinfo") == "true"
-    assert xs_xml.get("ngridq") == "5 5 6"
+    assert xs_xml.get("ngridq") == "3 3 4"
 
     xs_subelements = list(xs_xml)
     assert len(xs_subelements) == 5, "Expect xs tree to have 5 sub-elements"
@@ -287,7 +287,7 @@ def test_exciting_own_parameters(tmp_path: Path, mp_Structure_mp390: Structure):
         "ngridk",
         "nempty",
     }, "Excpected groundstate keys differ from found keys."
-    assert groundstate_xml.get("ngridk") == "5 5 6"
+    assert groundstate_xml.get("ngridk") == "3 3 4"
     assert groundstate_xml.get("nempty") == "42"
 
     xs_xml = subelements[3]
@@ -301,10 +301,10 @@ def test_exciting_own_parameters(tmp_path: Path, mp_Structure_mp390: Structure):
         "gqmax",
     }, "Excpected xs keys differ from found keys."
     assert xs_xml.get("gqmax") == "4.0"
-    assert xs_xml.get("ngridk") == "5 5 6"
+    assert xs_xml.get("ngridk") == "3 3 4"
     assert xs_xml.get("xstype") == "BSE"
     assert xs_xml.get("nempty") == "43"
-    assert xs_xml.get("ngridq") == "5 5 6"
+    assert xs_xml.get("ngridq") == "3 3 4"
 
     xs_subelements = list(xs_xml)
     assert len(xs_subelements) == 3, "Expect xs tree to have 3 sub-elements"
