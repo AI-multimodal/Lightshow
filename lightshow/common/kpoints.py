@@ -54,8 +54,8 @@ class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
     """
 
     def __init__(self, cutoff=60.0, max_radii=80.0):
-        self._cutoff = cutoff*Bohr
-        self._max_radii = max_radii*Bohr
+        self._cutoff = cutoff * Bohr
+        self._max_radii = max_radii * Bohr
 
     def __call__(self, structure):
         klist = dict()
