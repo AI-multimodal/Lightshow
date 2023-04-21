@@ -9,8 +9,7 @@ from lightshow.postprocess.broaden import SiteSpectrum
 def anatase_exp(spectra_file_directory):
     # Anatase TiO2 experimental data is derived from Yan, D.,et al.
     # Nano letters, 19(6), 3457-3463.
-    exp = np.loadtxt(spectra_file_directory / "anatase_exp.txt")
-    return exp.T
+    return np.loadtxt(spectra_file_directory / "anatase_exp.txt")
 
 
 @pytest.fixture
@@ -20,10 +19,7 @@ def anatase_VASP_theory(spectra_file_directory):
         spectra_file_directory / "anatase_theory_VASP.txt"
     )
 
-    # choosing smaller range can make the optimization processs faster
-    xin = unbroaden_spect[30000:35000, :]
-    yin = unbroaden_spect[30000:35000, :]
-    return [xin, yin]
+    return unbroaden_spect[30000:35000, :]
 
 
 def test_broaden(anatase_VASP_theory, anatase_exp, sample_file_directory):
