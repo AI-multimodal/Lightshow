@@ -221,11 +221,7 @@ class SiteSpectum(MSONable):
         self._spectrum[:, 0] = align_spectra_by_maxima(exp, self._spectrum)
 
     def broaden(
-        self,
-        xout,
-        method="Gaussian",
-        *broadening_args,
-        **broadening_kwargs
+        self, xout, method="Gaussian", *broadening_args, **broadening_kwargs
     ):
         """Returns a broadened version of the spectrum.
 
@@ -285,7 +281,7 @@ class SiteSpectum(MSONable):
     ):
         """Optimizes the broadening parameters for a single spectrum. A
         reference spectrum (``exp``) is provided as the ground truth.
-        
+
         Parameters
         ----------
         exp : numpy.ndarray
@@ -294,7 +290,7 @@ class SiteSpectum(MSONable):
             Note that shift is always the first parameter.
         method : str, optional
             Description
-        
+
         """
 
         xin_theory = self._spectrum[:, 0].copy()
@@ -306,8 +302,8 @@ class SiteSpectum(MSONable):
 
         self.align_to_experiment_(exp)  # makes the shift optimization easier
 
-        where_lower = np.argmin((xin_theory - lower_shift)**2)
-        where_upper = np.argmin((xin_theory - upper_shift)**2)
+        where_lower = np.argmin((xin_theory - lower_shift) ** 2)
+        where_upper = np.argmin((xin_theory - upper_shift) ** 2)
 
         xin_theory = xin_theory[where_lower:where_upper]
 
