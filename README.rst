@@ -28,7 +28,7 @@
 
 .. inclusion-marker-LIGHTSHOW-overview-begin
 
-Often, it can be a daunting task to create comprehensive, well documented databases of materials structures and their x-ray absorption spectra. **Lightshow** solves this problem, allowing new users to choose sensible defaults for their calculations, while simultaneously exposing all functionality for experts.
+Often, it can be daunting to create comprehensive, well documented databases of materials structures and their x-ray absorption spectra. **Lightshow** solves this problem, allowing new users to choose sensible defaults for their calculations, while simultaneously exposing all functionality for experts.
 
 **Lightshow** aims to provide a "one-stop-shop" for input file generation, and currently supports the following codes:
 
