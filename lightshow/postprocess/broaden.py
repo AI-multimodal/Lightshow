@@ -157,7 +157,7 @@ def align_spectra_by_maxima(exp, theory):
     return theory[:, 0].copy() - get_shift_by_maxima(exp, theory)
 
 
-class SiteSpectum(MSONable):
+class SiteSpectrum(MSONable):
     """This class stores information about an XAS spectrum at each site,
     including the spectrum itself, the Fermi energy and site weight.
 
