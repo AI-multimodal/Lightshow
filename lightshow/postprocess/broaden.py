@@ -93,7 +93,7 @@ def voigt_broaden(x, xin, yin, sigma, gamma):
     return np.dot(voigt(x1 - x2, sigma, gamma / 2.0).T, yin) / len(xin) * dx
 
 
-def energy_dependent_voigt_broaden(x, xin, yin, sigma, ld, lt, ef):
+def energy_dependent_voigt_broaden(x, xin, yin, sigma, alpha, lifetime, efermi):
     """See ``voigt_broaden``. Performs a similar broadening only with an
     energy-dependent Lorentzian gamma term.
 
@@ -107,12 +107,12 @@ def energy_dependent_voigt_broaden(x, xin, yin, sigma, ld, lt, ef):
         The input spectrum.
     sigma : float
         Voigt broadening sigma.
-    ld : TYPE
-        Description
-    lt : TYPE
-        Description
-    ef : TYPE
-        Description
+    alpha : float
+        Parameter alpha in the energy dependent broadening function
+    lifetime : float
+        Core-hole lifetime
+    efermi : float
+        Fermi energy
 
     Returns
     -------
@@ -120,7 +120,7 @@ def energy_dependent_voigt_broaden(x, xin, yin, sigma, ld, lt, ef):
     """
 
     x1, x2 = np.meshgrid(x, xin)
-    gamma = lt + np.heaviside(x2 - ef, 1) * (x2 - ef) / ld
+    gamma = lifetime + np.heaviside(x2 - efermi, 1) * (x2 - efermi) * alpha
     dx = xin[-1] - xin[0]
     return np.dot(voigt(x1 - x2, sigma, gamma / 2.0).T, yin) / len(xin) * dx
 
@@ -265,7 +265,7 @@ class SiteSpectrum(MSONable):
                 xin,
                 yin,
                 *broadening_args,
-                ef=self._e_fermi,
+                efermi=self._e_fermi,
                 **broadening_kwargs,
             )
         else:
