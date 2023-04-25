@@ -51,6 +51,6 @@ def test_broaden(anatase_VASP_theory, anatase_exp, sample_file_directory):
         x,
         method="energy_dependent_voigt_broaden",
         sigma=0.2,
-        ld=40.0,
-        lt=TiK_core_hole_lifetime,
+        alpha=0.025,
+        lifetime=TiK_core_hole_lifetime,
     )
