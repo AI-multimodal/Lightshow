@@ -37,6 +37,16 @@ extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
 few comprehensive tutorials to help you get started.
 
+# Tutorials
+
+We offer a few tutorials to get you started (with more on the way!)
+
+| Tutorial  | Notebook |
+| ------------- | ------------- |
+| 1 Basic usage | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/00_basic_usage.ipynb) |
+| 2 Spectral broadening | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb) |
+
+
 # Installation
 
 To install Lightshow, simply use `pip`
