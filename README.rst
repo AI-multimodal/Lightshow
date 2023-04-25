@@ -19,6 +19,18 @@
 
 .. image:: https://zenodo.org/badge/DOI/10.48550/arXiv.2211.04452.svg
    :target: https://doi.org/10.48550/arXiv.2211.04452
+   
+=============
+
+**Tutorial #1, basic usage**:
+
+.. image:: https://colab.research.google.com/assets/colab-badge.svg
+    :target: https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/00_basic_usage.ipynb
+    
+**Tutorial #2, broadening**:
+
+.. image:: https://colab.research.google.com/assets/colab-badge.svg
+    :target: https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb
 
 =============
 
