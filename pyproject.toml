@@ -20,7 +20,7 @@ maintainers = [
     {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"}
 ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.7"
 license = {"file" = "LICENSE"}
 classifiers = [
