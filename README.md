@@ -65,7 +65,10 @@ Energy, Office of Science, Office Basic Energy Sciences, under Award
 Number FWP PS-030. This research used resources of the Center for
 Functional Nanomaterials (CFN), which is a U.S. Department of Energy
 Office of Science User Facility, at Brookhaven National Laboratory under
-Contract No. DE-SC0012704.
+Contract No. DE-SC0012704. This work received partial funding by the German Research Foundation
+(DFG) through the CRC 1404 (FONDA), Projektnummer 414984028, and the NFDI consortium FAIRmat – project 460197019.
+C.V. acknowledges support by the Department of Energy, Basic Energy Sciences, Materials Science and Engineering Division,
+through the Midwest Integrated Center for Computational Materials (MICCoM).
 
 ## Disclaimer
 
