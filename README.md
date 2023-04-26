@@ -26,56 +26,37 @@ functionality for experts.
 **Lightshow** aims to provide a \"one-stop-shop\" for input file
 generation, and currently supports the following codes:
 
--   FEFF
--   VASP
--   OCEAN
--   EXCITING
--   Xspectra
+-   [FEFF](https://feff.phys.washington.edu)
+-   [VASP](https://www.vasp.at)
+-   [OCEAN](https://www.nist.gov/services-resources/software/ocean)
+-   [EXCITING](https://exciting-code.org)
+-   [Xspectra](https://gitlab.com/QEF/q-e/-/tree/master/XSpectra)
 
 with more on the way! The software is intended to be user-friendly,
 extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
 few comprehensive tutorials to help you get started.
 
+# Tutorials
+
+We offer a few tutorials to get you started (with more on the way!)
+
+| Tutorial | Description | Notebook |
+| ------------- | ------------- | ------------- |
+| 1 Basic usage | Pull structure data from Materials Project, write input files for all codes | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/00_basic_usage.ipynb) |
+| 2 Spectral broadening | Utilities for broadening spectra |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb) |
+
+
 # Installation
 
-## Users
-
-To simply use the software, install it as you would any Python package:
+To install Lightshow, simply use `pip`
 
 ``` bash
 pip install lightshow
 ```
 
-## Developers
+More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
 
-If you wish to help us improve **Lightshow**, you should fork a copy of
-our repository, clone to your local machine, and then proceed with
-setting up the following:
-
-Create and activate a fresh virtual environment, e.g.
-
-``` bash
-conda create -n py3.9 python=3.9 && conda activate py3.9
-```
-
-It is highly recommended that you also install the pre-commit hooks.
-This will help you avoid failing the black and flake8 tests that are
-required as part of our CI testing suite.
-
-``` bash
-pre-commit install
-```
-
-We use helper scripts to parse the `pyproject.toml` file and install
-only specific packages required for certain parts of development. For
-development, we recommend installing all dependencies:
-
-``` bash
-bash scripts/install.sh       # Install Lightshow's core dependencies
-bash scripts/install.sh test  # Install the test requirements only
-bash scripts/install.sh doc   # Install requirements for building the docs
-```
 
 # Funding acknowledgement
 
