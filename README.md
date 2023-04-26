@@ -41,10 +41,10 @@ few comprehensive tutorials to help you get started.
 
 We offer a few tutorials to get you started (with more on the way!)
 
-| Tutorial | Description | Notebook |
-| ------------- | ------------- | ------------- |
-| 1 Basic usage | Pull structure data from Materials Project, write input files for all codes | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/00_basic_usage.ipynb) |
-| 2 Spectral broadening | Utilities for broadening spectra |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb) |
+| # | Tutorial | Description | Notebook |
+| ------------- | ------------- | ------------- | ------------- |
+| 1 | Basic usage | Pull structure data from Materials Project, write input files for all codes | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/00_basic_usage.ipynb) |
+| 2 | Spectral broadening | Utilities for broadening spectra |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb) |
 
 
 # Installation
