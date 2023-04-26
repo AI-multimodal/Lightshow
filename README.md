@@ -26,11 +26,11 @@ functionality for experts.
 **Lightshow** aims to provide a \"one-stop-shop\" for input file
 generation, and currently supports the following codes:
 
--   FEFF
--   VASP
--   OCEAN
+-   [FEFF](https://feff.phys.washington.edu)
+-   [VASP](https://www.vasp.at)
+-   [OCEAN](https://www.nist.gov/services-resources/software/ocean)
 -   EXCITING
--   Xspectra
+-   [Xspectra](https://gitlab.com/QEF/q-e/-/tree/master/XSpectra)
 
 with more on the way! The software is intended to be user-friendly,
 extensively documented and tested, and extendable for those users who
