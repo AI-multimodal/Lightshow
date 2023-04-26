@@ -29,7 +29,7 @@ generation, and currently supports the following codes:
 -   [FEFF](https://feff.phys.washington.edu)
 -   [VASP](https://www.vasp.at)
 -   [OCEAN](https://www.nist.gov/services-resources/software/ocean)
--   EXCITING
+-   [EXCITING](https://exciting-code.org)
 -   [Xspectra](https://gitlab.com/QEF/q-e/-/tree/master/XSpectra)
 
 with more on the way! The software is intended to be user-friendly,
