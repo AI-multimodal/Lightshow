@@ -138,7 +138,7 @@ structures quickly. Functionality is also available for instantiating a
 storage. Once a database has been created, code-specific simulation parameters 
 inheriting the `_BaseParameters` base class interface with various methods in 
 Pymatgen as well as in-house built software for systematically writing input 
-files for multiple XAS simulation programs, including FEFF [@rehr2010parameter],
+files for multiple XAS simulation programs, including FEFF [@rehr2010parameter; @kas2021advanced],
 XSpectra [@taillefumier2002x; @gougoussis2009first; @bunuau2013projector],
 `OCEAN` [@vinson2011bethe; @ocean-3], 
 `exciting` [@exciting] and 
