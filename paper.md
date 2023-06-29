@@ -146,7 +146,12 @@ VASP [@vasp-xas].
 We highlight the `_tests` directory, in which we maintain a suite of unit tests
 for individual functions and methods, as well as integration tests for the
 entire workflow. `Lightshow` is fully documented, and contains a simple example
-notebook for users to get started.
+notebook for users to get started. Finally, we also note that Lightshow is
+designed to be part of larger workflows (including perhaps systematic comparison
+to experiment) in which users wish to abstract away
+the complicated and tedious task of generating input files. Future work on the
+code will include designing modules for pre- and post-processing, allowing
+for more seamless integration into said workflows.
 
 
 # Acknowledgements
