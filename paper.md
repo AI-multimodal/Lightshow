@@ -131,7 +131,7 @@ We summarize the structure of `Lightshow`'s application programming interface
 (API) in \autoref{fig:WorkflowDiagram}. `Lightshow`'s core design
 philosophy is built around two principal objects: the `Database` class and
 the `_BaseParameters` class. At a high level, the `Database` class 
-interfaces primarily with Pymatgen and the Materials Project [@Jain2013], 
+interfaces primarily with Pymatgen and the Materials Project [@jain2011high; @Jain2013], 
 allowing the user to easily utilize Pymatgen and pull a large number of materials 
 structures quickly. Functionality is also available for instantiating a 
 `Database` via loading, e.g., `POSCAR`-style structure files from local 
