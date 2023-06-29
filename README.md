@@ -37,7 +37,9 @@ generation, and currently supports the following codes:
 with more on the way! The software is intended to be user-friendly,
 extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
-few comprehensive tutorials to help you get started.
+few comprehensive tutorials to help you get started. We welcome any and
+all contributions by the community, including pull requests, bug reports, etc.
+Please see our [contributing](https://github.com/AI-multimodal/Lightshow/blob/master/CONTRIBUTING.md) document for more details!
 
 # Tutorials
 
