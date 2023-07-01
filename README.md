@@ -61,7 +61,7 @@ More details can be found at our [documentation](https://ai-multimodal.github.io
 
 ## Running tests
 
-Tests can be run via `pytest`. After local installation, simply use
+For developers: tests can be run via `pytest`. After cloning, simply use
 
 ```bash
 pytest lightshow/_tests
