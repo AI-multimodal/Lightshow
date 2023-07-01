@@ -37,9 +37,7 @@ generation, and currently supports the following codes:
 with more on the way! The software is intended to be user-friendly,
 extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
-few comprehensive tutorials to help you get started. We welcome any and
-all contributions by the community, including pull requests, bug reports, etc.
-Please see our [contributing](https://github.com/AI-multimodal/Lightshow/blob/master/CONTRIBUTING.md) document for more details!
+few comprehensive tutorials to help you get started.
 
 # Tutorials
 
@@ -60,6 +58,20 @@ pip install lightshow
 ```
 
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
+
+
+# Contributing 
+
+We welcome any and all contributions by the community, including pull requests, bug reports, etc.
+Please see our [contributing](https://github.com/AI-multimodal/Lightshow/blob/master/CONTRIBUTING.md) document for more details!
+
+## Adding new spectroscopy codes
+
+Adding new spectroscopy codes requires one to inherit the `_BaseParameters` class from `lightshow.parameters._base`.
+The new `Parameters(_BaseParameters)` object should have a `write()` method, which must take a target directory as an
+argument, as well as any other keyword arguments require to write the input file (most notably, the Pymatgen structure,
+either a unit or super cell). The `name` property must also be defined (corresponding to the name of the calculation,
+e.g. "VASP"). Take a look at the examples in the `lightshow.parameters` module for more details!
 
 
 # Funding acknowledgement
