@@ -59,6 +59,14 @@ pip install lightshow
 
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
 
+## Running tests
+
+Tests can be run via `pytest`. After local installation, simply use
+
+```bash
+pytest lightshow/_tests
+```
+
 
 # Contributing 
 
