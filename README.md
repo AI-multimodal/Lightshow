@@ -57,7 +57,27 @@ To install Lightshow, simply use `pip`
 pip install lightshow
 ```
 
+Make sure you've set your Pymatgen legacy API key as well!
+
+```bash
+export PMG_API_KEY="your_legacy_materials_project_key"
+```
+
+(or preferably, add `PMG_API_KEY` to your bash profile).
+
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
+
+## Development installation
+
+For developers: after cloning Lightshow locally, install `pre-commit` via
+
+```bash
+pip install pre-commit
+pre-commit
+pre-commit install
+```
+
+and check that the tests (below) work correctly.
 
 ## Running tests
 
@@ -65,6 +85,12 @@ For developers: tests can be run via `pytest`. After cloning, simply use
 
 ```bash
 pytest lightshow/_tests
+```
+
+or with coverage
+
+```bash
+pytest -v --cov --cov-report xml lightshow/_tests
 ```
 
 
