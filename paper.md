@@ -87,15 +87,15 @@ They are also critical to accelerating new materials
 design. In comparison to experiments, which can be expensive and time-consuming, _in silico_ materials 
 design frameworks can quickly screen the most promising candidates for target 
 applications by running high-throughput calculations, allowing for a systematic 
-down-sampling of the intractably large chemical space. The emergence of the
+down-sampling of the intractably large chemical space. The emergence of
 high-performance computing hardware architecture combined with the development 
-of efficient structure search algorithms continue to fuel the advance of
+of efficient structure search algorithms continues to fuel the advance of
 first-principles simulations in materials design.
 
 Spectroscopy is an important experimental characterization technique that
 probes a sample based on the physics of light-matter interaction. Different types of
 spectroscopy can be classified by the energy range they probe, such as X-ray,
-ultraviolet–visible, and infrared spectroscopy. `Lightshow` currently focuses on writing
+ultraviolet–-visible, and infrared spectroscopy. `Lightshow` currently focuses on writing
 the input files for one type: X-ray absorption spectroscopy (XAS), in which a
 deeply bound core level electron is excited to empty states in the 
 conduction bands. XAS is particularly useful because it is element-specific
@@ -146,7 +146,7 @@ VASP [@vasp-xas].
 We highlight the `_tests` directory, in which we maintain a suite of unit tests
 for individual functions and methods, as well as integration tests for the
 entire workflow. `Lightshow` is fully documented, and contains a simple example
-notebook for users to get started. Finally, we also note that Lightshow is
+notebook for users to get started. Finally, we also note that `Lightshow` is
 designed to be part of larger workflows (including perhaps systematic comparison
 to experiment) in which users wish to abstract away
 the complicated and tedious task of generating input files. Future work on the
