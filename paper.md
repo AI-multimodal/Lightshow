@@ -95,7 +95,7 @@ first-principles simulations in materials design.
 Spectroscopy is an important experimental characterization technique that
 probes a sample based on the physics of light-matter interaction. Different types of
 spectroscopy can be classified by the energy range they probe, such as X-ray,
-ultraviolet–-visible, and infrared spectroscopy. `Lightshow` currently focuses on writing
+ultraviolet-visible, and infrared spectroscopy. `Lightshow` currently focuses on writing
 the input files for one type: X-ray absorption spectroscopy (XAS), in which a
 deeply bound core level electron is excited to empty states in the 
 conduction bands. XAS is particularly useful because it is element-specific
