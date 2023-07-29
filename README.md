@@ -2,14 +2,13 @@
 
 ![sysfs line plot](https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg)
 
+[![image](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg)](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43)
 [![image](https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml/badge.svg)](https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml)
 [![image](https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7)](https://codecov.io/gh/AI-multimodal/Lightshow)
 [![image](https://app.codacy.com/project/badge/Grade/d31a4e18672c4d71bbaafa719181c140)](https://www.codacy.com/gh/AI-multimodal/Lightshow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AI-multimodal/Lightshow&amp;utm_campaign=Badge_Grade)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![python](https://img.shields.io/badge/-Python_3.7+-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AI-multimodal/Lightshow/pulls) <br>
-[![image](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg)](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43)
-[![image](https://zenodo.org/badge/DOI/10.48550/arXiv.2211.04452.svg)](https://doi.org/10.48550/arXiv.2211.04452)
+
 
 
 </div>
@@ -17,7 +16,8 @@
 ------------------------------------------------------------------------
 
 **Lightshow** is a Python library for easily generating computational
-spectroscopy input files.
+spectroscopy input files. If you use our code, please consider citing our [manuscript](https://doi.org/10.21105/joss.05182)
+in the Journal of Open Source Software.
 
 Often, it can be daunting to create comprehensive, well documented
 databases of materials structures and their x-ray absorption spectra.
