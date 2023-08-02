@@ -44,6 +44,13 @@ def _fetch_from_MP(job):
 
     Parameters
     ----------
+    job : list
+        A list containing the parameters of the function, see below.
+
+    Notes
+    -----
+    For each element of ``job``, we have the following, in order:
+
     mpr : pymatgen.ext.matproj.MPRester
         Interface to the Materials Project REST API.
     mpid : str
@@ -85,7 +92,7 @@ def _from_mpids_list(
 ):
     """Makes one large API call to the Materials Project database and pulls the
     relevant structural files given a list of Materials Project ID's (mpids).
-    
+
     Parameters
     ----------
     mpids : list of str
@@ -98,7 +105,7 @@ def _from_mpids_list(
         If True, will use tqdm to print a progress bar.
     concurrent_threads : int, optional
         The number of concurrent threads used in the ThreadPoolExecutor.
-    
+
     Returns
     -------
     dict
@@ -106,13 +113,11 @@ def _from_mpids_list(
         metadata (with the same keys).
     """
 
-    # Safely fetch all of the Materials Project structures matching the query
-
     with MPRester(api_key) as mpr:
         jobs = [[mpr, mpid, metadata_keys] for mpid in mpids]
         with ThreadPoolExecutor(max_workers=concurrent_threads) as executor:
-            results = list(tqdm(executor.map(
-                _fetch_from_MP, jobs), total=len(jobs))
+            results = list(
+                tqdm(executor.map(_fetch_from_MP, jobs), total=len(jobs))
             )
 
     structures = {
@@ -230,6 +235,7 @@ class Database(MSONable):
             "diel",
         ],
         verbose=True,
+        concurrent_threads=2,
     ):
         """Constructs the :class:`.Database` object by pulling structures and
         metadata directly from the Materials Project. The following query types
@@ -317,6 +323,7 @@ class Database(MSONable):
             api_key,
             metadata_keys,
             verbose=verbose,
+            concurrent_threads=concurrent_threads,
         )
 
         return cls(
