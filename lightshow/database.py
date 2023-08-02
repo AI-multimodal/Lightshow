@@ -39,7 +39,7 @@ def _delete_common_strings(old_list_of_strings):
     ]
 
 
-def _fetch_from_MP(mpr, mpid, metadata_keys):
+def _fetch_from_MP(job):
     """Uses the provided MPID to fetch the structure data.
 
     Parameters
@@ -59,6 +59,10 @@ def _fetch_from_MP(mpr, mpid, metadata_keys):
         The structure (:class:`pymatgen.core.structure.Structure`) of interest
         and the specified metadata, as well as the mpid for reference.
     """
+
+    mpr = job[0]
+    mpid = job[1]
+    metadata_keys = job[2]
 
     try:
         metadata = mpr.get_doc(mpid)
@@ -81,7 +85,7 @@ def _from_mpids_list(
 ):
     """Makes one large API call to the Materials Project database and pulls the
     relevant structural files given a list of Materials Project ID's (mpids).
-
+    
     Parameters
     ----------
     mpids : list of str
@@ -92,7 +96,9 @@ def _from_mpids_list(
         If True, will only
     verbose : bool, optional
         If True, will use tqdm to print a progress bar.
-
+    concurrent_threads : int, optional
+        The number of concurrent threads used in the ThreadPoolExecutor.
+    
     Returns
     -------
     dict
@@ -101,13 +107,13 @@ def _from_mpids_list(
     """
 
     # Safely fetch all of the Materials Project structures matching the query
+
     with MPRester(api_key) as mpr:
+        jobs = [[mpr, mpid, metadata_keys] for mpid in mpids]
         with ThreadPoolExecutor(max_workers=concurrent_threads) as executor:
-            futures = [
-                executor.submit(_fetch_from_MP, mpr, mpid, metadata_keys)
-                for mpid in mpids
-            ]
-            results = [future.result() for future in as_completed(futures)]
+            results = list(tqdm(executor.map(
+                _fetch_from_MP, jobs), total=len(jobs))
+            )
 
     structures = {
         x["mpid"]: x["structure"] for x in results if x["structure"] is not None
