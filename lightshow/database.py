@@ -4,7 +4,7 @@ the `Materials Project Database <https://materialsproject.org/>`_, as well as
 utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
