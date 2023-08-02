@@ -81,7 +81,7 @@ def _fetch_from_MP(job):
 
 
 def _from_mpids_list(
-    mpids, api_key, metadata_keys, verbose=True, concurrent_threads=20
+    mpids, api_key, metadata_keys, verbose=True, concurrent_threads=2
 ):
     """Makes one large API call to the Materials Project database and pulls the
     relevant structural files given a list of Materials Project ID's (mpids).
