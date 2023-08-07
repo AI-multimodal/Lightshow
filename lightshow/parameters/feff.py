@@ -17,6 +17,17 @@ FEFF_DEFAULT_CARDS = {
     "FMS": "9.0 0",
     "EXCHANGE": "0 0.0 0.0 2",
     "RPATH": "-1",
+    "EGRID": "\nk_grid -1 0 0.04\nk_grid 0 6 0.04",
+}
+
+FEFF_DEFAULT_EXAFS_CARDS = {
+    "S02": "0",
+    "COREHOLE": "RPA",
+    "CONTROL": "1 1 1 1 1 1",
+    "EXAFS": "20",
+    "RPATH": "10",
+    "SCF": "7.0 0 100 0.2 3",
+    "EXCHANGE": "0 0.0 0.0 2",
 }
 
 
