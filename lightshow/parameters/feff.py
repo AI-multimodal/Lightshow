@@ -93,19 +93,32 @@ class FEFFParameters(MSONable, _BaseParameters):
         cards=FEFF_DEFAULT_CARDS,
         edge="K",
         radius=9.0,
-        spectrum="XANES",
-        name="FEFF",
+        spectrum=None,
+        name=None,
         **feff_dict_set_kwargs,
     ):
         # Try to see if "edge" is in the provided card keys
         if "EDGE" in cards.keys():
             warn(f"Provided edge in cars will be overwritten by kwarg {edge}")
             cards.pop("EDGE")
+        if spectrum is not None:
+            self._spectrum = spectrum
+        else:
+            if "XANES" in cards.keys():
+                self._spectrum = "XANES"
+                assert "EXAFS" not in cards.keys()
+            elif "EXAFS" in cards.keys():
+                self._spectrum = "EXAFS"
+                assert "XANES" not in cards.keys()
+            else:
+                raise ValueError("Something is wrong with your cards!")
 
         self._cards = cards
         self._radius = radius
-        self._spectrum = spectrum
+
         self._name = name
+        if self._name is None:
+            self._name = f"FEFF-{self._spectrum}"
         self._edge = edge
         self._feff_dict_set_kwargs = feff_dict_set_kwargs
 
