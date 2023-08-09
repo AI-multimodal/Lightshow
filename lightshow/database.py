@@ -304,7 +304,7 @@ class Database(MSONable):
             mpids = []
             with MPRester(api_key) as mpr:
                 for pattern in query:
-                    data = mpr.get_data(pattern, data_type="vasp")
+                    data = mpr.get_data(pattern, prop="material_id")
                     mpids.extend([xx["material_id"] for xx in data])
 
         # Convert the raw query itself to a list of mpids
@@ -491,6 +491,21 @@ class Database(MSONable):
             if specie == species
         ]
 
+    def write_unit_cells(self, root, pbar=False):
+        """A helper method for writing the unit cells in POSCAR format. This
+        is convenient as the atom indexes saved as Lightshow runs correspond
+        to this unit cell.
+
+        Parameters
+        ----------
+        root : os.PathLike
+        pbar : bool, optional
+        """
+
+        for key, structure in tqdm(self._structures.items(), disable=not pbar):
+            fname = Path(root) / key / "POSCAR"
+            structure.to(fmt="POSCAR", filename=fname)
+
     def write(
         self,
         root,
@@ -576,9 +591,10 @@ class Database(MSONable):
         writer_metadata_path = root / Path("writer_metadata.json")
 
         for key, supercell in tqdm(self._supercells.items(), disable=not pbar):
+            primitive_info = self._metadata[key]["primitive"]
+            supercell_info = self._metadata[key]["supercell"]
+
             for absorbing_atom in absorbing_atoms:
-                primitive_info = self._metadata[key]["primitive"]
-                supercell_info = self._metadata[key]["supercell"]
 
                 # If inequiv is None, that means that the absorbing_atom was not
                 # specified (absorbing_atom is None)
