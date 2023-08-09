@@ -595,7 +595,6 @@ class Database(MSONable):
             supercell_info = self._metadata[key]["supercell"]
 
             for absorbing_atom in absorbing_atoms:
-
                 # If inequiv is None, that means that the absorbing_atom was not
                 # specified (absorbing_atom is None)
                 inequiv = self._get_site_indexes_matching_atom(
