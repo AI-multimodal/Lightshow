@@ -4,6 +4,7 @@ from functools import lru_cache
 import numpy as np
 from pymatgen.core.structure import IStructure
 from pymatgen.io.exciting import ExcitingInput
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 ATOMIC_NUMBERS = {
@@ -338,6 +339,22 @@ def consistency_check(
     atom_dirs_VASP = sorted(list((Path(path) / "VASP").iterdir()))
     atom_dirs_XSpectra = sorted(list((Path(path) / "XSpectra").iterdir()))
     atom_dirs_EXCITING = sorted(list((Path(path) / "EXCITING").iterdir()))
+    unit_cell_path = Path(path) / "POSCAR"
+
+    # Check that the unit cell corresponds with the site indexes in the
+    # VASP directory
+    _sites = sorted([int(str(dd.name).split("_")[0]) for dd in atom_dirs_VASP])
+    _structure = IStructure.from_file(unit_cell_path)
+    inequivalent_sites = (
+        SpacegroupAnalyzer(_structure)
+        .get_symmetrized_structure()
+        .equivalent_indices
+    )
+    for ineq in inequivalent_sites:
+        L = len(ineq)
+        L2 = len(list(set(ineq) - set(_sites)))
+        assert L - L2 == 1
+    # Done!
 
     l1 = [xx.name for xx in atom_dirs_FEFF]
     l2 = [xx.name for xx in atom_dirs_VASP]
