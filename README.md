@@ -1,5 +1,4 @@
 <div align="center">
-
 ![sysfs line plot](https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg)
 
 [![image](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg)](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43)
@@ -8,9 +7,6 @@
 [![image](https://app.codacy.com/project/badge/Grade/d31a4e18672c4d71bbaafa719181c140)](https://www.codacy.com/gh/AI-multimodal/Lightshow/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AI-multimodal/Lightshow&amp;utm_campaign=Badge_Grade)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![python](https://img.shields.io/badge/-Python_3.7+-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
-
-
-
 </div>
     
 ------------------------------------------------------------------------
@@ -57,13 +53,13 @@ To install Lightshow, simply use `pip`
 pip install lightshow
 ```
 
-Make sure you've set your Pymatgen legacy API key as well!
+Make sure you've set your Materials Project v2 API key as well! You can find some documentation on how to query data [here](https://docs.materialsproject.org/downloading-data/using-the-api/querying-data) and how to set up your new API key [here](https://next-gen.materialsproject.org/api).
 
 ```bash
-export PMG_API_KEY="your_legacy_materials_project_key"
+export MP_API_KEY="your_Materials_Project_v2_API_key"
 ```
 
-(or preferably, add `PMG_API_KEY` to your bash profile).
+(or preferably, add `MP_API_KEY` to your bash profile).
 
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
 
