@@ -12,7 +12,10 @@ from geometry import consistency_check  # noqa
 
 @pytest.mark.parametrize(
     "mpid",
-    ["mp-390", "mvc-11115"],
+    [
+        "mp-390",
+        # "mvc-11115"
+    ],
 )
 def test_write(mpid, dummy_potcar_file_directory, database_from_file, tmp_path):
     # Load it all in

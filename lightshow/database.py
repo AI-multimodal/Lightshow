@@ -4,7 +4,6 @@ the `Materials Project Database <https://materialsproject.org/>`_, as well as
 utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
@@ -12,8 +11,8 @@ from shutil import copy2
 from warnings import warn
 
 from monty.json import MSONable
+from mp_api.client import MPRester
 from pymatgen.core.structure import Structure
-from pymatgen.ext.matproj import MPRester, MPRestError
 from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ
@@ -37,97 +36,6 @@ def _delete_common_strings(old_list_of_strings):
     return [
         str(Path(xx) / Path(name)) for xx, name in zip(final_p, list_of_names)
     ]
-
-
-def _fetch_from_MP(job):
-    """Uses the provided MPID to fetch the structure data.
-
-    Parameters
-    ----------
-    job : list
-        A list containing the parameters of the function, see below.
-
-    Notes
-    -----
-    For each element of ``job``, we have the following, in order:
-
-    mpr : pymatgen.ext.matproj.MPRester
-        Interface to the Materials Project REST API.
-    mpid : str
-        The specific mpid to pull.
-    metadata_keys : list of str, optional
-        The Materials Project metadata contains a huge amount of information.
-        If not ``None``, these are the only keys that are kept in the pulled
-        metadata object.
-
-    Returns
-    -------
-    dict
-        The structure (:class:`pymatgen.core.structure.Structure`) of interest
-        and the specified metadata, as well as the mpid for reference.
-    """
-
-    mpr = job[0]
-    mpid = job[1]
-    metadata_keys = job[2]
-
-    try:
-        metadata = mpr.get_doc(mpid)
-    except MPRestError as error:
-        warn(f"MPRestError pulling mpid={mpid}, error: {error}")
-        return {"mpid": mpid, "structure": None, "metadata": None}
-
-    if metadata_keys is not None:
-        metadata = {key: metadata[key] for key in metadata_keys}
-    metadata["downloaded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # The structure is precisely in the data pulled from get_doc:
-    structure = Structure.from_dict(metadata.pop("structure"))
-
-    return {"mpid": mpid, "structure": structure, "metadata": metadata}
-
-
-def _from_mpids_list(
-    mpids, api_key, metadata_keys, verbose=True, concurrent_threads=2
-):
-    """Makes one large API call to the Materials Project database and pulls the
-    relevant structural files given a list of Materials Project ID's (mpids).
-
-    Parameters
-    ----------
-    mpids : list of str
-        List of Materials Project IDs to pull.
-    api_key : str, optional
-        Materials Project API key.
-    metadata_keys : bool, optional
-        If True, will only
-    verbose : bool, optional
-        If True, will use tqdm to print a progress bar.
-    concurrent_threads : int, optional
-        The number of concurrent threads used in the ThreadPoolExecutor.
-
-    Returns
-    -------
-    dict
-        A dictionary containing the structures (with keys as the mpids) and
-        metadata (with the same keys).
-    """
-
-    with MPRester(api_key) as mpr:
-        jobs = [[mpr, mpid, metadata_keys] for mpid in mpids]
-        with ThreadPoolExecutor(max_workers=concurrent_threads) as executor:
-            results = list(
-                tqdm(executor.map(_fetch_from_MP, jobs), total=len(jobs))
-            )
-
-    structures = {
-        x["mpid"]: x["structure"] for x in results if x["structure"] is not None
-    }
-    metadatas = {
-        x["mpid"]: x["metadata"] for x in results if x["structure"] is not None
-    }
-
-    return {"structures": structures, "metadata": metadatas}
 
 
 def _get_api_key(api_key):
@@ -216,121 +124,48 @@ class Database(MSONable):
         return kls
 
     @classmethod
-    def from_materials_project(
-        cls,
-        query,
-        query_type="mpids",
-        api_key=None,
-        metadata_keys=[
-            "created_at",
-            "blessed_tasks",
-            "pseudo_potential",
-            "spacegroup",
-            "_id",
-            "structure",
-            "icsd_ids",
-            "e_above_hull",
-            "formation_energy_per_atom",
-            "band_gap",
-            "diel",
-        ],
-        verbose=True,
-        concurrent_threads=2,
-    ):
+    def from_materials_project(cls, **kwargs):
         """Constructs the :class:`.Database` object by pulling structures and
-        metadata directly from the Materials Project. The following query types
-        are allowed:
-
-        * ``query_type == mpids``, the ``query`` argument is simply a list of
-          Materials Project IDs.
-        * ``query_type == patterns``, the ``query`` argument is a list
-          of patterns, e.g. ``[Ti-O, Ti-O-*, Cu-O-*]``.
-        * ``query_type == mp_query``, then the ``query`` argument is
-          just a dict that is passed directly to the ``mpr.query`` method,
-          where ``mpr`` is the MPRester object.
+        metadata directly from the Materials Project. This is a simple
+        passthrough method which utilizes the MPRester.materials.summary.search
+        API of the Materials Project v2 API.
 
         Parameters
         ----------
-        query : list or dict
-            The query itself, the form of which is determined by
-            ``query_type``.
-        query_type : str, optional
-            There are three different types of allowed queries: ``mpids``,
-            ``patterns``, or ``mp_query``. See above for the allowed query
-            types.
-        api_key : str, optional
-            Materials Project API key. If None (not provided), looks for the
-            environment variable ``PMG_API_KEY``.
-        metadata_keys : list, optional
-            The Materials Project metadata contains a huge amount of
-            information. If not ``None``, these are the only keys that are kept
-            in the pulled metadata object.
-        verbose : bool, optional
-            If True, uses the :class:`tqdm` progress bar. Otherwise will
-            silence it.
-
-        Returns
-        -------
-        Database
+        **kwargs
+            Description
 
         Examples
         --------
-        Construct a :class:`.Database` via directly pulling certain materials
-        by MPID.
 
-        .. code-block:: python
+        Deleted Parameters
+        ------------------
+        mpr_query_kwargs : dict
+            Direct passthrough to MPRester.materials.summary.search. See
+            examples below.
+        api_key : None, optional
+            API key which can either be provided directly or is read from
+            the MP_API_KEY environment variable.
 
-            database = Database.from_materials_project(["mp-390", "mvc-1115"])
-
-        Construct a :class:`.Database` via pulling all materials consistent
-        with certain patterns. For example, to pull all binary and ternary
-        titanium oxide compounds:
-
-        .. code-block:: python
-
-            database = Database.from_materials_project(
-                ["Ti-O", "Ti-O-*"], query_type="patterns"
-            )
+        No Longer Returned
+        ------------------
+        Database
         """
 
-        api_key = _get_api_key(api_key)
+        api_key = _get_api_key(kwargs.get("api_key"))
 
-        # Nothing to do here
-        if query_type == "mpids":
-            mpids = query
+        try:
+            kwargs.pop("api_key")
+        except KeyError:
+            pass
 
-        # Convert the patterns into a list of mpids
-        elif query_type == "patterns":
-            mpids = []
-            with MPRester(api_key) as mpr:
-                for pattern in query:
-                    data = mpr.get_data(pattern, prop="material_id")
-                    mpids.extend([xx["material_id"] for xx in data])
+        with MPRester(api_key) as mpr:
+            searched = mpr.materials.summary.search(**kwargs)
 
-        # Convert the raw query itself to a list of mpids
-        elif query_type == "mp_query":
-            with MPRester(api_key) as mpr:
-                materials_list = mpr.query(**query)
-            mpids = [xx["material_id"] for xx in materials_list]
+        structures = {s.material_id.string: s.structure for s in searched}
+        metadata = {s.material_id.string: s.dict() for s in searched}
 
-        # Otherwise we error and terminate
-        else:
-            raise ValueError(f"Unknown query {query_type}")
-
-        # Get all of the data as a dictionary
-        data = _from_mpids_list(
-            mpids,
-            api_key,
-            metadata_keys,
-            verbose=verbose,
-            concurrent_threads=concurrent_threads,
-        )
-
-        return cls(
-            structures=data["structures"],
-            metadata=data["metadata"],
-            supercells=dict(),
-        )
+        return cls(structures=structures, metadata=metadata, supercells=dict())
 
     def initialize_supercells(self, supercell_cutoff=9.0):
         """Initializes the supercells from the structures pulled from the
@@ -504,7 +339,7 @@ class Database(MSONable):
 
         for key, structure in tqdm(self._structures.items(), disable=not pbar):
             fname = Path(root) / key / "POSCAR"
-            structure.to(fmt="POSCAR", filename=fname)
+            structure.to(fmt="POSCAR", filename=str(fname))
 
     def write(
         self,

@@ -19,7 +19,7 @@ SAMPLE_FILES_PATH = (
 def test_structure_names():
     return [
         "mp-390",
-        "mvc-11115",
+        # "mvc-11115",  # No longer in v2 API
         "mp-1215",
         "mp-1840",
         "mp-2657",
