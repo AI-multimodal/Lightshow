@@ -37,15 +37,14 @@ Begin by importing the ``Database`` object.
 Databases from the Materials Project
 ------------------------------------
 
-The database is designed to be constructed via classmethods. The primary classmethod we recommend using is ``from_materials_project``. It interfaces directly with the ``MPRester`` object to make queries and pull data locally. There are three ways to do this:
+The database is designed to be constructed via classmethods. The primary classmethod we recommend using is ``from_materials_project``. It interfaces directly with the ``mp_api.client.MPRester`` object to make queries and pull data locally. As of `Lightshow==1.0.0`, this interfaces directly with the `Materials Project v2 API <https://next-gen.materialsproject.org/api>`_ and is a simple passthrough. You should type something like ``mpr.materials.summary.search?`` (check its docstring) for the options you can pass directly through to ``Database.from_materials_project``. 
 
 #. Directly pull a list of Materials Project IDs
    
    .. code-block:: python
 
         database = Database.from_materials_project(
-            query=["mp-390", "mvc-11115"],
-            query_type="mpids",
+            material_ids=["mp-390"],
             api_key=API_KEY
         )
 
@@ -54,28 +53,13 @@ The database is designed to be constructed via classmethods. The primary classme
    .. code-block:: python
 
        database = Database.from_materials_project(
-            query=["Ti-O", "Ti-O-*"],
-            query_type="patterns",
-            api_key=API_KEY
-        )
-
-#. Via direct REST query. See the appropriate Pymatgen docs `here <https://pymatgen.org/pymatgen.ext.matproj.html?highlight=mprester#pymatgen.ext.matproj.MPRester.query>`__ for more details.
-
-   .. code-block:: python
-
-       database = Database.from_materials_project(
-            query={
-                "criteria": ...,
-                "properties": ...,
-                ...
-            },
-            query_type="mp_query",
+            chemsys=["Ti-O", "Ti-O-*"],
             api_key=API_KEY
         )
 
 .. note::
 
-    While the `Pymatgen API Key <https://legacy.materialsproject.org/open>`_ can be provided manually during the use of ``from_materials_project``, we highly recommend setting it in the environment variable ``PMG_API_KEY``. If ``api_key`` in the above arguments is not provided or is set to ``None``, **Lightshow** will check for this environment variable and use it instead.
+    While the Pymatgen API Key can be provided manually during the use of ``from_materials_project``, we highly recommend setting it in the environment variable ``MP_API_KEY``. If ``api_key`` in the above arguments is not provided or is set to ``None``, **Lightshow** will check for this environment variable and use it instead.
 
 Once the ``database`` has been built, three properties are accessible:
 
