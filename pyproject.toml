@@ -21,13 +21,12 @@ maintainers = [
 ]
 description = "A one-stop-shop for writing computational spectroscopy input files"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {"file" = "LICENSE"}
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Natural Language :: English",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3",
