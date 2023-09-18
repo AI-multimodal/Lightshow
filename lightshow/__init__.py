@@ -10,15 +10,15 @@ __version__ = ...  # semantic-version-placeholder
 
 
 def _get_API_key_from_environ():
-    """Checks for an environment variable PMG_API_KEY. If does not exist,
-    returns None.
+    """Checks for an environment variable MP_API_KEY. If does not exist,
+    returns None. Note that this is now for the Materials Project v2 api.
 
     Returns
     -------
     str
     """
 
-    return environ.get("PMG_API_KEY", None)
+    return environ.get("MP_API_KEY", None)
 
 
 def _get_POTCAR_DIRECTORY_from_environ():

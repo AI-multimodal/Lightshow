@@ -40,7 +40,8 @@ dependencies = [
     "numpy",
     "tqdm",
     "monty",
-    "pymatgen<=2022.5.26",
+    "pymatgen>=2023.9.10",
+    "mp-api",
     "ase"
 ]
 

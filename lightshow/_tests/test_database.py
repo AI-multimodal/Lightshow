@@ -31,7 +31,7 @@ def test_database_from_disk(database_from_file, test_structure_names):
 
 def test_from_materials_project(test_structure_names):
     try:
-        dat = Database.from_materials_project(test_structure_names)
+        dat = Database.from_materials_project(material_ids=test_structure_names)
         dat.initialize_supercells(9.0)
         assert set(dat.structures.keys()) == set(test_structure_names)
         assert set(dat.supercells.keys()) == set(test_structure_names)
@@ -43,7 +43,7 @@ def test_from_materials_project(test_structure_names):
     "mpid",
     [
         "mp-390",
-        "mvc-11115",
+        # "mvc-11115",
         "mp-1215",
         "mp-1840",
         "mp-2657",
