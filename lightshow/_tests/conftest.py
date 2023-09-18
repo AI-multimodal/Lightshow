@@ -31,6 +31,21 @@ def test_structure_names():
 
 
 @pytest.fixture
+def test_from_materials_project_structure_names():
+    return [
+        "mp-390",
+        "mp-1215",
+        "mp-1840",
+        "mp-2657",
+        "mp-2664",
+        "mp-430",
+        "mp-458",
+        "mp-10734",
+        "mp-1203",
+    ]
+
+
+@pytest.fixture
 def database_from_file():
     print("structure-files-path", STRUCTURE_FILES_PATH)
     dat = Database.from_files(

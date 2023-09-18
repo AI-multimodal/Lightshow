@@ -29,12 +29,18 @@ def test_database_from_disk(database_from_file, test_structure_names):
     assert set(dat.supercells.keys()) == set(test_structure_names)
 
 
-def test_from_materials_project(test_structure_names):
+def test_from_materials_project(test_from_materials_project_structure_names):
     try:
-        dat = Database.from_materials_project(material_ids=test_structure_names)
+        dat = Database.from_materials_project(
+            material_ids=test_from_materials_project_structure_names
+        )
         dat.initialize_supercells(9.0)
-        assert set(dat.structures.keys()) == set(test_structure_names)
-        assert set(dat.supercells.keys()) == set(test_structure_names)
+        assert set(dat.structures.keys()) == set(
+            test_from_materials_project_structure_names
+        )
+        assert set(dat.supercells.keys()) == set(
+            test_from_materials_project_structure_names
+        )
     except MPRestError:
         warn("MPRestError during pulling data")
 
