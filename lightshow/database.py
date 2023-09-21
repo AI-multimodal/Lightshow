@@ -326,7 +326,7 @@ class Database(MSONable):
             if specie == species
         ]
 
-    def write_unit_cells(self, root, pbar=False):
+    def _write_unit_cells(self, root, pbar=False):
         """A helper method for writing the unit cells in POSCAR format. This
         is convenient as the atom indexes saved as Lightshow runs correspond
         to this unit cell.
@@ -348,6 +348,7 @@ class Database(MSONable):
         options=[],
         pbar=True,
         copy_script=None,
+        write_unit_cells=True,
     ):
         """The core method of the :class:`.Database` class. This method will
         write all input files specified in the ``options`` parameter to disk.
@@ -401,6 +402,9 @@ class Database(MSONable):
         copy_script : os.PathLike
             If not ``None``, will copy the script in the provided path to each
             of the input file locations.
+        write_unit_cells : bool, optional
+            If True, writes the unit cells in the materials directory in
+            POSCAR format. Very useful!
         """
 
         self._setup_preliminary_attributes()
@@ -473,6 +477,9 @@ class Database(MSONable):
                     if copy_script is not None and "paths" in status.keys():
                         for p in status["paths"]:
                             copy2(copy_script, p)
+
+        if write_unit_cells:
+            self._write_unit_cells(root, pbar=pbar)
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
