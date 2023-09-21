@@ -131,7 +131,7 @@ ATOMIC_NUMBERS = {
 ATOMIC_NUMBERS = {value: key for key, value in ATOMIC_NUMBERS.items()}
 
 
-def read_FEFF_geometry(path, rounding=4):
+def read_FEFF_geometry(path):
     path = Path(path) / "feff.inp"
 
     with open(path, "r") as f:
@@ -144,12 +144,12 @@ def read_FEFF_geometry(path, rounding=4):
     feff_lines = [xx.split() for xx in feff_lines]
 
     atoms = [xx[4] for xx in feff_lines]
-    distances = np.round([float(xx[5]) for xx in feff_lines], rounding)
+    distances = np.array([float(xx[5]) for xx in feff_lines])
 
     return {"atoms": atoms[1:], "distances": distances[1:]}
 
 
-def read_VASP_geometry(path, neighbor_radius=10.0, rounding=4):
+def read_VASP_geometry(path, neighbor_radius=10.0):
     path = Path(path) / "POSCAR"
 
     # VASP POSCAR files are easy, only need data after line 8
@@ -163,11 +163,11 @@ def read_VASP_geometry(path, neighbor_radius=10.0, rounding=4):
 
     return {
         "atoms": [xx[1] for xx in tmp],
-        "distances": np.round([xx[0] for xx in tmp], rounding),
+        "distances": np.array([xx[0] for xx in tmp]),
     }
 
 
-def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
+def read_OCEAN_geometry(path, neighbor_radius=10.0):
     path = Path(path) / "ocean.in"
 
     absorber = str(path.parts[-2])
@@ -220,13 +220,13 @@ def read_OCEAN_geometry(path, neighbor_radius=10.0, rounding=4):
         return_list.append(
             {
                 "atoms": [xx[1] for xx in tmp],
-                "distances": np.round([xx[0] for xx in tmp], rounding),
+                "distances": np.array([xx[0] for xx in tmp]),
             }
         )
     return return_list
 
 
-def read_XSpectra_geometry(path, neighbor_radius=10.0, rounding=4):
+def read_XSpectra_geometry(path, neighbor_radius=10.0):
     path = Path(path) / "es.in"
 
     with open(path, "r") as f:
@@ -281,11 +281,11 @@ def read_XSpectra_geometry(path, neighbor_radius=10.0, rounding=4):
 
     return {
         "atoms": [xx[1] for xx in tmp],
-        "distances": np.round([xx[0] for xx in tmp], rounding),
+        "distances": np.array([xx[0] for xx in tmp]),
     }
 
 
-def read_EXCITING_geometry(path, neighbor_radius=10.0, rounding=4):
+def read_EXCITING_geometry(path, neighbor_radius=10.0):
     path = Path(path) / "input.xml"
     structure = ExcitingInput.from_file(path).structure
 
@@ -307,28 +307,22 @@ def read_EXCITING_geometry(path, neighbor_radius=10.0, rounding=4):
 
     return {
         "atoms": [xx[1] for xx in tmp],
-        "distances": np.round([xx[0] for xx in tmp], rounding),
+        "distances": np.array([xx[0] for xx in tmp]),
     }
 
 
 @lru_cache(maxsize=16)
-def _read_OCEAN_geometry(path, neighbor_radius, rounding):
-    return read_OCEAN_geometry(
-        path, neighbor_radius=neighbor_radius, rounding=rounding
-    )
+def _read_OCEAN_geometry(path, neighbor_radius):
+    return read_OCEAN_geometry(path, neighbor_radius=neighbor_radius)
 
 
-def consistency_check(
-    path, rounding=3, first_n_distances=10, neighbor_radius=10.0
-):
+def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
     """Summary
 
     Parameters
     ----------
     path : os.PathLike
         A path to a particular materials directory.
-    rounding : int, optional
-        The number of decimal points to round the distances to.
     first_n_distances : int, optional
         The first n distances are taken to do the consistency check. These
         distances are sorted in the order of closest to furthest to the
@@ -371,21 +365,22 @@ def consistency_check(
     for path_FEFF, path_VASP, path_XSpectra, path_EXCITING in zip(
         atom_dirs_FEFF, atom_dirs_VASP, atom_dirs_XSpectra, atom_dirs_EXCITING
     ):
-        data_FEFF = read_FEFF_geometry(path_FEFF, rounding=rounding)
+        data_FEFF = read_FEFF_geometry(path_FEFF)
         data_VASP = read_VASP_geometry(
-            path_VASP, neighbor_radius=neighbor_radius, rounding=rounding
+            path_VASP, neighbor_radius=neighbor_radius
         )
         data_XSpectra = read_XSpectra_geometry(
-            path_XSpectra, neighbor_radius=neighbor_radius, rounding=rounding
+            path_XSpectra, neighbor_radius=neighbor_radius
         )
         data_EXCITING = read_EXCITING_geometry(
-            path_EXCITING, neighbor_radius=neighbor_radius, rounding=rounding
+            path_EXCITING, neighbor_radius=neighbor_radius
         )
 
         a1 = data_FEFF["atoms"][:first_n_distances]
         a2 = data_VASP["atoms"][:first_n_distances]
         a3 = data_XSpectra["atoms"][:first_n_distances]
         a4 = data_EXCITING["atoms"][:first_n_distances]
+        # assert np.allclose()
         assert a1 == a2 == a3 == a4, f"\n{a1}\n{a2}\n{a3}\n{a4}"
 
         d1 = data_FEFF["distances"][:first_n_distances]
@@ -403,7 +398,7 @@ def consistency_check(
         path_OCEAN = Path(path) / "OCEAN" / absorber
 
         all_data_OCEAN = _read_OCEAN_geometry(
-            path_OCEAN, neighbor_radius=neighbor_radius, rounding=rounding
+            path_OCEAN, neighbor_radius=neighbor_radius
         )
 
         ocean_checks = []

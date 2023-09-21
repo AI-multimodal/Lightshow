@@ -147,8 +147,8 @@ class Database(MSONable):
             API key which can either be provided directly or is read from
             the MP_API_KEY environment variable.
 
-        No Longer Returned
-        ------------------
+        Returns
+        -------
         Database
         """
 
