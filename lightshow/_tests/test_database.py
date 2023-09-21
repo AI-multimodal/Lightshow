@@ -120,8 +120,8 @@ def test_write(
             exciting_params,
             xspectra_params,
         ],
+        write_unit_cells=True,
     )
-    dat.write_unit_cells(target)
 
     # Assert geometires
     consistency_check(target / Path(mpid), rounding=3)
