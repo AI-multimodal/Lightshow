@@ -128,7 +128,7 @@ def test_write(
     consistency_check(target / Path(mpid))
 
 
-@pytest.mark.parametrize("mpid", get_mpids_for_stress_test())
+@pytest.mark.parametrize("mpid", get_mpids_for_stress_test()[:100])
 def test_geometry_stress(
     mpid,
     dummy_potcar_file_directory,

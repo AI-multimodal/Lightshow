@@ -664,7 +664,7 @@ class Poscar(pmgPoscar):
             return self.site_symbols
 
         # Get the default lines for the POSCAR file
-        lines = self.get_string(significant_figures=significant_figures).split(
+        lines = self.get_str(significant_figures=significant_figures).split(
             "\n"
         )
 
