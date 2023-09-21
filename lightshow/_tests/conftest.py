@@ -1,4 +1,5 @@
 from copy import deepcopy
+from functools import cache
 from pathlib import Path
 import pytest
 
@@ -47,11 +48,26 @@ def test_from_materials_project_structure_names():
 
 @pytest.fixture
 def database_from_file():
-    print("structure-files-path", STRUCTURE_FILES_PATH)
     dat = Database.from_files(
         STRUCTURE_FILES_PATH, filename="POSCAR", cleanup_paths=True
     )
     return deepcopy(dat)
+
+
+@cache
+def _database_for_stress_test():
+    # print("✅✅✅✅ Pulled some data from the Materials Project ✅✅✅✅")
+    # print("✅✅✅✅ hopefully only once!!!                      ✅✅✅✅")
+    return Database.from_materials_project(chemsys=["Ti-O"])
+
+
+@pytest.fixture
+def database_for_stress_test():
+    return deepcopy(_database_for_stress_test())
+
+
+def get_mpids_for_stress_test():
+    return list(_database_for_stress_test().structures.keys())
 
 
 @pytest.fixture

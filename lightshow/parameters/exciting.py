@@ -232,7 +232,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
             self._cards["xs"]["BSE"]["xasatom"] = str(site + 1)
             # add the plans using the tree
             root = excitinginput.write_etree(
-                "primitive", bandstr=False, **self._cards
+                "unchanged", bandstr=False, **self._cards
             )
             tree = ET.ElementTree(root)
             xs_loc = root.find("xs")

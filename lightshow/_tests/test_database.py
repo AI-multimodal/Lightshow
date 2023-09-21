@@ -14,6 +14,7 @@ from lightshow import (
     EXCITINGParameters,
 )
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
+from lightshow._tests.conftest import get_mpids_for_stress_test
 
 # Helper testing files
 sys.path.append(str(Path(__file__).parent.resolve() / Path("helpers")))
@@ -71,7 +72,6 @@ def test_write(
     dat = database_from_file
     dat.initialize_supercells(9.0)
     dat.initialize_inequivalent_sites()
-    print(dat.structures.keys())
     dat._supercells = {mpid: dat.supercells[mpid]}
     dat._structures = {mpid: dat.structures[mpid]}
     dat._metadata = {mpid: dat.metadata[mpid]}
@@ -121,7 +121,77 @@ def test_write(
             xspectra_params,
         ],
         write_unit_cells=True,
+        pbar=False,
     )
 
     # Assert geometires
-    consistency_check(target / Path(mpid), rounding=3)
+    consistency_check(target / Path(mpid))
+
+
+@pytest.mark.parametrize("mpid", get_mpids_for_stress_test())
+def test_geometry_stress(
+    mpid,
+    dummy_potcar_file_directory,
+    dummy_psp_file_directory,
+    dummy_chpsp_file_directory,
+    database_for_stress_test,
+    tmp_path,
+):
+    # Load it all in
+    dat = database_for_stress_test
+    dat.initialize_supercells(9.0)
+    dat.initialize_inequivalent_sites()
+    dat._supercells = {mpid: dat.supercells[mpid]}
+    dat._structures = {mpid: dat.structures[mpid]}
+    dat._metadata = {mpid: dat.metadata[mpid]}
+
+    target = Path(tmp_path) / Path("iama") / Path("destination")
+    target.mkdir(exist_ok=True, parents=True)
+
+    # Write it (note these are Ti-O compounds)
+    feff_parameters = FEFFParameters(
+        cards={
+            "S02": "0",
+            "COREHOLE": "RPA",
+            "CONTROL": "1 1 1 1 1 1",
+            "XANES": "4 0.04 0.1",
+            "SCF": "7.0 0 100 0.2 3",
+            "FMS": "9.0 0",
+            "EXCHANGE": "0 0.0 0.0 2",
+            "RPATH": "-1",
+        },
+        edge="K",
+        radius=6.0,
+        spectrum="XANES",
+        name="FEFF",
+    )
+    vasp_params_corehole = VASPParameters(
+        incar=VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
+        potcar_directory=None,
+        force_spin_unpolarized=False,
+    )
+    ocean_params = OCEANParameters(edge="K")
+    exciting_params = EXCITINGParameters(edge="K")
+    xspectra_params = XSpectraParameters(
+        psp_directory=None,
+        psp_cutoff_table="mock_cutoff_table.json",
+        chpsp_directory=None,
+        edge="K",
+    )
+
+    dat.write(
+        target,
+        absorbing_atoms=["Ti", "O"],
+        options=[
+            feff_parameters,
+            vasp_params_corehole,
+            ocean_params,
+            exciting_params,
+            xspectra_params,
+        ],
+        write_unit_cells=True,
+        pbar=False,
+    )
+
+    # Assert geometires
+    consistency_check(target / Path(mpid))
