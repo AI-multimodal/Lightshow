@@ -334,6 +334,7 @@ def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
     atom_dirs_XSpectra = sorted(list((Path(path) / "XSpectra").iterdir()))
     atom_dirs_EXCITING = sorted(list((Path(path) / "EXCITING").iterdir()))
     unit_cell_path = Path(path) / "POSCAR"
+    print([xx.name for xx in atom_dirs_VASP])
 
     # Check that the unit cell corresponds with the site indexes in the
     # VASP directory
