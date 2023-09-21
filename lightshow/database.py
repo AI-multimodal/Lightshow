@@ -390,7 +390,8 @@ class Database(MSONable):
             spectroscopy) will be skipped. Only calculations that do not
             require absorbing atoms to be specified (e.g. neutral potential
             VASP electronic structure self-consistent procedure) will be
-            performed.
+            performed. Note this can also be ``"all"``, in which case, every
+            atom in the structure will have input files written for it.
         options : list, optional
             A list of :class:`lightshow.parameters._base._BaseParameters`
             objects or derived instances. The choice of options not only
@@ -411,7 +412,10 @@ class Database(MSONable):
 
         root = str(Path(root).resolve())  # Get absolute path
 
-        if not isinstance(absorbing_atoms, list):
+        write_all_atoms = False
+        if absorbing_atoms == "all":
+            write_all_atoms = True
+        elif not isinstance(absorbing_atoms, list):
             absorbing_atoms = [absorbing_atoms]
 
         writer_metadata = {
@@ -433,8 +437,12 @@ class Database(MSONable):
             primitive_info = self._metadata[key]["primitive"]
             supercell_info = self._metadata[key]["supercell"]
 
-            for absorbing_atom in absorbing_atoms:
+            if write_all_atoms:
+                absorbing_atoms = list(
+                    set([s.specie.symbol for s in supercell])
+                )
 
+            for absorbing_atom in absorbing_atoms:
                 # Gracefully skip any atoms that are not present in the
                 # structure
                 if not pymatgen_utils.atom_in_structure(
