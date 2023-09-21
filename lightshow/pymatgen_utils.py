@@ -76,3 +76,20 @@ def get_inequivalent_site_info(structure):
         "species": species,
         "multiplicities": multiplicities,
     }
+
+
+def atom_in_structure(atom_symbol, structure):
+    """Checks the provided structure to see if the atom_symbol is present
+    in it.
+
+    Parameters
+    ----------
+    atom_symbol : str
+    structure : pymatgen.core.structure.Structure
+
+    Returns
+    -------
+    bool
+    """
+
+    return atom_symbol in [s.specie.symbol for s in structure]
