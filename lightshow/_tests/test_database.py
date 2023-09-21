@@ -70,10 +70,10 @@ def test_write(
 ):
     # Load it all in
     dat = database_from_file
+    dat._structures = {mpid: dat.structures[mpid]}
     dat.initialize_supercells(9.0)
     dat.initialize_inequivalent_sites()
     dat._supercells = {mpid: dat.supercells[mpid]}
-    dat._structures = {mpid: dat.structures[mpid]}
     dat._metadata = {mpid: dat.metadata[mpid]}
 
     target = Path(tmp_path) / Path("iama") / Path("destination")
@@ -139,10 +139,10 @@ def test_geometry_stress(
 ):
     # Load it all in
     dat = database_for_stress_test
+    dat._structures = {mpid: dat.structures[mpid]}
     dat.initialize_supercells(9.0)
     dat.initialize_inequivalent_sites()
     dat._supercells = {mpid: dat.supercells[mpid]}
-    dat._structures = {mpid: dat.structures[mpid]}
     dat._metadata = {mpid: dat.metadata[mpid]}
 
     target = Path(tmp_path) / Path("iama") / Path("destination")
@@ -181,7 +181,7 @@ def test_geometry_stress(
 
     dat.write(
         target,
-        absorbing_atoms=["Ti", "O"],
+        absorbing_atoms="all",
         options=[
             feff_parameters,
             vasp_params_corehole,
