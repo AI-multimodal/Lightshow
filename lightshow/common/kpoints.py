@@ -75,6 +75,7 @@ class GenericEstimatorKpoints(MSONable, _BaseKpointsMethod):
                 if div not in klist:
                     klist[div] = radi
 
+        k = (1, 1, 1)
         for key, value in klist.items():
             if value > self._cutoff:
                 k = key
