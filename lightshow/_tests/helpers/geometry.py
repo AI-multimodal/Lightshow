@@ -476,7 +476,6 @@ def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
         # If the atom types don't line up, we definitely need to check
         # the distances
         if not a1 == a2 == a3 == a4:
-
             if distances_passed:
                 # DO SOMETHING HERE LATER, FOR NOW WE'RE GOOD.
                 # would be a hell of a coincidence if the distance check
