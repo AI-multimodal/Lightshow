@@ -486,13 +486,18 @@ class Database(MSONable):
                 # Write the files that we can
                 for option in options:
                     path = root / Path(key) / Path(option.name)
-                    status = option.write(path, **kwargs)
-                    if not status["pass"]:
-                        d = {"name": key, **status["errors"]}
-                        warn(f"error: {key}+{option.name}: {d}")
-                    if copy_script is not None and "paths" in status.keys():
-                        for p in status["paths"]:
-                            copy2(copy_script, p)
+
+                    # TODO need to clean up error tracking
+                    try:
+                        status = option.write(path, **kwargs)
+                        if not status["pass"]:
+                            d = {"name": key, **status["errors"]}
+                            warn(f"error: {key}+{option.name}: {d}")
+                        if copy_script is not None and "paths" in status.keys():
+                            for p in status["paths"]:
+                                copy2(copy_script, p)
+                    except Exception as ex:
+                        warn(ex)
 
         if write_unit_cells:
             self._write_unit_cells(root, pbar=pbar)
