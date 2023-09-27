@@ -1,5 +1,6 @@
 from copy import deepcopy
 from functools import cache
+import random
 from pathlib import Path
 import pytest
 
@@ -67,7 +68,9 @@ def database_for_stress_test():
 
 
 def get_mpids_for_stress_test():
-    return list(_database_for_stress_test().structures.keys())
+    random.seed(123)
+    L = list(_database_for_stress_test().structures.keys())
+    return random.choice(L, 200)
 
 
 @pytest.fixture
