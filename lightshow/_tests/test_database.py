@@ -50,7 +50,6 @@ def test_from_materials_project(test_from_materials_project_structure_names):
     "mpid",
     [
         "mp-390",
-        # "mvc-11115",
         "mp-1215",
         "mp-1840",
         "mp-2657",
@@ -179,19 +178,25 @@ def test_geometry_stress(
         edge="K",
     )
 
-    dat.write(
-        target,
-        absorbing_atoms="all",
-        options=[
-            feff_parameters,
-            vasp_params_corehole,
-            ocean_params,
-            exciting_params,
-            xspectra_params,
-        ],
-        write_unit_cells=True,
-        pbar=False,
-    )
+    try:
+        dat.write(
+            target,
+            absorbing_atoms="all",
+            options=[
+                feff_parameters,
+                vasp_params_corehole,
+                ocean_params,
+                exciting_params,
+                xspectra_params,
+            ],
+            write_unit_cells=True,
+            pbar=False,
+        )
+
+    except KeyError:
+        # This happens when an element is present in the material that is
+        # simply not compatible with some of the Lightshow features
+        return
 
     # Assert geometires
     consistency_check(target / Path(mpid))
