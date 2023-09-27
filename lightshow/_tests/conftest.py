@@ -58,7 +58,7 @@ def database_from_file():
 def _database_for_stress_test():
     # print("✅✅✅✅ Pulled some data from the Materials Project ✅✅✅✅")
     # print("✅✅✅✅ hopefully only once!!!                      ✅✅✅✅")
-    return Database.from_materials_project(chemsys=["Ti-O-*"])
+    return Database.from_materials_project(chemsys=["Ti-*", "Ti-*-*"])
 
 
 @pytest.fixture
