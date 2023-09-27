@@ -70,7 +70,7 @@ def database_for_stress_test():
 def get_mpids_for_stress_test():
     random.seed(123)
     L = list(_database_for_stress_test().structures.keys())
-    return random.choice(L, 200)
+    return random.sample(L, 200)
 
 
 @pytest.fixture
