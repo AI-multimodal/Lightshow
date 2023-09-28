@@ -69,13 +69,75 @@ def get_inequivalent_site_info(structure):
     # Equivalent indexes must all share the same atom type
     multiplicities = [len(xx) for xx in inequivalent_sites]
     inequivalent_sites = [xx[0] for xx in inequivalent_sites]
-    species = [str(structure[xx].specie) for xx in inequivalent_sites]
+    species = [structure[xx].specie.symbol for xx in inequivalent_sites]
 
     return {
         "sites": inequivalent_sites,
         "species": species,
         "multiplicities": multiplicities,
     }
+
+
+def get_supercell_indexes_matching_primitive(prim, sc, compare=10, r=5.0):
+    info_prim = get_inequivalent_site_info(prim)
+    info_sc = get_inequivalent_site_info(sc)
+
+    # These should be the "master indexes" that we're matching against
+    primitive_indexes = info_prim["sites"]
+    primitive_species = info_prim["species"]
+
+    # These are the supercell inequivalent indexes
+    sc_indexes = info_sc["sites"]
+    sc_species = info_sc["species"]
+
+    # Get the neighbors of the primitive and supercell inequivalent indexes
+    primitive_neighbors = [
+        sorted([jj.nn_distance for jj in prim.get_neighbors(prim[ii], r=r)])
+        for ii in primitive_indexes
+    ]
+    # primitive_species = [prim[ii].specie.symbol for ii in primitive_indexes]
+    sc_neighbors = [
+        sorted([jj.nn_distance for jj in sc.get_neighbors(sc[ii], r=r)])
+        for ii in sc_indexes
+    ]
+    # sc_species = [sc[ii].specie.symbol for ii in sc_indexes]
+
+    # Match
+    site_matching = {}
+    for cc, (primitive_index, p_species) in enumerate(
+        zip(primitive_indexes, primitive_species)
+    ):
+        primitive_neighbor_distances = primitive_neighbors[cc]
+        L_prim = len(primitive_neighbor_distances)
+
+        sc_neighbor_vector_lengths = [len(xx) for xx in sc_neighbors]
+        sc_indexes_with_same_length_as_prim = [
+            ii
+            for ii, (LL, symbol) in enumerate(
+                zip(sc_neighbor_vector_lengths, sc_species)
+            )
+            if LL == L_prim and p_species == symbol
+        ]
+
+        # Out of these candidates, we compare the distances
+        sc_distances_matches = [
+            np.allclose(
+                primitive_neighbor_distances[:compare],
+                sc_neighbors[ii][:compare],
+            )
+            for ii in sc_indexes_with_same_length_as_prim
+        ]
+        # print(sc_indexes_with_same_length_as_prim)
+        # print(sc_distances_matches)
+        index = sc_distances_matches.index(True)
+        # print(sc_indexes_with_same_length_as_prim[index])
+        # print(index)
+
+        site_matching[primitive_index] = sc_indexes[
+            sc_indexes_with_same_length_as_prim[index]
+        ]
+    print(primitive_species)
+    return site_matching
 
 
 def atom_in_structure(atom_symbol, structure):

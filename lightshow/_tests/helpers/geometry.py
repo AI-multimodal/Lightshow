@@ -10,6 +10,8 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 # See PR I'm going to open soon
 ROUNDING_PRECISON = 6
 
+ATOL = 1e-4
+
 
 ATOMIC_NUMBERS = {
     "H": 1,
@@ -345,17 +347,36 @@ def _read_OCEAN_geometry(path, neighbor_radius):
 
 
 def _check_distances(
-    d1, d2, d3, d4, path_FEFF, path, neighbor_radius, data_VASP, N
+    d1,
+    d2,
+    d3,
+    d4,
+    a1,
+    a2,
+    a3,
+    a4,
+    path_FEFF,
+    path,
+    neighbor_radius,
+    data_VASP,
+    N,
 ):
-    if not np.allclose(d1, d2):
-        # raise AssertionError(f"\n{d1}\n{d2}")
-        return False
-    if not np.allclose(d2, d3):
-        # raise AssertionError(f"\n{d2}\n{d3}")
-        return False
-    if not np.allclose(d3, d4):
-        # raise AssertionError(f"\n{d3}\n{d4}")
-        return False
+    issues = []
+
+    if not np.allclose(d1, d2, rtol=1e-5, atol=ATOL):
+        issues.append(f"\nFEFF/VASP\n{a1}\n{a2}\n{d1}\n{d2}")
+
+    if not np.allclose(d2, d4, rtol=1e-5, atol=ATOL):
+        issues.append(f"\nVASP/EXCITING\n{a2}\n{a4}\n{d2}\n{d4}")
+
+    if not np.allclose(d1, d4, rtol=1e-5, atol=ATOL):
+        issues.append(f"\nFEFF/EXCITING\n{a1}\n{a4}\n{d1}\n{d4}")
+
+    if not np.allclose(d2, d3, rtol=1e-5, atol=ATOL):
+        issues.append(f"\nVASP/Xspectra\n{a2}\n{a3}\n{d2}\n{d3}")
+
+    if not np.allclose(d1, d3, rtol=1e-5, atol=ATOL):
+        issues.append(f"\nFEFF/Xspectra\n{a1}\n{a3}\n{d1}\n{d3}")
 
     absorber = str(path_FEFF.name).split("_")[1]
     path_OCEAN = Path(path) / "OCEAN" / absorber
@@ -374,6 +395,8 @@ def _check_distances(
         if not np.allclose(
             data_OCEAN["distances"][:N],
             data_VASP["distances"][:N],
+            rtol=1e-5,
+            atol=ATOL,
         ):
             ocean_checks.append(False)
         else:
@@ -381,22 +404,18 @@ def _check_distances(
 
     if not any(ocean_checks):
         # raise AssertionError("OCEAN problem")
-        return False
+        issues.append("OCEAN problem")
 
-    return True
+    return issues
 
 
-def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
+def consistency_check(path, neighbor_radius=10.0):
     """Summary
 
     Parameters
     ----------
     path : os.PathLike
         A path to a particular materials directory.
-    first_n_distances : int, optional
-        The first n distances are taken to do the consistency check. These
-        distances are sorted in the order of closest to furthest to the
-        absorbing atom.
     """
 
     atom_dirs_FEFF = sorted(list((Path(path) / "FEFF").iterdir()))
@@ -404,7 +423,6 @@ def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
     atom_dirs_XSpectra = sorted(list((Path(path) / "XSpectra").iterdir()))
     atom_dirs_EXCITING = sorted(list((Path(path) / "EXCITING").iterdir()))
     unit_cell_path = Path(path) / "POSCAR"
-    print([xx.name for xx in atom_dirs_VASP])
 
     # Check that the unit cell corresponds with the site indexes in the
     # VASP directory
@@ -457,37 +475,32 @@ def consistency_check(path, first_n_distances=10, neighbor_radius=10.0):
         d3 = data_XSpectra["distances"][:N]
         d4 = data_EXCITING["distances"][:N]
 
-        # Distances check
-        distances_passed = _check_distances(
-            d1, d2, d3, d4, path_FEFF, path, neighbor_radius, data_VASP, N
+        # # Distances check
+        issues = _check_distances(
+            d1,
+            d2,
+            d3,
+            d4,
+            a1,
+            a2,
+            a3,
+            a4,
+            path_FEFF,
+            path,
+            neighbor_radius,
+            data_VASP,
+            N,
         )
 
-        # Another hack, but again it should actually work.
-        # If the 1-to-1 distance check doesn't pass, we can check the sum
-        # of the distances. For two different sites on the same material,
-        # these are going to be different
-        if not distances_passed:
-            s1 = round(float(np.sum(d1)), 1)
-            s2 = round(float(np.sum(d2)), 1)
-            s3 = round(float(np.sum(d3)), 1)
-            s4 = round(float(np.sum(d4)), 1)
-            distances_passed = s1 == s2 == s3 == s4
-
+        # TODO, if the atom types don't match, check the atom types in each
+        # shell.
         # If the atom types don't line up, we definitely need to check
         # the distances
-        if not a1 == a2 == a3 == a4:
-            if distances_passed:
-                # DO SOMETHING HERE LATER, FOR NOW WE'RE GOOD.
-                # would be a hell of a coincidence if the distance check
-                # passed but the atoms were legitimately wrong
-                return
+        # if not a1 == a2 == a3 == a4:
+        #     issues.append(
+        #         f"\nAtoms don't
+        # match:\n{a1}\n{a2}\n{a3}\n{a4}\n{d1}\n{d2}\n{d3}\n{d4}"
+        #     )
 
-            raise AssertionError(
-                f"\n{a1}\n{a2}\n{a3}\n{a4}\n{d1}\n{d2}\n{d3}\n{d4}"
-            )
-
-        if not distances_passed:
-            raise AssertionError(
-                f"\n{a1}\n{a2}\n{a3}\n{a4}\n{d1}\n{d2}\n{d3}"
-                f"\n{d4}\n{s1}\n{s2}\n{s3}\n{s4}"
-            )
+        if issues != []:
+            raise AssertionError("\n".join(issues))

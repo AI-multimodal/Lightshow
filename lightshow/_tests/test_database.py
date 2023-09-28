@@ -15,6 +15,8 @@ from lightshow import (
 )
 from lightshow.defaults import VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL
 from lightshow._tests.conftest import get_mpids_for_stress_test
+from lightshow.common.kpoints import GenericEstimatorKpoints
+from lightshow.common.nbands import UnitCellVolumeEstimate
 
 # Helper testing files
 sys.path.append(str(Path(__file__).parent.resolve() / Path("helpers")))
@@ -147,6 +149,8 @@ def test_geometry_stress(
     target = Path(tmp_path) / Path("iama") / Path("destination")
     target.mkdir(exist_ok=True, parents=True)
 
+    R = 10.0
+
     # Write it (note these are Ti-O compounds)
     feff_parameters = FEFFParameters(
         cards={
@@ -168,14 +172,25 @@ def test_geometry_stress(
         incar=VASP_INCAR_DEFAULT_COREHOLE_POTENTIAL,
         potcar_directory=None,
         force_spin_unpolarized=False,
+        kpoints=GenericEstimatorKpoints(cutoff=33),
+        nbands=UnitCellVolumeEstimate(e_range=40),
     )
-    ocean_params = OCEANParameters(edge="K")
-    exciting_params = EXCITINGParameters(edge="K")
+    ocean_params = OCEANParameters(
+        edge="K",
+        kpoints=GenericEstimatorKpoints(cutoff=33),
+        nbands=UnitCellVolumeEstimate(e_range=40),
+    )
+    exciting_params = EXCITINGParameters(
+        edge="K",
+        kpoints=GenericEstimatorKpoints(cutoff=33),
+        nbands=UnitCellVolumeEstimate(e_range=40),
+    )
     xspectra_params = XSpectraParameters(
         psp_directory=None,
         psp_cutoff_table="mock_cutoff_table.json",
         chpsp_directory=None,
         edge="K",
+        kpoints=GenericEstimatorKpoints(cutoff=33),
     )
 
     try:
@@ -199,4 +214,4 @@ def test_geometry_stress(
         return
 
     # Assert geometires
-    consistency_check(target / Path(mpid))
+    consistency_check(target / Path(mpid), R)

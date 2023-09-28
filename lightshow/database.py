@@ -197,6 +197,10 @@ class Database(MSONable):
         # Do the same for the supercells
         for key, supercell in self._supercells.items():
             info = pymatgen_utils.get_inequivalent_site_info(supercell)
+            mapping = pymatgen_utils.get_supercell_indexes_matching_primitive(
+                self._structures[key], supercell, compare=10, r=5.0
+            )
+            info["prim-supercell-mapping"] = mapping
             self._metadata[key]["supercell"] = info
 
         self._inequivalent_sites_initialized = True
@@ -412,9 +416,9 @@ class Database(MSONable):
 
         root = str(Path(root).resolve())  # Get absolute path
 
-        write_all_atoms = False
+        _write_all_atoms = False
         if absorbing_atoms == "all":
-            write_all_atoms = True
+            _write_all_atoms = True
         elif not isinstance(absorbing_atoms, list):
             absorbing_atoms = [absorbing_atoms]
 
@@ -434,10 +438,12 @@ class Database(MSONable):
         writer_metadata_path = root / Path("writer_metadata.json")
 
         for key, supercell in tqdm(self._supercells.items(), disable=not pbar):
+            primitive_cell = self._structures[key]
             primitive_info = self._metadata[key]["primitive"]
             supercell_info = self._metadata[key]["supercell"]
+            prim_to_sc_index_mapping = supercell_info["prim-supercell-mapping"]
 
-            if write_all_atoms:
+            if _write_all_atoms:
                 absorbing_atoms = list(
                     set([s.specie.symbol for s in supercell])
                 )
@@ -455,14 +461,6 @@ class Database(MSONable):
                 inequiv = self._get_site_indexes_matching_atom(
                     primitive_info, absorbing_atom
                 )
-                inequiv_sc = self._get_site_indexes_matching_atom(
-                    supercell_info, absorbing_atom
-                )
-
-                if inequiv_sc is not None and inequiv is not None:
-                    index_mapping = {k: v for k, v in zip(inequiv, inequiv_sc)}
-                else:
-                    index_mapping = None
 
                 # If the for VASP and XSpectra calculations, use supercell;
                 # otherwise, use unit cell structure
@@ -471,9 +469,9 @@ class Database(MSONable):
                 # if no, ignore them
                 kwargs = {
                     "structure_sc": supercell,
-                    "structure_uc": self._structures[key],
+                    "structure_uc": primitive_cell,
                     "sites": inequiv,
-                    "index_mapping": index_mapping,
+                    "index_mapping": prim_to_sc_index_mapping,
                 }
                 if key in self._metadata.keys():
                     if (
