@@ -62,7 +62,13 @@ def _database_for_stress_test():
     # "mp-1208324", "mp-10734"]
     # return Database.from_materials_project(material_ids=trouble)
     # return Database.from_materials_project(material_ids=["mp-980945"])
-    return Database.from_materials_project(chemsys=["Ti-*", "Ni-*-*"])
+    db = Database.from_materials_project(chemsys=["Ti-*", "Ti-O-*"])
+    keys = list(db._structures.keys())
+    # random.seed(123)
+    # keys = random.sample(keys, 200)
+    db._structures = {key: db._structures[key] for key in keys}
+    db._metadata = {key: db._metadata[key] for key in keys}
+    return db
 
 
 @pytest.fixture
@@ -71,10 +77,8 @@ def database_for_stress_test():
 
 
 def get_mpids_for_stress_test():
-    # random.seed(123)
-    L = list(_database_for_stress_test().structures.keys())
-    return L
-    # return random.sample(L, 500)
+    db = _database_for_stress_test()
+    return list(db._structures.keys())
 
 
 @pytest.fixture

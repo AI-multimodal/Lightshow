@@ -136,7 +136,7 @@ def get_supercell_indexes_matching_primitive(prim, sc, compare=10, r=5.0):
         site_matching[primitive_index] = sc_indexes[
             sc_indexes_with_same_length_as_prim[index]
         ]
-    print(primitive_species)
+    # print(primitive_species)
     return site_matching
 
 
