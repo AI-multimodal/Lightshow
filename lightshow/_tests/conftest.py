@@ -1,6 +1,5 @@
 from copy import deepcopy
 from functools import cache
-import random
 from pathlib import Path
 import pytest
 
@@ -59,7 +58,11 @@ def database_from_file():
 def _database_for_stress_test():
     # print("✅✅✅✅ Pulled some data from the Materials Project ✅✅✅✅")
     # print("✅✅✅✅ hopefully only once!!!                      ✅✅✅✅")
-    return Database.from_materials_project(chemsys=["Ti-*", "Ti-*-*"])
+    # trouble = ["mp-1104067", "mp-1103465", "mp-1196561", "mp-1191564",
+    # "mp-1208324", "mp-10734"]
+    # return Database.from_materials_project(material_ids=trouble)
+    # return Database.from_materials_project(material_ids=["mp-980945"])
+    return Database.from_materials_project(chemsys=["Ti-*", "Ni-*-*"])
 
 
 @pytest.fixture
@@ -68,9 +71,10 @@ def database_for_stress_test():
 
 
 def get_mpids_for_stress_test():
-    random.seed(123)
+    # random.seed(123)
     L = list(_database_for_stress_test().structures.keys())
-    return random.sample(L, 200)
+    return L
+    # return random.sample(L, 500)
 
 
 @pytest.fixture

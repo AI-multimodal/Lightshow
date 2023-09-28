@@ -622,7 +622,7 @@ class Poscar(pmgPoscar):
         target_directory,
         site_index=None,
         check_atom_type=None,
-        significant_figures=8,
+        significant_figures=16,
     ):
         """Writes the VASP POSCAR file for the specified ``site_index``.
 
