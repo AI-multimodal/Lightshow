@@ -39,7 +39,7 @@ dependencies = [
     "mp-api==0.36.1",
     "ase==3.22.1",
     "tqdm==4.65.0",
-    "monty==2023.5.8"
+    "monty==2023.9.25"
 ]
 
 # Dynamic version reads __version__ directly from my_package.__init__
