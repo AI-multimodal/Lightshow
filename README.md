@@ -36,7 +36,7 @@ extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
 few comprehensive tutorials to help you get started.
 
-# Tutorials
+## Tutorials
 
 We offer a few tutorials to get you started (with more on the way!)
 
@@ -46,7 +46,7 @@ We offer a few tutorials to get you started (with more on the way!)
 | 2 | Spectral broadening | Utilities for broadening spectra |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-multimodal/Lightshow/blob/master/notebooks/01_Ti_K_anatase_broaden.ipynb) |
 
 
-# Installation
+## Installation
 
 To install Lightshow, simply use `pip`
 
@@ -64,7 +64,7 @@ export MP_API_KEY="your_Materials_Project_v2_API_key"
 
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
 
-## Development installation
+### Development installation
 
 For developers: after cloning Lightshow locally, install `pre-commit` via
 
@@ -76,7 +76,7 @@ pre-commit install
 
 and check that the tests (below) work correctly.
 
-## Running tests
+### Running tests
 
 For developers: tests can be run via `pytest`. After cloning, simply use
 
@@ -91,12 +91,12 @@ pytest -v --cov --cov-report xml lightshow/_tests
 ```
 
 
-# Contributing 
+## Contributing 
 
 We welcome any and all contributions by the community, including pull requests, bug reports, etc.
 Please see our [contributing](https://github.com/AI-multimodal/Lightshow/blob/master/CONTRIBUTING.md) document for more details!
 
-## Adding new spectroscopy codes
+### Adding new spectroscopy codes
 
 Adding new spectroscopy codes requires one to inherit the `_BaseParameters` class from `lightshow.parameters._base`.
 The new `Parameters(_BaseParameters)` object should have a `write()` method, which must take a target directory as an
@@ -105,7 +105,7 @@ either a unit or super cell). The `name` property must also be defined (correspo
 e.g. "VASP"). Take a look at the examples in the `lightshow.parameters` module for more details!
 
 
-# Funding acknowledgement
+## Funding acknowledgement
 
 This research is based upon work supported by the U.S. Department of
 Energy, Office of Science, Office Basic Energy Sciences, under Award
@@ -116,8 +116,6 @@ Contract No. DE-SC0012704. This work received partial funding by the German Rese
 (DFG) through the CRC 1404 (FONDA), Projektnummer 414984028, and the NFDI consortium FAIRmat – project 460197019.
 C.V. acknowledges support by the Department of Energy, Basic Energy Sciences, Materials Science and Engineering Division,
 through the Midwest Integrated Center for Computational Materials (MICCoM).
-
-## Disclaimer
 
 The Software resulted from work developed under a U.S. Government
 Contract No. DE-SC0012704 and are subject to the following terms: the
