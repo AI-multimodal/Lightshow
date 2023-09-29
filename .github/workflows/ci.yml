@@ -176,7 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/lightshow
+      url: https://pypi.org/project/lightshow/
     permissions:
       id-token: write
 
@@ -202,6 +202,8 @@ jobs:
 
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://upload.pypi.org/legacy/
 
   # build_and_publish_docs:
   #   name: Build and publish documentation via GitHub Pages
