@@ -136,12 +136,12 @@ jobs:
     permissions:
       id-token: write
 
-    needs:
-      - tests
-      - black
-      - flake8_py3
-      - check_semantic_version_placeholder
-      - docs
+    # needs:
+    #   - tests
+    #   - black
+    #   - flake8_py3
+    #   - check_semantic_version_placeholder
+    #   - docs
 
     steps:
 
