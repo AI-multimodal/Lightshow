@@ -175,6 +175,11 @@ jobs:
     # Only allow tagged commits
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
 
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
     # needs:
     #   - tests
     #   - black
