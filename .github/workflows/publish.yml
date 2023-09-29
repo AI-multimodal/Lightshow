@@ -1,125 +1,11 @@
-name: publish
+name: Publish
 
 # Run on all PR's and on pushes/merges to deploy and master
 on:
-  pull_request:
-    branches: []
   push:
     tags: ["v*"]
 
 jobs:
-
-  # tests:
-  #   name: Run unit testing suite
-
-  #   env:
-  #       MP_API_KEY: ${{ secrets.MP_API_KEY }}
-
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-latest, macOS-latest]
-  #       python-version: [3.9, '3.10', 3.11]
-
-  #   steps:
-
-  #   - uses: actions/checkout@v3
-
-  #   - name: Set up Python ${{ matrix.python-version }}
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: ${{ matrix.python-version }}
-
-  #   - name: Install testing dependencies
-  #     run: |
-  #       bash scripts/install.sh
-  #       bash scripts/install.sh test
-
-  #   - name: Run tests
-  #     run: |
-  #       pytest -v --cov --cov-report xml lightshow/_tests
-
-  #   - name: Upload code coverage
-  #     uses: codecov/codecov-action@v2
-  #     timeout-minutes: 10
-  #     with:
-  #       token: ${{ secrets.CODECOV_TOKEN }}
-  #       fail_ci_if_error: false
-
-  # black:
-  #   name: Run Black code quality check
-
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: rickstaa/action-black@v1
-  #       with:
-  #         black_args: "lightshow/ --check"
-  #         fail_on_error: "true"
-
-  # flake8_py3:
-  #   name: Run flake8 code quality check
-
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-
-  #     - uses: actions/checkout@v3
-
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.9
-
-  #     - name: Install flake8
-  #       run: pip install flake8
-
-  #     - name: Run flake8
-  #       uses: suo/flake8-github-action@releases/v1
-  #       with:
-  #         checkName: 'flake8_py3'   # NOTE: this needs to be the same as the job name
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # check_semantic_version_placeholder:
-  #   name: Check semantic version placeholder exists in the __init__
-
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-
-  #   - uses: actions/checkout@v3
-
-  #   - name: Check lines exist
-  #     run: |
-  #       grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
-
-  # docs:
-  #   name: Build documentation test
-
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-
-  #   - name: Checkout
-  #     uses: actions/checkout@v3
-
-  #   ###########################################################################
-  #   # Getting the tags like this is REQUIRED for the dynamic versioning
-  #   # system to work properly
-  #   - name: Get tags
-  #     if: "! startsWith(github.ref, 'refs/tags')"
-  #     run: git fetch --unshallow --tags
-  #   ###########################################################################
-
-  #   - name: Set up Python 3.9
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.9
-
-  #   - name: Install and build
-  #     run: bash scripts/build_docs.sh
 
   build_and_publish:
     # This workflow follows the best practices outlined here:
@@ -134,13 +20,6 @@ jobs:
       url: https://pypi.org/project/lightshow/
     permissions:
       id-token: write
-
-    # needs:
-    #   - tests
-    #   - black
-    #   - flake8_py3
-    #   - check_semantic_version_placeholder
-    #   - docs
 
     steps:
 
@@ -159,60 +38,3 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://upload.pypi.org/legacy/
-
-  build_and_publish_docs:
-    name: Build and publish documentation via GitHub Pages
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    # Only allow tagged commits
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-
-    # needs:
-    #   - tests
-    #   - black
-    #   - flake8_py3
-    #   - check_semantic_version_placeholder
-    #   - docs
-    #   - build_and_publish
-
-    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    # Allow one concurrent deployment
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Build and apply version
-      run: |
-        bash scripts/build_docs.sh
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v2
-
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
-      with:
-        path: 'docs/build/html/'
-
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v1
