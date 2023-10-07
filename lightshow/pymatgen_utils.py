@@ -78,7 +78,7 @@ def get_inequivalent_site_info(structure):
     }
 
 
-def get_supercell_indexes_matching_primitive(prim, sc, compare=10, r=5.0):
+def get_supercell_indexes_matching_primitive(prim, sc, compare=20, r=10.0):
     info_prim = get_inequivalent_site_info(prim)
     info_sc = get_inequivalent_site_info(sc)
 
