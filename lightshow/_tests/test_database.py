@@ -83,7 +83,7 @@ def test_geometry_stress(
             "RPATH": "-1",
         },
         edge="K",
-        radius=6.0,
+        radius=R - 1.0,
         spectrum="XANES",
         name="FEFF",
     )
