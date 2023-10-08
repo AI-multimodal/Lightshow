@@ -2,6 +2,7 @@ from copy import deepcopy
 from functools import cache
 from pathlib import Path
 import pytest
+import random
 
 from pymatgen.core.structure import Structure
 
@@ -65,8 +66,8 @@ def _database_for_stress_test():
     db = Database.from_materials_project(chemsys=["Ti-*", "Mn-O-*"])
     # db = Database.from_materials_project(material_ids=["mp-390"])
     keys = sorted(list(db._structures.keys()))
-    # random.seed(123)
-    # keys = random.sample(keys, 200)
+    random.seed(123)
+    keys = random.sample(keys, 1000)
     db._structures = {key: db._structures[key] for key in keys}
     db._metadata = {key: db._metadata[key] for key in keys}
     return db

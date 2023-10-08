@@ -38,7 +38,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest -n auto -v --cov --cov-report xml lightshow/_tests
+        pytest -v --cov --cov-report xml lightshow/_tests
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v2
