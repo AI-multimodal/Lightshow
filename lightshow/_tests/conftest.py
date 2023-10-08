@@ -64,7 +64,7 @@ def _database_for_stress_test():
     # return Database.from_materials_project(material_ids=["mp-980945"])
     db = Database.from_materials_project(chemsys=["Ti-*", "Mn-O-*"])
     # db = Database.from_materials_project(material_ids=["mp-390"])
-    keys = list(db._structures.keys())
+    keys = sorted(list(db._structures.keys()))
     # random.seed(123)
     # keys = random.sample(keys, 200)
     db._structures = {key: db._structures[key] for key in keys}
