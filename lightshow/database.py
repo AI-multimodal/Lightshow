@@ -198,7 +198,7 @@ class Database(MSONable):
         for key, supercell in self._supercells.items():
             info = pymatgen_utils.get_inequivalent_site_info(supercell)
             mapping = pymatgen_utils.get_supercell_indexes_matching_primitive(
-                self._structures[key], supercell, compare=10, r=5.0
+                self._structures[key], supercell, compare=30, r=20.0
             )
             info["prim-supercell-mapping"] = mapping
             self._metadata[key]["supercell"] = info

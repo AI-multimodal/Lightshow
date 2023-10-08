@@ -364,19 +364,29 @@ def _check_distances(
     issues = []
 
     if not np.allclose(d1, d2, rtol=1e-5, atol=ATOL):
-        issues.append(f"\nFEFF/VASP\n{a1}\n{a2}\n{d1}\n{d2}")
+        issues.append(
+            f"\nFEFF/VASP\n{len(a1)} | {a1}\n{len(a2)} | {a2}\n{d1}\n{d2}"
+        )
 
     if not np.allclose(d2, d4, rtol=1e-5, atol=ATOL):
-        issues.append(f"\nVASP/EXCITING\n{a2}\n{a4}\n{d2}\n{d4}")
+        issues.append(
+            f"\nVASP/EXCITING\n{len(a2)} | {a2}\n{len(a4)} | {a4}\n{d2}\n{d4}"
+        )
 
     if not np.allclose(d1, d4, rtol=1e-5, atol=ATOL):
-        issues.append(f"\nFEFF/EXCITING\n{a1}\n{a4}\n{d1}\n{d4}")
+        issues.append(
+            f"\nFEFF/EXCITING\n{len(a1)} | {a1}\n{len(a4)} | {a4}\n{d1}\n{d4}"
+        )
 
     if not np.allclose(d2, d3, rtol=1e-5, atol=ATOL):
-        issues.append(f"\nVASP/Xspectra\n{a2}\n{a3}\n{d2}\n{d3}")
+        issues.append(
+            f"\nVASP/Xspectra\n{len(a2)} | {a2}\n{len(a3)} | {a3}\n{d2}\n{d3}"
+        )
 
     if not np.allclose(d1, d3, rtol=1e-5, atol=ATOL):
-        issues.append(f"\nFEFF/Xspectra\n{a1}\n{a3}\n{d1}\n{d3}")
+        issues.append(
+            f"\nFEFF/Xspectra\n{len(a1)} | {a1}\n{len(a3)} | {a3}\n{d1}\n{d3}"
+        )
 
     absorber = str(path_FEFF.name).split("_")[1]
     path_OCEAN = Path(path) / "OCEAN" / absorber
