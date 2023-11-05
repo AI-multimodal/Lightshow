@@ -34,7 +34,7 @@ class Database(MSONable):
         cls,
         root,
         filename="*.xyz",
-        lattice=[20.0, 20.0, 20.0],
+        lattice=None,
         pbar=True,
     ):
         """Searches for files matching the provided ``filename``, and assumes
@@ -57,6 +57,9 @@ class Database(MSONable):
         -------
         Database
         """
+
+        if lattice is None:
+            lattice = [20.0, 20.0, 20.0]
 
         structures = {}
         metadata = {}
