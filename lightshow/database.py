@@ -63,10 +63,11 @@ class Database(MSONable):
         for key, path in enumerate(
             tqdm(Path(root).rglob(filename), disable=not pbar)
         ):
+            key = f"{key:08}"
             molecule = Molecule.from_file(path)
             structures[key] = molecule.get_boxed_structure(*lattice)
             metadata[key] = {"origin": str(path)}
-        return cls(structure=structures, metadat=metadata, supercells=dict())
+        return cls(structures=structures, metadata=metadata, supercells=dict())
 
     @classmethod
     def from_files(cls, root, filename="CONTCAR", pbar=True):
@@ -103,6 +104,7 @@ class Database(MSONable):
         for key, path in enumerate(
             tqdm(Path(root).rglob(filename), disable=not pbar)
         ):
+            key = f"{key:08}"
             struct = Structure.from_file(path)
             structures[key] = struct.get_primitive_structure()
             metadata[key] = {"origin": str(path)}
@@ -341,9 +343,13 @@ class Database(MSONable):
         """
 
         for key, metadata in tqdm(self._metadata.items(), disable=not pbar):
-            if "origin" in metadata.keys():
-                fname = Path(root) / key / "metadata.json"
-                json.dump(metadata, fname, indent=4, sort_keys=True)
+            if "origin" not in metadata.keys():
+                continue
+            fname = Path(root) / key / "metadata.json"
+            origin = str(Path(metadata["origin"]).resolve())
+            new_metadata = {"origin": origin}
+            with open(fname, "w") as outfile:
+                json.dump(new_metadata, outfile, indent=4, sort_keys=True)
 
     def write(
         self,
