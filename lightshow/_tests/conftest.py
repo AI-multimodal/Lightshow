@@ -49,9 +49,7 @@ def test_from_materials_project_structure_names():
 
 @pytest.fixture
 def database_from_file():
-    dat = Database.from_files(
-        STRUCTURE_FILES_PATH, filename="POSCAR", cleanup_paths=True
-    )
+    dat = Database.from_files(STRUCTURE_FILES_PATH, filename="POSCAR")
     return deepcopy(dat)
 
 
