@@ -5,37 +5,17 @@ utilizing existing data the user may have on their hard drive."""
 
 from datetime import datetime
 import json
-import os
 from pathlib import Path
 from shutil import copy2
 from warnings import warn
 
 from monty.json import MSONable
 from mp_api.client import MPRester
-from pymatgen.core.structure import Structure
+from pymatgen.core.structure import Structure, Molecule
 from tqdm import tqdm
 
 from lightshow import _get_API_key_from_environ
 from lightshow import pymatgen_utils
-
-
-def _delete_common_strings(old_list_of_strings):
-    list_of_strings = [str(Path(xx).parent) for xx in old_list_of_strings]
-    list_of_names = [str(Path(xx).name) for xx in old_list_of_strings]
-
-    commonprefix = os.path.commonprefix(list_of_strings)
-    new_p = [x[len(commonprefix) :] for x in list_of_strings]
-
-    # Reverse every string in the list then do it again
-    list_of_strings_reversed = [xx[::-1] for xx in new_p]
-    commonsuffix = os.path.commonprefix(list_of_strings_reversed)
-    new_p = [x[len(commonsuffix) :] for x in list_of_strings_reversed]
-
-    final_p = [xx[::-1] for xx in new_p]
-
-    return [
-        str(Path(xx) / Path(name)) for xx, name in zip(final_p, list_of_names)
-    ]
 
 
 def _get_api_key(api_key):
@@ -49,38 +29,64 @@ def _get_api_key(api_key):
 class Database(MSONable):
     """Contains all materials and metadata for some database."""
 
-    def cleanup_paths(self):
-        """When loading data from disk, paths can become very repetitive. This
-        method strips all common prefixes and suffixes from the keys of the
-        structures and metadata properties."""
+    @classmethod
+    def from_files_molecule(
+        cls,
+        root,
+        filename="molecule.xyz",
+        lattice=[20, 20, 20],
+        debug=None,
+        verbose=True,
+    ):
+        """Searches for files matching the provided ``filename``, and assumes
+        those files are structural files in xyz format. The names/ids of these
+        files is given by the full directory structure where that file was
+        found. For example, if ``root == "my_dir"``, ``filename == "CONTCAR"``
+        and we have a single structure file in ``my_dir/test/CONTCAR``, then
+        the resulting structures will be ``{"my_dir/test": struct}``.
 
-        old_keys = list(self._structures.keys())
-        new_keys = _delete_common_strings(old_keys)
-        for old_key, new_key in zip(old_keys, new_keys):
-            self._structures[new_key] = self._structures.pop(old_key)
-            self._metadata[new_key] = self._metadata.pop(old_key)
+        Parameters
+        ----------
+        root : str
+            The directory in which to begin the search.
+        filename : str, optional
+            The files to search for. Uses ``rglob`` to recursively find any
+            files matching ``filename`` within the provided directory.
+        lattice : list of floats, optional
+            Lattice parameter used to construct the crystal lattice.
 
-            if self._supercells_initialized:
-                self._supercells[new_key] = self._supercells.pop(old_key)
+        Returns
+        -------
+        Database
+        """
+
+        a, b, c = lattice
+        structures = dict()
+        for ii, path in enumerate(
+            tqdm(Path(root).rglob(filename)), not verbose
+        ):
+            key = str(Path(path.parent) / path.stem)
+            structures[key] = Molecule.from_file(path).get_boxed_structure(
+                a, b, c
+            )
+            if debug is not None:
+                if ii > debug:
+                    break
+        metadata = {key: dict() for key in structures.keys()}
+        return cls(structures, metadata, dict())
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR", cleanup_paths=True):
+    def from_files(cls, root, filename="CONTCAR"):
         """Searches for files matching the provided ``filename``, which can
-        include wildcards, and assumes those files are structural files in CIF
-        format. The names/ids of these files is given by the full directory
-        structure where that file was found. For example, if
-        ``root == "my_dir"``, ``filename == "CONTCAR"`` and we have a single
-        structure file in ``my_dir/test/CONTCAR``, then the resulting
-        structures will be ``{"my_dir/test/CONTCAR": struct}``. Similarly, if
-        ``filename == "CONTCAR*", then all files of the form ``CONTCAR*`` will
-        be found and used. The directory structure produced will be something
-        like
+        include wildcards, and assumes those files are structural files in a
+        format that can be processed by ``Structure.from_file``. Each structure
+        is given its own index, with the origin path stored in its metadata.
 
         .. code-block:: python
 
             {
-                "my_dir/test/CONTCAR1": struct1,
-                "my_dir/test/CONTCAR2": struct2,
+                "0": struct1,
+                "1": struct2,
                 ...
             }
 
@@ -91,37 +97,19 @@ class Database(MSONable):
         filename : str, optional
             The files to search for. Uses ``rglob`` to recursively find any
             files matching ``filename`` within the provided directory.
-        cleanup_paths : bool, optional
-            If True, runs :class:`cleanup_paths()` after initializing the
-            Database.
 
         Returns
         -------
         Database
         """
 
-        structures = {
-            str(Path(path.parent) / path.stem): Structure.from_file(
-                path
-            ).get_primitive_structure()
-            for path in Path(root).rglob(filename)
-        }
-
-        # Check for any duplicate names
-        names = list(structures.keys())
-        names = [Path(name).name for name in names]
-        if len(list(set(names))) < len(names):
-            new_structures = dict()
-            for key, value in structures.items():
-                new_structures[str(Path(key).parent)] = value
-            structures = new_structures
-
-        metadata = {key: dict() for key in structures.keys()}
-
-        kls = cls(structures=structures, metadata=metadata, supercells=dict())
-        if cleanup_paths:
-            kls.cleanup_paths()
-        return kls
+        structures = {}
+        metadata = {}
+        for key, path in enumerate(Path(root).rglob(filename)):
+            struct = Structure.from_file(path)
+            structures[key] = struct.get_primitive_structure()
+            metadata[key] = {"origin": str(path)}
+        return cls(structures=structures, metadata=metadata, supercells=dict())
 
     @classmethod
     def from_materials_project(cls, **kwargs):
