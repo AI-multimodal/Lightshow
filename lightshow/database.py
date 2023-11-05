@@ -33,17 +33,13 @@ class Database(MSONable):
     def from_files_molecule(
         cls,
         root,
-        filename="molecule.xyz",
-        lattice=[20, 20, 20],
-        debug=None,
-        verbose=True,
+        filename="*.xyz",
+        lattice=[20.0, 20.0, 20.0],
+        pbar=True,
     ):
         """Searches for files matching the provided ``filename``, and assumes
-        those files are structural files in xyz format. The names/ids of these
-        files is given by the full directory structure where that file was
-        found. For example, if ``root == "my_dir"``, ``filename == "CONTCAR"``
-        and we have a single structure file in ``my_dir/test/CONTCAR``, then
-        the resulting structures will be ``{"my_dir/test": struct}``.
+        those files are structural files in a format compatible with
+        ``Molecule.from_file``.
 
         Parameters
         ----------
@@ -54,29 +50,26 @@ class Database(MSONable):
             files matching ``filename`` within the provided directory.
         lattice : list of floats, optional
             Lattice parameter used to construct the crystal lattice.
+        pbar : bool, optional
+            If True, will show a tqdm progress bar.
 
         Returns
         -------
         Database
         """
 
-        a, b, c = lattice
-        structures = dict()
-        for ii, path in enumerate(
-            tqdm(Path(root).rglob(filename)), not verbose
+        structures = {}
+        metadata = {}
+        for key, path in enumerate(
+            tqdm(Path(root).rglob(filename), disable=not pbar)
         ):
-            key = str(Path(path.parent) / path.stem)
-            structures[key] = Molecule.from_file(path).get_boxed_structure(
-                a, b, c
-            )
-            if debug is not None:
-                if ii > debug:
-                    break
-        metadata = {key: dict() for key in structures.keys()}
-        return cls(structures, metadata, dict())
+            molecule = Molecule.from_file(path)
+            structures[key] = molecule.get_boxed_structure(*lattice)
+            metadata[key] = {"origin": str(path)}
+        return cls(structure=structures, metadat=metadata, supercells=dict())
 
     @classmethod
-    def from_files(cls, root, filename="CONTCAR"):
+    def from_files(cls, root, filename="CONTCAR", pbar=True):
         """Searches for files matching the provided ``filename``, which can
         include wildcards, and assumes those files are structural files in a
         format that can be processed by ``Structure.from_file``. Each structure
@@ -97,6 +90,8 @@ class Database(MSONable):
         filename : str, optional
             The files to search for. Uses ``rglob`` to recursively find any
             files matching ``filename`` within the provided directory.
+        pbar : bool, optional
+            If True, will show a tqdm progress bar.
 
         Returns
         -------
@@ -105,7 +100,9 @@ class Database(MSONable):
 
         structures = {}
         metadata = {}
-        for key, path in enumerate(Path(root).rglob(filename)):
+        for key, path in enumerate(
+            tqdm(Path(root).rglob(filename), disable=not pbar)
+        ):
             struct = Structure.from_file(path)
             structures[key] = struct.get_primitive_structure()
             metadata[key] = {"origin": str(path)}
@@ -333,6 +330,21 @@ class Database(MSONable):
             fname = Path(root) / key / "POSCAR"
             structure.to(fmt="POSCAR", filename=str(fname))
 
+    def _write_origin_paths(self, root, pbar=False):
+        """A helper method for writing important metadata for each of the
+        structures if the data was loaded from disk.
+
+        Parameters
+        ----------
+        root : os.PathLike
+        pbar : bool, optional
+        """
+
+        for key, metadata in tqdm(self._metadata.items(), disable=not pbar):
+            if "origin" in metadata.keys():
+                fname = Path(root) / key / "metadata.json"
+                json.dump(metadata, fname, indent=4, sort_keys=True)
+
     def write(
         self,
         root,
@@ -482,6 +494,8 @@ class Database(MSONable):
 
         if write_unit_cells:
             self._write_unit_cells(root, pbar=pbar)
+
+        self._write_origin_paths(root, pbar=pbar)
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
