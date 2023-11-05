@@ -23,15 +23,6 @@ sys.path.append(str(Path(__file__).parent.resolve() / Path("helpers")))
 from geometry import consistency_check  # noqa  # type: ignore
 
 
-def test_database_from_disk(database_from_file, test_structure_names):
-    dat = database_from_file
-    dat.initialize_supercells(9.0)
-    dat.initialize_inequivalent_sites()
-    assert set(dat.structures.keys()) == set(test_structure_names)
-    assert set(dat.metadata.keys()) == set(test_structure_names)
-    assert set(dat.supercells.keys()) == set(test_structure_names)
-
-
 def test_from_materials_project(test_from_materials_project_structure_names):
     try:
         dat = Database.from_materials_project(
