@@ -53,7 +53,7 @@ def lorentz_broaden(x, xin, yin, gamma):
     yin : numpy.ndarray
         The input spectrum.
     gamma : float
-        Lorentzian broadening gamma.
+        Lorentzian broadening Gamma or the full-width at half-maximum (FWHM)
 
     Returns
     -------
@@ -63,7 +63,7 @@ def lorentz_broaden(x, xin, yin, gamma):
 
     x1, x2 = np.meshgrid(x, xin)
     dx = xin[-1] - xin[0]
-    return np.dot(cauchy.pdf(x1, x2, gamma).T, yin) / len(xin) * dx
+    return np.dot(cauchy.pdf(x1, x2, gamma / 2.0).T, yin) / len(xin) * dx
 
 
 def voigt_broaden(x, xin, yin, sigma, gamma):
