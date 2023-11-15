@@ -117,7 +117,7 @@ class Database(MSONable):
     def from_materials_project(cls, **kwargs):
         """Constructs the :class:`.Database` object by pulling structures and
         metadata directly from the Materials Project. This is a simple
-        passthrough method which utilizes the MPRester.materials.summary.search
+        passthrough method which utilizes the MPRester.materials.search
         API of the Materials Project v2 API.
 
         Parameters
@@ -131,7 +131,7 @@ class Database(MSONable):
         Deleted Parameters
         ------------------
         mpr_query_kwargs : dict
-            Direct passthrough to MPRester.materials.summary.search. See
+            Direct passthrough to MPRester.materials.search. See
             examples below.
         api_key : None, optional
             API key which can either be provided directly or is read from
@@ -150,7 +150,7 @@ class Database(MSONable):
             pass
 
         with MPRester(api_key) as mpr:
-            searched = mpr.materials.summary.search(**kwargs)
+            searched = mpr.materials.search(**kwargs)
 
         structures = {s.material_id.string: s.structure for s in searched}
         metadata = {s.material_id.string: s.dict() for s in searched}
