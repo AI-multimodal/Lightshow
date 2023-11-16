@@ -14,8 +14,7 @@ def extract_FEFF(path):
     -------
     dict_output
         A dictionary containing the spectrum. 
-        The Fermi level is extracted if ``feff.out`` file is in the directory.
-        ``{"spectrum": [..., ...], "efermi": ...}``
+        ``{"spectrum": [..., ...], "efermi": ..., "normalization_constant": ...}``
 
     Raises
     ------
@@ -23,30 +22,32 @@ def extract_FEFF(path):
         If the output path does not contain ``xmu.dat`` file. 
     """
     
-    dict_output = {}
-    
+    dict_output = {}    
     path = Path(path)
+    
+    ### Extract sepctrum 
     try: 
         spectrum = np.loadtxt(path / "xmu.dat")
     except OSError as err: 
         print(err)
         return
     dict_output['spectrum'] = np.column_stack((spectrum[:,0],spectrum[:,3]))
-    
-    ### Try to extract Fermi energy from ``feff.out`` file
-    file_out = path / "feff.out"
-    lines_fermi = []
+
+    ### Extract Fermi energy at k=0
+    efermi = spectrum[spectrum[:,2]==0,1]
     try: 
-        with open(file_out, 'r') as f:
-            for line in f.readlines():
-                if 'New Fermi level' in line:
-                    lines_fermi.append(line)
-        try: 
-            dict_output['efermi'] = float(lines_fermi[-1].split()[4])
-        except NameError as err: 
-            print('Cannot find Fermi energy in', file_out)                    
+        dict_output['efermi'] = efermi[0]
     except: 
-        print(file_out, 'file not found. Fermi energy not extracted.')
+        print("Failed to extract Fermi energy.")
+        
+    ### Extract the normalization constant from the header
+    ### This number can be used to normalize feff to absolute cross section in the unit of Angstrom^2 
+    with open(path/"xmu.dat", 'r') as f:
+        for line in f.readlines():
+            if 'normalize mu' in line:
+                normalization_constant = float(line.split()[-1])
+                dict_output['normalization_constant'] = normalization_constant
+                break
 
     return dict_output
 
@@ -63,8 +64,9 @@ def extract_VASP(path):
     -------
     dict_output
         A dictionary containing the spectrum. The spectrum is averaged from all polarization directions. 
-        The volume of the super cell and fermi energy are also extracted if these are contained in OUTCAR. 
-        ``{"spectrum": [..., ...], "volume": ..., "efermi": ...}``
+        The volume of the super cell is extracted in the unit of Angstrom^3.
+        Fermi energy and total energy are also extracted if these are contained in OUTCAR, in the unit of eV. 
+        ``{"spectrum": [..., ...], "volume": ..., "efermi": ..., "total_energy": ...}``
 
     Raises
     ------
@@ -84,6 +86,8 @@ def extract_VASP(path):
                     volume = float(line.split()[4])
                 if 'Fermi energy:' in line:
                     efermi = float(line.split()[2])
+                if 'TOTEN' in line:
+                    total_energy = float(line.split()[-2])
                 if 'IMAGINARY DIELECTRIC FUNCTION' in line:
                     idx_start = idx
                 if 'REAL DIELECTRIC FUNCTION' in line: 
@@ -104,11 +108,13 @@ def extract_VASP(path):
     dict_output['volume'] = volume
     try: dict_output['efermi'] = efermi 
     except: pass
+    try: dict_output['total_energy'] = total_energy 
+    except: pass
 
     return dict_output
 
 
-def extract_XSpectra(path): 
+def extract_XSpectra(path, es_out_file=None): 
     """Extract spectrum from XSpectra output directory. 
     
     Parameters
@@ -120,8 +126,9 @@ def extract_XSpectra(path):
     -------
     dict_output
         A dictionary containing the spectrum. The spectrum is averaged from all polarization directions in ``path``
-        Fermi level is extracted if ``xanes.out`` file is in the directory.
-        ``{"spectrum": [..., ...], "efermi": ...}``
+        Fermi level (in eV) is extracted if ``xanes.out`` file is in the directory.
+        Total energy (in eV) is extracted if the path and file name of es.out file is given. 
+        ``{"spectrum": [..., ...], "efermi": ..., "total_energy": ...}``
 
     Raises
     ------
@@ -130,8 +137,8 @@ def extract_XSpectra(path):
     """
     
     dict_output = {}
-    
     path = Path(path)
+
     num_polar = 0
     spectra = None
     efermi = None
@@ -149,10 +156,13 @@ def extract_XSpectra(path):
                     for line in f.readlines():
                         if 'ef    [eV]' in line:
                             efermi = float(line.split()[2])
-                            dict_output['efermi'] = efermi
+                            break
+                try: 
+                    dict_output['efermi'] = efermi
+                except NameError as err: 
+                    print('Cannot find Fermi energy in', file_out)                            
             except: 
                 print(file_out, 'not found. Fermi energy not extracted.')
-    
     ### Raise error if there is no ``xanes.dat`` file in the directory.                         
     try: 
         assert num_polar > 0, "\'xanes.dat\' file not found in %s"%path 
@@ -164,14 +174,28 @@ def extract_XSpectra(path):
         assert num_polar <= 3, "More than three \'xanes.dat\' files in %s. Might be a problem."%path
     except AssertionError as msg: 
         print(msg)
-        
     spectra[:,1] /= num_polar
     dict_output['spectrum'] = spectra
+    
+    ### Extract total energy if filename of es.out file is given
+    if es_out_file is not None: 
+        try: 
+            with open(es_out_file, 'r') as f:
+                for line in f.readlines():
+                    if '!' in line:
+                        total_energy = float(line.split()[-2]) * 13.605703976
+                        break
+            try: 
+                dict_output['total_energy'] = total_energy
+            except NameError as err: 
+                print('Cannot find total energy in', es_out_file)                        
+        except: 
+            print(es_out_file, 'not found. Total energy not extracted.')                
 
     return dict_output
 
 
-def extract_OCEAN(path, scf_path=None): 
+def extract_OCEAN(path, scf_out_file=None): 
     """Extract spectrum from OCEAN output directory. 
     
     Parameters
@@ -186,10 +210,11 @@ def extract_OCEAN(path, scf_path=None):
     -------
     dict_output
         A dictionary containing the spectra from different sites. Each spectrum is averaged from all polarization directions in ``path``.
-        Fermi level is extracted if ``scf.out`` file is in the ``scf_path`` directory.
+        Fermi level and total energy are extracted if ``scf.out`` file is provided, with unit eV
         ``{
             "Ti": {"0001_1s": {"spectrum": [..., ...] }, "0002_1s": {"spectrum": [..., ...] } }, 
-            "efermi": ...
+            "efermi": ...,
+            "total_energy": ...
            }``
 
     Raises
@@ -198,12 +223,12 @@ def extract_OCEAN(path, scf_path=None):
         If the output path does not contain any file that starts with ``absspct``. 
     """
     
-    if scf_path is None:
-        scf_path = path
-    
     dict_output = {}
     
     path = Path(path)
+    if scf_out_file is None:
+        scf_out_file = path / "scf.out"
+        
     num_spectra = 0
     spectra = None
     for sub_path in path.rglob('absspct*'): 
@@ -235,23 +260,29 @@ def extract_OCEAN(path, scf_path=None):
             del dict_output[element][absorber]['num_polar']
 
     ### Try to extract Fermi energy from ``scf.out`` file. 
-    file_out = Path(scf_path) / 'scf.out'
+    file_out = scf_out_file
     try: 
         with open(file_out, 'r') as f:
             for line in f.readlines():
                 if 'Fermi energy' in line:
                     efermi = float(line.split()[4])
+                if '!' in line:
+                    total_energy = float(line.split()[-2]) * 13.605703976
         try: 
             dict_output['efermi'] = efermi
         except NameError as err: 
             print('Cannot find Fermi energy in', file_out)
+        try: 
+            dict_output['total_energy'] = total_energy
+        except: 
+            print('Cannot find total energy in', file_out) 
     except OSError: 
-        print(file_out, 'not found. Fermi energy not extracted.')
+        print(file_out, 'not found. Fermi energy and total energy not extracted.')
     
     return dict_output
 
 
-def extract_exciting(path, INFO_path=None): 
+def extract_exciting(path, INFO_out_file=None): 
     """Extract spectrum from exciting output directory. 
     
     Parameters
@@ -266,8 +297,8 @@ def extract_exciting(path, INFO_path=None):
     -------
     dict_output
         A dictionary containing the spectrum. The spectrum is averaged from all polarization directions in ``path``.
-        Fermi level is extracted if ``INFO.OUT`` file is in the ``INFO_path`` directory.
-        ``{"spectrum": [..., ...], "efermi": ...}``
+        Fermi level and total energy are extracted if ``INFO.OUT`` file is provided, with unit eV.
+        ``{"spectrum": [..., ...], "efermi": ..., "total_energy": ...}``
 
     Raises
     ------
@@ -275,11 +306,12 @@ def extract_exciting(path, INFO_path=None):
         If the output path does not contain any file that starts with ``EPSILON`` and ends with ``OUT``. 
     """
     
-    if INFO_path is None:
-        INFO_path = path
     dict_output = {}
     
     path = Path(path)
+    if INFO_out_file is None:
+        INFO_out_file = path / "INFO.OUT"
+    
     num_polar = 0
     spectra = None
     for sub_path in path.rglob('EPSILON*OUT'): 
@@ -288,7 +320,6 @@ def extract_exciting(path, INFO_path=None):
             spectra = np.loadtxt(sub_path, usecols=(0,2))
         else: 
             spectra[:,1] += np.loadtxt( sub_path, usecols=(2)  )
-
     ### Raise error if there is no ``EPSILON...OUT`` file in the directory.                     
     try: 
         assert num_polar > 0, "\'EPSILON...OUT\' file not found in %s"%path 
@@ -304,20 +335,26 @@ def extract_exciting(path, INFO_path=None):
     spectra[:,1] /= num_polar
     dict_output['spectrum'] = spectra
 
-    ### Try to extract Fermi energy from ``INFO.OUT`` file. 
-    file_out = Path(INFO_path) / 'INFO.OUT'
+    ### Extract Fermi energy and total energy from ``INFO.OUT`` file. 
+    file_out = INFO_out_file
     lines_fermi = []
     try: 
         with open(file_out, 'r') as f:
             for line in f.readlines():
                 if 'Fermi energy' in line:
                     lines_fermi.append(line)
+                if 'Total energy' in line:
+                    total_energy = float(line.split()[3])*27.211407953
         try: 
-            dict_output['efermi'] = float(lines_fermi[-2].split()[3])
+            dict_output['efermi'] = float(lines_fermi[-2].split()[3])*27.211407953
         except: 
             print('Cannot find Fermi energy in', file_out) 
+        try: 
+            dict_output['total_energy'] = total_energy
+        except: 
+            print('Cannot find total energy in', file_out) 
     except: 
-        print(file_out, 'not found. Fermi energy not extracted.')
+        print(file_out, 'not found. Fermi energy and total energy not extracted.')
 
     return dict_output
 
