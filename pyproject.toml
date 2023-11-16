@@ -34,7 +34,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "numpy==1.26.1",
+    "numpy==1.26.2",
     "pymatgen==2023.11.12",
     "mp-api==0.37.5",
     "ase",
