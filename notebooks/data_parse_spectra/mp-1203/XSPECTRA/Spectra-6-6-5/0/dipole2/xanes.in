@@ -1,0 +1,32 @@
+&input_xspectra
+    calculation = 'xanes_dipole'
+    edge = 'K'
+    prefix = 'pwscf'
+    outdir = '../'
+    xniter = 5000
+    xiabs = 3
+    xerror = 0.01
+    !wf_collect = .true.
+    xcoordcrys = .false.
+    xcheck_conv = 200
+    xepsilon(1) = 0
+    xepsilon(2) = 1
+    xepsilon(3) = 0
+/
+&plot
+    xnepoint = 400
+    xemin = -15.0
+    xemax = 70
+    terminator = .true.
+    cut_occ_states = .true.
+    gamma_mode = 'constant'
+    xgamma = 0.89 
+/
+&pseudos
+    filecore = '../../../Core.wfc'
+    r_paw(1) = 1.79
+/
+&cut_occ
+    cut_desmooth = 0.3
+/
+6 6 5 0 0 0
