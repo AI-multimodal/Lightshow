@@ -117,18 +117,21 @@ def extract_XSpectra(path, es_out_file=None):
     num_polar = 0
     efermi = None
     spectra = 0
-    for sub_path in path.rglob('xanes.dat'): 
-        num_polar += 1
-        if 'energy' not in dict_output.keys(): 
-            dict_output['energy'] = np.loadtxt(sub_path, usecols=(0))
+    for num_polar, sub_path in enumerate(path.rglob('xanes.dat'), start=1):        
         # Try to extract Fermi energy from ``xanes.out`` file. 
         if efermi is None: 
             file_out = Path("/".join(Path(sub_path).parts[:-1]))/"xanes.out"
             if file_out.exists():
                 with open(file_out, 'r') as f:
                     dict_output['efermi'] = [float(line.split()[2]) for line in f.readlines() if 'ef    [eV]' in line][0]
-        dict_output[sub_path.parts[-2]] = np.loadtxt( sub_path, usecols=(1)  )
-        spectra += np.loadtxt( sub_path, usecols=(1)  )
+        if 'energy' not in dict_output.keys(): 
+            energy_spectrum = np.loadtxt( sub_path, usecols=(0,1)  )
+            dict_output['energy'] = energy_spectrum[:,0]
+            spectrum = energy_spectrum[:,1]
+        else: 
+            spectrum = np.loadtxt( sub_path, usecols=(1)  )
+        dict_output[sub_path.parts[-2]] = spectrum
+        spectra += spectrum
     # Raise error if there is no ``xanes.dat`` file in the directory.                         
     assert num_polar > 0, "\'xanes.dat\' file not found in %s"%path 
     # Print a reminder if there are more than three polarizations in the directory. 
@@ -189,26 +192,28 @@ def extract_OCEAN(path, scf_out_file=None):
 
     path = Path(path)    
     num_spectra = 0
-    for sub_path in path.rglob('absspct*'): 
-        num_spectra += 1
+    for num_spectra, sub_path in enumerate(path.rglob('absspct*'), start=1):
         element = sub_path.parts[-1].split('.')[0].split('_')[1]
         absorber = sub_path.parts[-1].split('.')[1].split('_')[0] + '_' + sub_path.parts[-1].split('.')[1].split('_')[1]
         polarization = sub_path.parts[-1].split('.')[1].split('_')[-1]
         if element not in dict_output.keys(): 
             dict_output[element] = {}
         if absorber not in dict_output[element].keys(): 
+            energy_spectrum = np.loadtxt( sub_path, usecols=(0,2)  )
+            spectrum = energy_spectrum[:,1]
             dict_output[element][absorber] = {
                 'label': 'epsilon2',  # OCEAN outputs the imaginary part of the dielectric tensor. This label may be used for later analysis. 
-                'energy': np.loadtxt( sub_path, usecols=(0)  ), 
+                'energy': energy_spectrum[:,0], 
+                'spectrum': 0, # The spectrum value will be assigned later, outside this if-else 
                 'num_polar': 1
             }
             if efermi is not None: dict_output[element][absorber]['efermi'] = efermi
             if total_energy is not None: dict_output[element][absorber]['total_energy'] = total_energy
-            dict_output[element][absorber]['spectrum'] = np.loadtxt( sub_path, usecols=(2)  )
         else: 
-            dict_output[element][absorber]['spectrum'] += np.loadtxt( sub_path, usecols=(2)  )
+            spectrum = np.loadtxt( sub_path, usecols=(2)  )
             dict_output[element][absorber]['num_polar'] += 1
-        dict_output[element][absorber][polarization] = np.loadtxt( sub_path, usecols=(2)  )
+        dict_output[element][absorber][polarization] = spectrum
+        dict_output[element][absorber]['spectrum'] += spectrum
         
     # Raise error if there is no ``absspct...`` file in the directory.                     
     assert num_spectra > 0, "\'absspct...\' file not found in %s"%path 
@@ -250,13 +255,16 @@ def extract_exciting(path, INFO_out_file=None):
     
     num_polar = 0
     spectra = 0
-    for sub_path in path.rglob('EPSILON*OUT'): 
-        num_polar += 1
+    for num_polar, sub_path in enumerate(path.rglob('EPSILON*OUT'), start=1):
         if 'energy' not in dict_output.keys(): 
-            dict_output['energy'] = np.loadtxt(sub_path, usecols=(0))
+            energy_spectrum = np.loadtxt( sub_path, usecols=(0,2)  )
+            dict_output['energy'] = energy_spectrum[:,0]
+            spectrum = energy_spectrum[:,1]
+        else: 
+            spectrum = np.loadtxt( sub_path, usecols=(2)  )
         polarization = ''.join( [ii for ii in sub_path.parts[-1].split('.')[0].split('_')[-1] if ii.isdigit()] )
-        dict_output[polarization] = np.loadtxt( sub_path, usecols=(2)  )
-        spectra += np.loadtxt( sub_path, usecols=(2)  )
+        dict_output[polarization] = spectrum
+        spectra += spectrum
 
     # Raise error if there is no ``EPSILON...OUT`` file in the directory.                     
     assert num_polar > 0, "\'EPSILON...OUT\' file not found in %s"%path 
