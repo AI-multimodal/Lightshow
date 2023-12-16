@@ -369,7 +369,7 @@ class Incar(pmgIncar):
             If "NBANDS" is not in the INCAR ``keys``.
         """
 
-        if "NBANDS" not in self.keys():
+        if "NBANDS" not in self.keys() and "CH_LSPEC" in self.keys():
             raise ValueError("NBANDS not present in INCAR parameters")
         super().check_params()
 
@@ -900,7 +900,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         # Set the number of bands if the number of bands is not explicitly
         # provided
-        if incar.get("NBANDS") is None:
+        if incar.get("NBANDS") is None and ch_lspec:
             cb = self._nbands(structure)
             vb = self._vbands(structure)
             nb = cb + vb
