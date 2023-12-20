@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.1
+
+- Implement fix for the number of bands during VASP SCF calculations.
+
 ## v1.2.0
 
 - Molecules as "big supercells" is now implemented using `Database.from_files_molecule`.
