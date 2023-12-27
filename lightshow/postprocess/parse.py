@@ -29,7 +29,9 @@ def extract_FEFF(path):
         dict_output["spectrum"] = spectrum[:, 3]
         f.seek(0)
         dict_output["normalization_constant"] = [
-            float(line.split()[-1]) for line in f.readlines() if "normalize mu" in line
+            float(line.split()[-1])
+            for line in f.readlines()
+            if "normalize mu" in line
         ][0]
     # Extract sepctrum and normalization constant
     # The normalization constant can be used to normalize feff to
@@ -143,7 +145,7 @@ def extract_XSpectra(path, es_out_file=None):
                     ][0]
         # Try to extract Fermi energy from ``xanes.out`` file.
 
-        if "energy" not in dict_output.keys():
+        if "energy" not in dict_output:
             energy_spectrum = np.loadtxt(sub_path, usecols=(0, 1))
             dict_output["energy"] = energy_spectrum[:, 0]
             spectrum = energy_spectrum[:, 1]
@@ -220,7 +222,9 @@ def extract_OCEAN(path, scf_out_file=None):
                 if "!" in line:
                     total_energy = (
                         float(line.split()[-2])
-                        * physical_constants["Rydberg constant times hc in eV"][0]
+                        * physical_constants["Rydberg constant times hc in eV"][
+                            0
+                        ]
                     )
     # Try to extract Fermi energy from ``scf.out`` file.
 
@@ -234,9 +238,9 @@ def extract_OCEAN(path, scf_out_file=None):
             + sub_path.parts[-1].split(".")[1].split("_")[1]
         )
         polarization = sub_path.parts[-1].split(".")[1].split("_")[-1]
-        if element not in dict_output.keys():
+        if element not in dict_output:
             dict_output[element] = {}
-        if absorber not in dict_output[element].keys():
+        if absorber not in dict_output[element]:
             energy_spectrum = np.loadtxt(sub_path, usecols=(0, 2))
             spectrum = energy_spectrum[:, 1]
             dict_output[element][absorber] = {
@@ -260,8 +264,8 @@ def extract_OCEAN(path, scf_out_file=None):
     assert num_spectra > 0, "'absspct...' file not found in %s" % path
     # Raise error if there is no ``absspct...`` file in the directory.
 
-    for element in dict_output.keys():
-        for absorber in dict_output[element].keys():
+    for element in dict_output:
+        for absorber in dict_output[element]:
             dict_output[element][absorber]["spectrum"] /= dict_output[element][
                 absorber
             ]["num_polar"]
