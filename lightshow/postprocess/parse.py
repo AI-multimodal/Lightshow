@@ -157,11 +157,8 @@ def extract_XSpectra(path, es_out_file=None):
     # Raise error if there is no ``xanes.dat`` file in the directory.
 
     if num_polar > 3:
-        warnings.warn(
-            "More than three 'xanes.dat' files in %s. \
-        Might be a problem."
-            % path
-        )
+        warnings.warn("More than three 'xanes.dat' files in %s. \
+        Might be a problem." % path)
     # Print a reminder if more than three polarizations in the directory.
 
     dict_output["spectrum"] = spectra / num_polar
@@ -313,7 +310,7 @@ def extract_exciting(path, INFO_out_file=None):
     num_polar = 0
     spectra = 0
     for num_polar, sub_path in enumerate(path.rglob("EPSILON*OUT"), start=1):
-        if "energy" not in dict_output.keys():
+        if "energy" not in dict_output:
             energy_spectrum = np.loadtxt(sub_path, usecols=(0, 2))
             dict_output["energy"] = energy_spectrum[:, 0]
             spectrum = energy_spectrum[:, 1]
@@ -332,11 +329,8 @@ def extract_exciting(path, INFO_out_file=None):
     # Raise error if there is no ``EPSILON...OUT`` file in the directory.
 
     if num_polar > 3:
-        warnings.warn(
-            "More than three 'EPSILON...OUT' files in %s. \
-        Might be a problem."
-            % path
-        )
+        warnings.warn("More than three 'EPSILON...OUT' files in %s. \
+        Might be a problem." % path)
     # Print a reminder if more than three polarizations in the directory.
 
     dict_output["spectrum"] = spectra / num_polar
