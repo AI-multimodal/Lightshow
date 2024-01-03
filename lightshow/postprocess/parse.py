@@ -157,8 +157,11 @@ def extract_XSpectra(path, es_out_file=None):
     # Raise error if there is no ``xanes.dat`` file in the directory.
 
     if num_polar > 3:
-        warnings.warn("More than three 'xanes.dat' files in %s. \
-        Might be a problem." % path)
+        warnings.warn(
+            "More than three 'xanes.dat' files in %s. \
+        Might be a problem."
+            % path
+        )
     # Print a reminder if more than three polarizations in the directory.
 
     dict_output["spectrum"] = spectra / num_polar
@@ -222,9 +225,9 @@ def extract_OCEAN(path, scf_out_file=None):
                 if "!" in line:
                     total_energy = (
                         float(line.split()[-2])
-                        * physical_constants[
-                            "Rydberg constant times hc in eV"
-                        ][0]
+                        * physical_constants["Rydberg constant times hc in eV"][
+                            0
+                        ]
                     )
     # Try to extract Fermi energy from ``scf.out`` file.
 
@@ -329,8 +332,11 @@ def extract_exciting(path, INFO_out_file=None):
     # Raise error if there is no ``EPSILON...OUT`` file in the directory.
 
     if num_polar > 3:
-        warnings.warn("More than three 'EPSILON...OUT' files in %s. \
-        Might be a problem." % path)
+        warnings.warn(
+            "More than three 'EPSILON...OUT' files in %s. \
+        Might be a problem."
+            % path
+        )
     # Print a reminder if more than three polarizations in the directory.
 
     dict_output["spectrum"] = spectra / num_polar
