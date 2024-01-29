@@ -14,8 +14,7 @@
 ------------------------------------------------------------------------
 
 **Lightshow** is a Python library for easily generating computational
-spectroscopy input files. If you use our code, please consider citing our [manuscript](https://doi.org/10.21105/joss.05182)
-in the Journal of Open Source Software.
+spectroscopy input files. If you use our code, please consider citing our [manuscript](https://doi.org/10.21105/joss.05182) in the Journal of Open Source Software and our multi-code benchmark [paper](https://doi.org/10.1103/PhysRevMaterials.8.013801), which provides the methods and default parameters used in Lightshow.
 
 Often, it can be daunting to create comprehensive, well documented
 databases of materials structures and their x-ray absorption spectra.
