@@ -305,7 +305,7 @@ class Incar(pmgIncar):
         },
     ):
         """Updates the INCAR using the Materials Project default values for the
-        Hubburd U values.
+        Hubbard U values.
 
         Parameters
         ----------
