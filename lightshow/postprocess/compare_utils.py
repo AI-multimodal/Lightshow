@@ -5,7 +5,6 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
-# from scipy.ndimage import gaussian_filter1d
 
 def compare_between_spectra(spectrum1, spectrum2, erange=35, accuracy=0.01):
     ''' Atomatic align the spectra and calculate the spearman coefficient
