@@ -120,11 +120,10 @@ def maxCos(spectrum1, spectrum2, start = 12, stop = -12, step=0.01, GRID=None):
     gplot2 = np.vstack((spectrum2[:,0],np.gradient(spectrum2[:,1],spectrum2[1,0]-spectrum2[0,0]))).T
     x1 = peak_loc(gplot1)
     x2 = peak_loc(gplot2)
-    if abs(x1 - m_ind - x2 ) < 1:
-        pass #return m_ind
+    if abs(x1 - m_ind - x2 ) < 2:
+        pass 
     else: 
-        print("XAS edge positions might not align. Please check the spectrum. ")
-
+        print("XAS edge positions might not align. Better to plot and check the spectrum. ")
     return pearson, spearman, coss, m_ind 
 
 
