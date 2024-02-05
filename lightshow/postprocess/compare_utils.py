@@ -68,7 +68,7 @@ def CosSimilar(v1, v2):
 def spectraCorr(spectrum1, spectrum2, omega=0, GRID = None, verbose=True):
     if GRID is None: 
         GRID = np.linspace(max(spectrum1[0,0], spectrum2[0,0] + omega), 
-                           min(spectrum1[-1,0], spectrum2[-1,0] + omega), 200)
+                           min(spectrum1[-1,0], spectrum2[-1,0] + omega), 300)
         
     interp1 = interpolate.interp1d(spectrum1[:,0], spectrum1[:,1], assume_sorted=False, 
                                    kind='cubic', bounds_error=False)
@@ -98,14 +98,17 @@ def maxCos(spectrum1, spectrum2, start = 12, stop = -12, step=0.01, GRID=None):
     if start <= stop:
         print('WARNING: Start {} is larger than stop {}]'.format(start, stop))
         exit()
-
+    if GRID is None: 
+        GRID = np.linspace(max(spectrum1[0,0], spectrum2[0,0] + stop), 
+                           min(spectrum1[-1,0], spectrum2[-1,0] + start), 300)
+        
     pearson={}
     spearman={}
     coss = {}
 
     i = start
     while i > stop:
-        pearson[i],spearman[i],coss[i] = spectraCorr(spectrum1, spectrum2, omega = i, GRID=GRID, verbose=True)
+        pearson[i],spearman[i],coss[i] = spectraCorr(spectrum1, spectrum2, omega = i, GRID=GRID, verbose=False)
         i -=step
 
     # find omega according to coss
@@ -124,6 +127,7 @@ def maxCos(spectrum1, spectrum2, start = 12, stop = -12, step=0.01, GRID=None):
         pass 
     else: 
         print("XAS edge positions might not align. Better to plot and check the spectrum. ")
+
     return pearson, spearman, coss, m_ind 
 
 
