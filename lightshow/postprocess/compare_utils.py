@@ -16,7 +16,7 @@ def compare_between_spectra(
     Parameters
     ----------
     spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity). 
+    method : 'pearson', 'spearman', or 'coss' (cosine similarity).
         Empirically 'coss' works well
 
     Return
@@ -108,7 +108,7 @@ def spectraCorr(
 
     Returns
     -------
-    correlation: list; pearson, spearman, or cosine similarity. 
+    correlation: list; pearson, spearman, or cosine similarity.
         If method == 'all', all three correlations are returned.
     """
     if GRID is None:
@@ -176,16 +176,16 @@ def maxCorr(
     GRID=None,
     method="coss",
 ):
-    """Calculate the correlation between two spectra, 
+    """Calculate the correlation between two spectra,
         and the amout of shift to obtain maximum correlation
 
     Parameters
     ----------
     spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
-    start, stop, and step : shift of spectrum2 ranges from start to stop 
+    start, stop, and step : shift of spectrum2 ranges from start to stop
         with stepsize=step
     GRID : common grid for interpolation
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity). 
+    method : 'pearson', 'spearman', or 'coss' (cosine similarity).
         Empirically 'coss' works well
 
     Returns
@@ -238,8 +238,8 @@ def maxCorr(
         pass
     else:
         print(
-            "XAS edge positions might not align. " \
-            "Better to plot and check the spectrum. "
+            "XAS edge positions might not align. "
+            "Better to plot and check the spectrum."
         )
     return correlation, m_shift
 
