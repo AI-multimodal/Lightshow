@@ -12,16 +12,12 @@ def compare_between_spectra(spectrum1, spectrum2, erange=35, accuracy=0.01):
 
         Parameters
         ----------
-        spectra1 and spectra2 : two-column arrays of energy vs. intensity XAS spectra 
+        spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra 
 
         Return
         ------
-        shift : real
-            relative shift between the two spectra, sign is meaningful
+        shift : real; relative shift between the two spectra, sign is meaningful
         pearson, spearman, cossine correlation : real
-            spearman coefficient 
-        To do: 
-            Consider to return spearman coefficient as log(1-spearman)
     '''
     
     start1, end1 = truncate_spectrum(spectrum1,erange)
@@ -38,10 +34,12 @@ def truncate_spectrum(spectrum, erange=35, threshold=0.02):
         Parameters
         ----------
         spectrum: column stacked spectrum, energy vs. intensity
+        erange: truncation range 
+        threshold: start truncation at threshold * maximum intensity
 
         Return
         ------
-        index : int
+        start, end : int; indices of truncated spectrum in the input spectrum
     '''
     x = spectrum[:,0]
     y = spectrum[:,1]/np.max(spectrum[:,1])
@@ -57,8 +55,18 @@ def truncate_spectrum(spectrum, erange=35, threshold=0.02):
     return start, end
 
 
-# Function to calculate the cosine similarity between two vectors
 def CosSimilar(v1, v2):
+    ''' Calculates the cosine similarity between two vectors
+        
+        Parameters
+        ----------
+        v1 : vector #1 
+        v2 : vector #2 
+
+        Returns
+        -------
+        cosine similarity : real; v1 * v2 / (norm(v1) * norm(v2))
+    '''    
     norm1 = np.sqrt( np.dot( v1, v1 ) )
     norm2 = np.sqrt( np.dot( v2, v2 ) )
     cosSimilarity = np.dot( v1, v2 ) / (norm1 * norm2)
@@ -66,6 +74,18 @@ def CosSimilar(v1, v2):
 
 
 def spectraCorr(spectrum1, spectrum2, omega=0, GRID = None, verbose=True):
+    ''' Calculates the pearson, spearman, cossine correlation between two spectra
+        
+        Parameters
+        ----------
+        spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra 
+        omega : shift between two spectra. spectrum2 is shifted to spectrum2 + omega
+        GRID: common grid for interpolation
+
+        Returns
+        -------
+        pearson, spearman, cossine similarities : real
+    '''       
     if GRID is None: 
         GRID = np.linspace(max(spectrum1[0,0], spectrum2[0,0] + omega), 
                            min(spectrum1[-1,0], spectrum2[-1,0] + omega), 300)
@@ -95,12 +115,24 @@ def spectraCorr(spectrum1, spectrum2, omega=0, GRID = None, verbose=True):
 
 
 def maxCos(spectrum1, spectrum2, start = 12, stop = -12, step=0.01, GRID=None):
+    ''' Calculate the pearson, spearman, cossine similarities, and the shift of maximum cossine similarity
+        
+        Parameters
+        ----------
+        spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra 
+        shift of spectrum2 ranges from start to stop with stepsize=step 
+        GRID : common grid for interpolation
+
+        Returns
+        -------
+        pearson, spearman, cossine similarities : dict; values at each shift step
+        m_shift : the shift value at which cosine similarity is max
+    
+    '''
+
     if start <= stop:
         print('WARNING: Start {} is larger than stop {}]'.format(start, stop))
         exit()
-    if GRID is None: 
-        GRID = np.linspace(max(spectrum1[0,0], spectrum2[0,0] + stop), 
-                           min(spectrum1[-1,0], spectrum2[-1,0] + start), 300)
         
     pearson={}
     spearman={}
@@ -111,24 +143,24 @@ def maxCos(spectrum1, spectrum2, start = 12, stop = -12, step=0.01, GRID=None):
         pearson[i],spearman[i],coss[i] = spectraCorr(spectrum1, spectrum2, omega = i, GRID=GRID, verbose=False)
         i -=step
 
-    # find omega according to coss
+    # find index at maximum cosine similarity
     m = 0
     for i,j in coss.items():
         if j > m:
             m = j
-            m_ind = i
+            m_shift = i
 
     ## check if the gradient makes sense
     gplot1 = np.vstack((spectrum1[:,0],np.gradient(spectrum1[:,1],spectrum1[1,0]-spectrum1[0,0]))).T
     gplot2 = np.vstack((spectrum2[:,0],np.gradient(spectrum2[:,1],spectrum2[1,0]-spectrum2[0,0]))).T
     x1 = peak_loc(gplot1)
     x2 = peak_loc(gplot2)
-    if abs(x1 - m_ind - x2 ) < 2:
+    if abs(x1 - m_shift - x2 ) < 2:
         pass 
     else: 
         print("XAS edge positions might not align. Better to plot and check the spectrum. ")
 
-    return pearson, spearman, coss, m_ind 
+    return pearson, spearman, coss, m_shift 
 
 
 def peak_loc(plot):
