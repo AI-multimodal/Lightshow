@@ -15,8 +15,9 @@ def compare_between_spectra(
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity). Empirically 'coss' works well
+    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
+    method : 'pearson', 'spearman', or 'coss' (cosine similarity). 
+        Empirically 'coss' works well
 
     Return
     ------
@@ -96,19 +97,19 @@ def CosSimilar(v1, v2):
 def spectraCorr(
     spectrum1, spectrum2, omega=0, GRID=None, verbose=True, method="all"
 ):
-    """Calculates the pearson, spearman, cossine correlation between two spectra
+    """Calculates pearson, spearman, cossine correlation between two spectra
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra
-    omega : shift between two spectra. spectrum2 is shifted to spectrum2 + omega
+    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
+    omega : shift between two spectra. spectrum2 shifted to spectrum2 + omega
     GRID : common grid for interpolation
     method : 'pearson', 'spearman', 'coss' (cosine similarity), or 'all'.
 
     Returns
     -------
-    correlation: list; pearson, spearman, or cosine similarity. If method == 'all', all three
-    correlations are returned.
+    correlation: list; pearson, spearman, or cosine similarity. 
+        If method == 'all', all three correlations are returned.
     """
     if GRID is None:
         GRID = np.linspace(
@@ -156,7 +157,7 @@ def spectraCorr(
         decay = 0.9 ** (width / (GRID[indices][-1] - GRID[indices][0]))
         if verbose:
             print(
-                "Overlap less than 50%%. Similarity values are decayed by %0.4f"
+                "Overlap less than 50%%. Similarity values decayed by %0.4f"
                 % decay
             )
         pearson *= decay
@@ -175,14 +176,17 @@ def maxCorr(
     GRID=None,
     method="coss",
 ):
-    """Calculate the correlation between two spectra, and the amout of shift to obtain maximum correlation
+    """Calculate the correlation between two spectra, 
+        and the amout of shift to obtain maximum correlation
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS spectra
-    start, stop, and step : shift of spectrum2 ranges from start to stop with stepsize=step
+    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
+    start, stop, and step : shift of spectrum2 ranges from start to stop 
+        with stepsize=step
     GRID : common grid for interpolation
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity). Empirically 'coss' works well
+    method : 'pearson', 'spearman', or 'coss' (cosine similarity). 
+        Empirically 'coss' works well
 
     Returns
     -------
@@ -214,7 +218,7 @@ def maxCorr(
         if j > m:
             m = j
             m_shift = i
-    ## check if the gradient makes sense
+    # check if the gradient makes sense
 
     gplot1 = np.vstack(
         (
@@ -234,7 +238,8 @@ def maxCorr(
         pass
     else:
         print(
-            "XAS edge positions might not align. Better to plot and check the spectrum. "
+            "XAS edge positions might not align. " \
+            "Better to plot and check the spectrum. "
         )
     return correlation, m_shift
 
