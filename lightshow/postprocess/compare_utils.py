@@ -21,7 +21,7 @@ def compare_between_spectra(
 
     Return
     ------
-    pearson, spearman, cossine correlation : real
+    pearson, spearman, cosine correlation : real
     shift : real; relative shift between the two spectra, sign is meaningful
     """
 
@@ -41,8 +41,8 @@ def compare_between_spectra(
     )
 
     shift_prior = spectrum1[start1, 0] - spectrum2[start2, 0]
-    _, shift = maxCorr(plot1, plot2, step=accuracy, method=method)
-    pears, spear, coss = spectraCorr(
+    _, shift = max_corr(plot1, plot2, step=accuracy, method=method)
+    pears, spear, coss = spectra_corr(
         plot1, plot2, omega=shift, verbose=True, method="all"
     )
     shift += shift_prior
@@ -76,7 +76,7 @@ def truncate_spectrum(spectrum, erange=35, threshold=0.02):
     return start, end
 
 
-def CosSimilar(v1, v2):
+def cos_similar(v1, v2):
     """Calculates the cosine similarity between two vectors
 
     Parameters
@@ -94,16 +94,16 @@ def CosSimilar(v1, v2):
     return cosSimilarity
 
 
-def spectraCorr(
-    spectrum1, spectrum2, omega=0, GRID=None, verbose=True, method="all"
+def spectra_corr(
+    spectrum1, spectrum2, omega=0, grid=None, verbose=True, method="all"
 ):
-    """Calculates pearson, spearman, cossine correlation between two spectra
+    """Calculates pearson, spearman, cosine correlation between two spectra
 
     Parameters
     ----------
     spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
     omega : shift between two spectra. spectrum2 shifted to spectrum2 + omega
-    GRID : common grid for interpolation
+    grid : common grid for interpolation
     method : 'pearson', 'spearman', 'coss' (cosine similarity), or 'all'.
 
     Returns
@@ -111,8 +111,8 @@ def spectraCorr(
     correlation: list; pearson, spearman, or cosine similarity.
         If method == 'all', all three correlations are returned.
     """
-    if GRID is None:
-        GRID = np.linspace(
+    if grid is None:
+        grid = np.linspace(
             max(spectrum1[0, 0], spectrum2[0, 0] + omega),
             min(spectrum1[-1, 0], spectrum2[-1, 0] + omega),
             300,
@@ -131,8 +131,8 @@ def spectraCorr(
         kind="cubic",
         bounds_error=False,
     )
-    curve1 = interp1(GRID)
-    curve2 = interp2(GRID)
+    curve1 = interp1(grid)
+    curve2 = interp2(grid)
     indices = ~(np.isnan(curve1) | np.isnan(curve2))
 
     pearson = np.NaN
@@ -143,18 +143,18 @@ def spectraCorr(
     if "spear" in method:
         spearman = spearmanr(curve1[indices], curve2[indices])[0]
     if "cos" in method:
-        coss = CosSimilar(curve1[indices], curve2[indices])
+        coss = cos_similar(curve1[indices], curve2[indices])
     if method == "all":
         pearson = pearsonr(curve1[indices], curve2[indices])[0]
         spearman = spearmanr(curve1[indices], curve2[indices])[0]
-        coss = CosSimilar(curve1[indices], curve2[indices])
+        coss = cos_similar(curve1[indices], curve2[indices])
     width = 0.5 * min(
         spectrum1[-1, 0] - spectrum1[0, 0], spectrum2[-1, 0] - spectrum2[0, 0]
     )
     # require 50% overlap
 
-    if GRID[indices][-1] - GRID[indices][0] < width:
-        decay = 0.9 ** (width / (GRID[indices][-1] - GRID[indices][0]))
+    if grid[indices][-1] - grid[indices][0] < width:
+        decay = 0.9 ** (width / (grid[indices][-1] - grid[indices][0]))
         if verbose:
             print(
                 "Overlap less than 50%%. Similarity values decayed by %0.4f"
@@ -167,13 +167,13 @@ def spectraCorr(
     return correlation
 
 
-def maxCorr(
+def max_corr(
     spectrum1,
     spectrum2,
     start=12,
     stop=-12,
     step=0.01,
-    GRID=None,
+    grid=None,
     method="coss",
 ):
     """Calculate the correlation between two spectra,
@@ -184,7 +184,7 @@ def maxCorr(
     spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
     start, stop, and step : shift of spectrum2 ranges from start to stop
         with stepsize=step
-    GRID : common grid for interpolation
+    grid : common grid for interpolation
     method : 'pearson', 'spearman', or 'coss' (cosine similarity).
         Empirically 'coss' works well
 
@@ -202,11 +202,11 @@ def maxCorr(
 
     i = start
     while i > stop:
-        correlation[i] = spectraCorr(
+        correlation[i] = spectra_corr(
             spectrum1,
             spectrum2,
             omega=i,
-            GRID=GRID,
+            grid=grid,
             verbose=False,
             method=method,
         )[0]
