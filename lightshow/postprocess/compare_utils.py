@@ -10,19 +10,28 @@ from scipy.stats import pearsonr, spearmanr
 def compare_between_spectra(
     spectrum1, spectrum2, erange=35, accuracy=0.01, method="coss"
 ):
-    """Atomatic align the spectra and calculate the spearman coefficient
-    Comparison was done for epsilon instead of cross-section
+    """Atomatic align the spectra and calculate the correlation coefficients.
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity).
-        Empirically 'coss' works well
+    spectrum1, spectrum2 : 2d-array
+        Two-column arrays of energy vs. intensity XAS data.
+    method : {'coss', 'pearson', 'spearman'}
+        The correlation metric for spectra comparison.
+        Empirically 'coss' works well.
+    erange : float, default=35
+        Energy range for comparison. Unit: eV.
+    accuracy : float, default=0.01
+        Accuracy for spectra alignment. Unit: eV.
 
-    Return
-    ------
-    pearson, spearman, cosine correlation : real
-    shift : real; relative shift between the two spectra, sign is meaningful
+    Returns
+    -------
+    pearson, spearman, coss : float
+        Correlation of two spectra after alignment.
+    shift : float
+        Relative shift between the two spectra, sign is meaningful.
+        Spectrum2 should be shifted to spectrum2+shift for alignment.
+
     """
 
     start1, end1 = truncate_spectrum(spectrum1, erange)
@@ -51,16 +60,22 @@ def compare_between_spectra(
 
 
 def truncate_spectrum(spectrum, erange=35, threshold=0.02):
-    """
+    """Truncate XAS spectrum to desired energy range.
+
     Parameters
     ----------
-    spectrum: column stacked spectrum, energy vs. intensity
-    erange: truncation range
-    threshold: start truncation at threshold * maximum intensity
+    spectrum : 2d-array
+        Column stacked spectrum, energy vs. intensity.
+    erange : float, default=35
+        Truncation energy range in eV.
+    threshold : float, default=0.02
+        Start truncation at threshold * maximum intensity.
 
-    Return
-    ------
-    start, end : int; indices of truncated spectrum in the input spectrum
+    Returns
+    -------
+    start, end : int
+        Indices of truncated spectrum in the input spectrum.
+
     """
     x = spectrum[:, 0]
     y = spectrum[:, 1] / np.max(spectrum[:, 1])
@@ -77,16 +92,16 @@ def truncate_spectrum(spectrum, erange=35, threshold=0.02):
 
 
 def cos_similar(v1, v2):
-    """Calculates the cosine similarity between two vectors
+    """Calculates the cosine similarity between two vectors.
 
     Parameters
     ----------
-    v1 : vector #1
-    v2 : vector #2
+    v1, v2 : 1d-array
 
     Returns
     -------
-    cosine similarity : real; v1 * v2 / (norm(v1) * norm(v2))
+    cosSimilarity : float
+
     """
     norm1 = np.sqrt(np.dot(v1, v1))
     norm2 = np.sqrt(np.dot(v2, v2))
@@ -97,19 +112,24 @@ def cos_similar(v1, v2):
 def spectra_corr(
     spectrum1, spectrum2, omega=0, grid=None, verbose=True, method="all"
 ):
-    """Calculates pearson, spearman, cosine correlation between two spectra
+    """Calculates pearson, spearman, and cosine correlation of two spectra.
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
-    omega : shift between two spectra. spectrum2 shifted to spectrum2 + omega
-    grid : common grid for interpolation
-    method : 'pearson', 'spearman', 'coss' (cosine similarity), or 'all'.
+    spectrum1, spectrum2 : 2d-array
+        Two-column arrays of energy vs. intensity XAS data.
+    omega : float
+        Shift between two spectra. spectrum2 shifted to spectrum2 + omega.
+    grid : 1d-array
+        Common grid for interpolation.
+    method : {'all', 'pearson', 'spearman', 'coss'}
 
     Returns
     -------
-    correlation: list; pearson, spearman, or cosine similarity.
-        If method == 'all', all three correlations are returned.
+    correlation : list of float
+        Pearson, spearman, or cosine similarity.
+        If method == 'all', all three correlations are calculated.
+
     """
     if grid is None:
         grid = np.linspace(
@@ -177,21 +197,25 @@ def max_corr(
     method="coss",
 ):
     """Calculate the correlation between two spectra,
-        and the amout of shift to obtain maximum correlation
+        and the amout of shift to obtain maximum correlation.
 
     Parameters
     ----------
-    spectrum1 and spectrum2 : two-column arrays of energy vs. intensity XAS
-    start, stop, and step : shift of spectrum2 ranges from start to stop
-        with stepsize=step
-    grid : common grid for interpolation
-    method : 'pearson', 'spearman', or 'coss' (cosine similarity).
-        Empirically 'coss' works well
+    spectrum1, spectrum2 : 2d-array
+        Two-column arrays of energy vs. intensity XAS.
+    start, stop, step : float
+        Shift of spectrum2 ranges from start to stop with stepsize=step.
+    grid : 1d-array
+        Common grid for interpolation.
+    method : {'coss', 'pearson', 'spearman'}
+        Empirically 'coss' (cosine similarity) works well.
 
     Returns
     -------
-    correlation : dict; values at each shift step
-    m_shift : the shift value at which the correlation is max
+    correlation : dict
+        Correlation values at each shift step.
+    m_shift : float
+        Shift value at which the correlation is max.
 
     """
 
@@ -245,7 +269,7 @@ def max_corr(
 
 
 def peak_loc(plot):
-    """locate the peak positon of a spectrum
+    """Locate the peak positon of a spectrum.
 
     Parameters
     ----------
@@ -254,5 +278,6 @@ def peak_loc(plot):
     Returns
     -------
     position of the peak
+
     """
     return plot[plot[:, 1].argmax(), 0]
