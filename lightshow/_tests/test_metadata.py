@@ -35,5 +35,5 @@ def test_multiplicipty_writing(database_from_file, tmp_path):
     with open(metadata_fn) as f:
         d_metadata = json.load(f)
     assert "multiplicities" in d_metadata
-    i_site, n_multi = 2, 4
-    assert d_metadata[i_site] == n_multi
+    i_site, n_multi = "2", 4
+    assert d_metadata["multiplicities"][i_site] == n_multi
