@@ -351,6 +351,14 @@ class Database(MSONable):
             fname = Path(root) / key / "metadata.json"
             origin = str(Path(metadata["origin"]).resolve())
             new_metadata = {"origin": origin}
+            multiplicities = {
+                i_site: n_multi
+                for i_site, n_multi in zip(
+                    metadata["primitive"]["sites"],
+                    metadata["primitive"]["multiplicities"],
+                )
+            }
+            new_metadata["multiplicities"] = multiplicities
             with open(fname, "w") as outfile:
                 json.dump(new_metadata, outfile, indent=4, sort_keys=True)
 
