@@ -31,9 +31,14 @@ def test_multiplicipty_writing(database_from_file, tmp_path):
         write_unit_cells=True,
         pbar=False,
     )
-    metadata_fn = target / Path("00000002") / Path("metadata.json")
-    with open(metadata_fn) as f:
-        d_metadata = json.load(f)
-    assert "multiplicities" in d_metadata
-    i_site, n_multi = "2", 4
-    assert d_metadata["multiplicities"][i_site] == n_multi
+    for k, v in database_from_file.metadata.items():
+        metadata_fn = target / Path(k) / Path("metadata.json")
+        with open(metadata_fn) as f:
+            d_metadata = json.load(f)
+        prim_meta = v["primitive"]
+        for i_site, n_multi in zip(
+            prim_meta["sites"], prim_meta["multiplicities"]
+        ):
+            i_site = str(i_site)
+            assert "multiplicities" in d_metadata
+            assert d_metadata["multiplicities"][i_site] == n_multi
