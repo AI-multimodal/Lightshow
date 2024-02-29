@@ -36,7 +36,7 @@ classifiers = [
 dependencies = [
     "numpy==1.26.2",
     "pymatgen==2024.2.23",
-    "mp-api==0.40.2",
+    "mp-api==0.41.1",
     "ase",
     "tqdm",
     "monty"
