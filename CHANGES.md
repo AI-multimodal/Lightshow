@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.2
+
+- Add multiple utilities into the `lightshow.postprocess`.
+- Add functionality to output a `metadata.json` file when writing to disk. This saves information about site multiplicity, and allows for other information to be saved in the future.
+
 ## v1.2.1
 
 - Implement fix for the number of bands during VASP SCF calculations.
