@@ -3,19 +3,18 @@ various materials and clusters. This includes pulling and processing data from
 the `Materials Project Database <https://materialsproject.org/>`_, as well as
 utilizing existing data the user may have on their hard drive."""
 
-from datetime import datetime
 import json
+from datetime import datetime
 from pathlib import Path
 from shutil import copy2
 from warnings import warn
 
 from monty.json import MSONable
 from mp_api.client import MPRester
-from pymatgen.core.structure import Structure, Molecule
+from pymatgen.core.structure import Molecule, Structure
 from tqdm import tqdm
 
-from lightshow import _get_API_key_from_environ
-from lightshow import pymatgen_utils
+from lightshow import _get_API_key_from_environ, pymatgen_utils
 
 
 def _get_api_key(api_key):
