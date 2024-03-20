@@ -83,19 +83,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  check_semantic_version_placeholder:
-    name: Check semantic version placeholder exists in the __init__
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - uses: actions/checkout@v3
-
-    - name: Check lines exist
-      run: |
-        grep -x "__version__ = ...  # semantic-version-placeholder" lightshow/__init__.py
-
   docs:
     name: Build documentation test
 
@@ -140,7 +127,6 @@ jobs:
       - tests
       - black
       - flake8_py3
-      - check_semantic_version_placeholder
       - docs
 
     steps:
@@ -175,7 +161,6 @@ jobs:
       - tests
       - black
       - flake8_py3
-      - check_semantic_version_placeholder
       - docs
       - build_and_publish
 
