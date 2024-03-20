@@ -1,12 +1,6 @@
 from os import environ
 
-
-# DO NOT CHANGE BELOW ---------------------------------------------------------
-# This is replaced at build time automatically during deployment and
-# installation. Replacing anything will mess that up and crash the entire
-# build.
-__version__ = ...  # semantic-version-placeholder
-# DO NOT CHANGE ABOVE ---------------------------------------------------------
+from lightshow._version import __version__
 
 
 def _get_API_key_from_environ():
@@ -70,8 +64,17 @@ def _get_SPECIES_DIRECTORY_from_environ():
 
 
 from lightshow.database import Database  # noqa
-from lightshow.parameters.feff import FEFFParameters  # noqa
-from lightshow.parameters.vasp import VASPParameters  # noqa
 from lightshow.parameters.exciting import EXCITINGParameters  # noqa
+from lightshow.parameters.feff import FEFFParameters  # noqa
 from lightshow.parameters.ocean import OCEANParameters  # noqa
+from lightshow.parameters.vasp import VASPParameters  # noqa
 from lightshow.parameters.xspectra import XSpectraParameters  # noqa
+
+__all__ = [
+    "Database",
+    "EXCITINGParameters",
+    "FEFFParameters",
+    "OCEANParameters",
+    "VASPParameters",
+    "XSpectraParameters",
+]
