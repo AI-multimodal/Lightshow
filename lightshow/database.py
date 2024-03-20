@@ -24,6 +24,19 @@ def _get_api_key(api_key):
         raise ValueError(f"Invalid API key {api_key}")
     return api_key
 
+def _get_method(method, mpr):
+    methods = [methods for methods in dir(mpr.materials) if methods is not callable and not methods.startswith('_')]
+
+    if method is None:
+        method = None
+    elif method in methods:
+        method = method
+    else:
+        print("Searching with default method")
+        method = None
+        
+    return method
+
 
 class Database(MSONable):
     """Contains all materials and metadata for some database."""
@@ -148,11 +161,28 @@ class Database(MSONable):
         except KeyError:
             pass
 
-        with MPRester(api_key) as mpr:
+        mpr = MPRester(api_key)
+        method = _get_method(kwargs.get("method"), mpr=mpr)
+
+        try:
+            kwargs.pop("method")
+        except KeyError:
+            pass
+
+        if method is not None:
+            searched = getattr(mpr.mateirals, method).search(**kwargs)
+        else:
             searched = mpr.materials.search(**kwargs)
 
-        structures = {s.material_id.string: s.structure for s in searched}
+        structures = {s.material_id.string: s.structure if hasattr(s, "structure") else None for s in searched}
         metadata = {s.material_id.string: s.dict() for s in searched}
+        
+
+        # with MPRester(api_key) as mpr:
+        #     searched = mpr.materials.search(**kwargs)
+
+        # structures = {s.material_id.string: s.structure for s in searched}
+        # metadata = {s.material_id.string: s.dict() for s in searched}
 
         return cls(structures=structures, metadata=metadata, supercells=dict())
 
