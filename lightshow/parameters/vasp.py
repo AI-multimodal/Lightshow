@@ -1,20 +1,19 @@
+import warnings
 from copy import copy, deepcopy
 from functools import lru_cache
 from pathlib import Path
-import warnings
 
-from monty.json import MSONable
 import numpy as np
-from pymatgen.io.vasp.sets import DictSet
+from monty.json import MSONable
 from pymatgen.io.vasp.inputs import Incar as pmgIncar
 from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
+from pymatgen.io.vasp.sets import DictSet
 
 from lightshow import _get_POTCAR_DIRECTORY_from_environ
-from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
-
+from lightshow.parameters._base import _BaseParameters
 
 VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL = {
     "ALGO": "Normal",
@@ -691,7 +690,13 @@ class Poscar(pmgPoscar):
         line_6_asint = [int(xx) for xx in self.natoms]
         line_6_asint[atom_type_loc] -= 1
         new_line_6_asint = [1, *line_6_asint]
-        new_line_6 = [str(xx) for xx in new_line_6_asint]
+
+        # Account for the fact that sometimes we only have a single atom
+        # of the absorbing type in the unit cell
+        new_line_5 = [
+            el for ii, el in enumerate(new_line_5) if new_line_6_asint[ii] > 0
+        ]
+        new_line_6 = [str(xx) for xx in new_line_6_asint if xx > 0]
 
         # Use the new lines 5 and 6
         lines[5] = " ".join(new_line_5)
