@@ -1,6 +1,6 @@
 from os import environ
 
-from lightshow._version import __version__
+from lightshow._version import __version__  # noqa
 
 
 def _get_API_key_from_environ():
