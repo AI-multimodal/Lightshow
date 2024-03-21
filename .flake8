@@ -5,7 +5,8 @@ exclude =
     build,
     dist,
     lightshow/defaults.py,
-    docs/source/conf.py
+    docs/source/conf.py,
+    lightshow/__init__.py
 max-line-length = 80
 show-source = True
 statistics = True
