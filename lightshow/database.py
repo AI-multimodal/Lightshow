@@ -161,18 +161,16 @@ class Database(MSONable):
         except KeyError:
             pass
 
-        mpr = MPRester(api_key)
-        method = _get_method(kwargs.get("method"), mpr=mpr)
-
-        try:
-            kwargs.pop("method")
-        except KeyError:
-            pass
-
-        if method is not None:
-            searched = getattr(mpr.mateirals, method).search(**kwargs)
-        else:
-            searched = mpr.materials.search(**kwargs)
+        with MPRester(api_key) as mpr:
+            method = _get_method(kwargs.get("method"), mpr=mpr)
+            try:
+                kwargs.pop("method")
+            else:
+                pass
+            if method is not None:
+                searched = getattr(mpr.materials, method).search(**kwargs)
+            else:
+                searched = mpr.materials.search(**kwargs)
 
         structures = {s.material_id.string: s.structure if hasattr(s, "structure") else None for s in searched}
         metadata = {s.material_id.string: s.dict() for s in searched}
