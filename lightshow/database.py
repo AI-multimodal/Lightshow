@@ -25,6 +25,7 @@ def _get_api_key(api_key):
     return api_key
 
 def _get_method(method, mpr):
+    """Get all the available search methods; if the given method is not present, the search will be performed using mpr.materials.search"""
     methods = [methods for methods in dir(mpr.materials) if methods is not callable and not methods.startswith('_')]
 
     if method is None:
@@ -148,7 +149,12 @@ class Database(MSONable):
         api_key : None, optional
             API key which can either be provided directly or is read from
             the MP_API_KEY environment variable.
-
+        method : None, optional, str
+            Keyword to get different information about materials'
+            for e.g. 'thermo', 'xas', 'summary' etc. fetch information on
+            thermodynamic properties, computed XAS data, large amount of amalgated data
+            about the material, respectively. https://api.materialsproject.org/docs
+            
         Returns
         -------
         Database
@@ -165,7 +171,7 @@ class Database(MSONable):
             method = _get_method(kwargs.get("method"), mpr=mpr)
             try:
                 kwargs.pop("method")
-            else:
+            except:
                 pass
             if method is not None:
                 searched = getattr(mpr.materials, method).search(**kwargs)
