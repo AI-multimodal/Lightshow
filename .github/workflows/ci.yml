@@ -116,7 +116,7 @@ jobs:
 
     needs:
       - tests
-      - black
+      - ruff
       - flake8_py3
       - docs
 
@@ -150,7 +150,7 @@ jobs:
 
     needs:
       - tests
-      - black
+      - ruff
       - flake8_py3
       - docs
       - build_and_publish
