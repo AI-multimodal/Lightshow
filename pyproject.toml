@@ -53,6 +53,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
+    "nox",
     "coverage",
     "flake8",
     "ruff",
