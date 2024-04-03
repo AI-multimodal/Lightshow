@@ -24,7 +24,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -47,35 +47,26 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
-  black:
-    name: Run Black code quality check
-
+  ruff:
+    name: Run Ruff code quality check
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-      - uses: rickstaa/action-black@v1
+      - uses: actions/checkout@v4
+      - uses: rchartboost/ruff-action@v1
         with:
-          black_args: "lightshow/ --check"
-          fail_on_error: "true"
+          src: './lightshow'
 
   flake8_py3:
     name: Run flake8 code quality check
-
     runs-on: ubuntu-latest
-
     steps:
-
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-
-      - name: Install flake8
-        run: pip install flake8
-
+      # - name: Install flake8
+      #   run: pip install flake8
       - name: Run flake8
         uses: suo/flake8-github-action@releases/v1
         with:
@@ -91,7 +82,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     ###########################################################################
     # Getting the tags like this is REQUIRED for the dynamic versioning
@@ -132,7 +123,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -180,7 +171,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
