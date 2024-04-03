@@ -77,20 +77,11 @@ build = [
 [tool.setuptools]
 packages = ["lightshow"]
 
-[tool.black]
+[tool.ruff]
 line-length = 80
-include = '\.pyi?$'
-exclude = '''
-/(
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | docs/source/conf.py
-)/
-'''
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 60
