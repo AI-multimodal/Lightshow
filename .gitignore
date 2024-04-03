@@ -1,4 +1,5 @@
 .DS_Store
+pyrightconfig.json
 
 *.pyc
 !build_sphinx.sh
