@@ -55,9 +55,9 @@ dynamic = ["version"]
 test = [
     "coverage",
     "flake8",
+    "ruff",
     "pytest",
     "pytest-cov",
-    "black",
     "nbstripout",
     "pre-commit",
 ]
