@@ -3,9 +3,9 @@ name: CI
 # Run on all PR's and on pushes/merges to deploy and master
 on:
   pull_request:
-    branches: ['master', '!paper.md']
+    branches: ['master', 'dev/*', '!paper.md']
   push:
-    branches: ['master', '!paper.md']
+    branches: ['master', 'dev/*', '!paper.md']
     tags: ["v*"]
 
 jobs:
