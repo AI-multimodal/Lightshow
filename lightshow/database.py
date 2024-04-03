@@ -283,8 +283,8 @@ class Database(MSONable):
     def __init__(
         self,
         structures,
-        metadata=dict(),
-        supercells=dict(),
+        metadata=None,
+        supercells=None,
         supercell_cutoff=None,
         inequivalent_sites_initialized=False,
         supercells_initialized=False,
@@ -293,8 +293,14 @@ class Database(MSONable):
         the classmethods to initialize this object."""
 
         self._structures = structures
-        self._metadata = metadata
-        self._supercells = supercells
+        if metadata is None:
+            self._metadata = {}
+        else:
+            self._metadata = metadata
+        if supercells is None:
+            self._supercells = {}
+        else:
+            self._supercells = supercells
         self._supercell_cutoff = supercell_cutoff
         self._inequivalent_sites_initialized = inequivalent_sites_initialized
         self._supercells_initialized = supercells_initialized
@@ -360,22 +366,12 @@ class Database(MSONable):
             fname = Path(root) / key / "POSCAR"
             structure.to(fmt="POSCAR", filename=str(fname))
 
-    def _write_origin_paths(self, root, pbar=False):
-        """A helper method for writing important metadata for each of the
-        structures if the data was loaded from disk.
-
-        Parameters
-        ----------
-        root : os.PathLike
-        pbar : bool, optional
-        """
+    def _write_multiplicity(self, root, pbar=False):
+        """Helper method for writing the site multiplicity information of
+        the structure."""
 
         for key, metadata in tqdm(self._metadata.items(), disable=not pbar):
-            if "origin" not in metadata.keys():
-                continue
-            fname = Path(root) / key / "metadata.json"
-            origin = str(Path(metadata["origin"]).resolve())
-            new_metadata = {"origin": origin}
+            fname = Path(root) / key / "multiplicity.json"
             multiplicities = {
                 i_site: n_multi
                 for i_site, n_multi in zip(
@@ -383,9 +379,8 @@ class Database(MSONable):
                     metadata["primitive"]["multiplicities"],
                 )
             }
-            new_metadata["multiplicities"] = multiplicities
             with open(fname, "w") as outfile:
-                json.dump(new_metadata, outfile, indent=4, sort_keys=True)
+                json.dump(multiplicities, outfile, indent=4, sort_keys=True)
 
     def write(
         self,
@@ -395,6 +390,7 @@ class Database(MSONable):
         pbar=True,
         copy_script=None,
         write_unit_cells=True,
+        write_multiplicity=True,
     ):
         """The core method of the :class:`.Database` class. This method will
         write all input files specified in the ``options`` parameter to disk.
@@ -452,6 +448,9 @@ class Database(MSONable):
         write_unit_cells : bool, optional
             If True, writes the unit cells in the materials directory in
             POSCAR format. Very useful!
+        write_multiplicity : bool, optional
+            If True, writes the multiplicities of each atom in the unit cell
+            to a multiplicities.json file.
         """
 
         self._setup_preliminary_attributes()
@@ -536,8 +535,8 @@ class Database(MSONable):
 
         if write_unit_cells:
             self._write_unit_cells(root, pbar=pbar)
-
-        self._write_origin_paths(root, pbar=pbar)
+        if write_multiplicity:
+            self._write_multiplicity(root, pbar=pbar)
 
         # Save a metadata file (not a serialized version of this class) to
         # disk along with the input files
