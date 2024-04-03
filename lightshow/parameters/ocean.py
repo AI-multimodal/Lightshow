@@ -1,14 +1,13 @@
 from copy import copy
 from pathlib import Path
-import numpy as np
 
+import numpy as np
 from monty.json import MSONable
 from pymatgen.core import Element
 
-from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
-
+from lightshow.parameters._base import _BaseParameters
 
 OCEAN_DEFAULT_CARDS = {
     "dft": "qe",
@@ -36,10 +35,10 @@ class OCEANParameters(MSONable, _BaseParameters):
         .. code-block:: python
 
             cards = {
-                    "dft" : "qe",
-                    "ecut" : "-1",
-                    "opf.program" : "hamann",
-                    "para_prefix" : "mpirun -np 24",
+                "dft": "qe",
+                "ecut": "-1",
+                "opf.program": "hamann",
+                "para_prefix": "mpirun -np 24",
             }
 
         The detailed description of the OCEAN parameters can be find at

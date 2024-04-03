@@ -3,10 +3,9 @@ from pathlib import Path
 from warnings import warn
 
 from monty.json import MSONable
-from pymatgen.io.feff.sets import MPXANESSet, MPEXAFSSet, FEFFDictSet
+from pymatgen.io.feff.sets import FEFFDictSet, MPEXAFSSet, MPXANESSet
 
 from lightshow.parameters._base import _BaseParameters
-
 
 FEFF_DEFAULT_CARDS = {
     "S02": "0",
@@ -54,7 +53,7 @@ class FEFFParameters(MSONable, _BaseParameters):
                 "SCF": "7.0 0 100 0.2 3",
                 "FMS": "9.0 0",
                 "EXCHANGE": "0 0.0 0.0 2",
-                "RPATH": "-1"
+                "RPATH": "-1",
             }
 
         And for EXAFS,

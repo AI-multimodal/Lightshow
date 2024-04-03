@@ -14,12 +14,13 @@ from mp_api.client import MPRester
 from pymatgen.core.structure import Molecule, Structure
 from tqdm import tqdm
 
-from lightshow import _get_API_key_from_environ, pymatgen_utils
+from lightshow import pymatgen_utils
+from lightshow.utils.environ_utils import get_API_key_from_environ
 
 
 def _get_api_key(api_key):
     if api_key is None:
-        api_key = _get_API_key_from_environ()
+        api_key = get_API_key_from_environ()
     if api_key is None:
         raise ValueError(f"Invalid API key {api_key}")
     return api_key

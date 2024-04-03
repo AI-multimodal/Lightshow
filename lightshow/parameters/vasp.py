@@ -10,10 +10,10 @@ from pymatgen.io.vasp.inputs import Kpoints as pmgKpoints
 from pymatgen.io.vasp.inputs import Poscar as pmgPoscar
 from pymatgen.io.vasp.sets import DictSet
 
-from lightshow import _get_POTCAR_DIRECTORY_from_environ
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
 from lightshow.parameters._base import _BaseParameters
+from lightshow.utils.environ_utils import get_POTCAR_DIRECTORY_from_environ
 
 VASP_INCAR_DEFAULT_NEUTRAL_POTENTIAL = {
     "ALGO": "Normal",
@@ -815,7 +815,7 @@ class VASPParameters(MSONable, _BaseParameters):
 
         # POTCAR information
         if potcar_directory is None:
-            potcar_directory = _get_POTCAR_DIRECTORY_from_environ()
+            potcar_directory = get_POTCAR_DIRECTORY_from_environ()
         if potcar_directory is None:
             warnings.warn(
                 "potcar_directory not provided, and VASP_POTCAR_DIRECTORY "
