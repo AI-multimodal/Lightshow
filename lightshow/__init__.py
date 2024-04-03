@@ -1,6 +1,12 @@
 from os import environ
 
-from lightshow._version import __version__  # noqa
+from lightshow._version import __version__
+from lightshow.database import Database
+from lightshow.parameters.exciting import EXCITINGParameters
+from lightshow.parameters.feff import FEFFParameters
+from lightshow.parameters.ocean import OCEANParameters
+from lightshow.parameters.vasp import VASPParameters
+from lightshow.parameters.xspectra import XSpectraParameters
 
 
 def _get_API_key_from_environ():
@@ -63,14 +69,8 @@ def _get_SPECIES_DIRECTORY_from_environ():
     return environ.get("SPECIES_DIRECTORY", None)
 
 
-from lightshow.database import Database  # noqa
-from lightshow.parameters.exciting import EXCITINGParameters  # noqa
-from lightshow.parameters.feff import FEFFParameters  # noqa
-from lightshow.parameters.ocean import OCEANParameters  # noqa
-from lightshow.parameters.vasp import VASPParameters  # noqa
-from lightshow.parameters.xspectra import XSpectraParameters  # noqa
-
 __all__ = [
+    "__version__",
     "Database",
     "EXCITINGParameters",
     "FEFFParameters",
