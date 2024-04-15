@@ -71,7 +71,7 @@ doc = [
 ]
 build = [
     "flit~=3.7",
-    "dunamai==1.19.2",
+    "dunamai==1.20.0",
 ]
 
 [tool.setuptools]
