@@ -11,7 +11,7 @@ on:
 jobs:
 
   tests:
-    name: Run unit testing suite
+    name: Tests
 
     env:
         MP_API_KEY: ${{ secrets.MP_API_KEY }}

@@ -1,14 +1,14 @@
-from pathlib import Path
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.exciting import ExcitingInput
 
-from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
 from lightshow.common.nbands import UnitCellVolumeEstimate
-from lightshow import _get_SPECIES_DIRECTORY_from_environ
+from lightshow.parameters._base import _BaseParameters
+from lightshow.utils.environ_utils import get_SPECIES_DIRECTORY_from_environ
 
 EXCITING_DEFAULT_GQMAX = 4.0
 
@@ -146,7 +146,7 @@ class EXCITINGParameters(MSONable, _BaseParameters):
 
         # species directory
         if species_directory is None:
-            species_directory = _get_SPECIES_DIRECTORY_from_environ()
+            species_directory = get_SPECIES_DIRECTORY_from_environ()
         if species_directory is None:
             warn(
                 "species_directory not set, and SPECIES_DIRECTORY not in "
@@ -210,9 +210,9 @@ class EXCITINGParameters(MSONable, _BaseParameters):
         self._cards["xs"]["BSE"]["nstlxas"] = f"1 {nbands}"
         # Estimate number of kpoints
         kmesh = self._kpoints(structure)
-        self._cards["groundstate"][
-            "ngridk"
-        ] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        self._cards["groundstate"]["ngridk"] = (
+            f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
+        )
         self._cards["xs"]["ngridk"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         self._cards["xs"]["ngridq"] = f"{kmesh[0]} {kmesh[1]} {kmesh[2]}"
         # Determine XAS species

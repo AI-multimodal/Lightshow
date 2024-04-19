@@ -4,8 +4,8 @@ from pathlib import Path
 from lightshow.parameters.feff import FEFFParameters
 
 
-def test_multiplicipty_writing(database_from_file, tmp_path):
-    target = Path(tmp_path) / Path("multi") / Path("destination")
+def test_multiplicity_writing(database_from_file, tmp_path):
+    target = Path(tmp_path) / "t"
     target.mkdir(exist_ok=True, parents=True)
     R = 10.0
     feff_parameters = FEFFParameters(
@@ -32,13 +32,12 @@ def test_multiplicipty_writing(database_from_file, tmp_path):
         pbar=False,
     )
     for k, v in database_from_file.metadata.items():
-        metadata_fn = target / Path(k) / Path("metadata.json")
-        with open(metadata_fn) as f:
-            d_metadata = json.load(f)
+        fname = target / k / Path("multiplicity.json")
+        with open(fname) as f:
+            mult = json.load(f)
         prim_meta = v["primitive"]
         for i_site, n_multi in zip(
             prim_meta["sites"], prim_meta["multiplicities"]
         ):
             i_site = str(i_site)
-            assert "multiplicities" in d_metadata
-            assert d_metadata["multiplicities"][i_site] == n_multi
+            assert mult[i_site] == n_multi

@@ -1,18 +1,18 @@
-from pathlib import Path
-import json
-import bz2
 import base64
+import bz2
+import json
 import shutil
+from pathlib import Path
 from warnings import warn
 
 from monty.json import MSONable
 from pymatgen.io.pwscf import PWInput
 
-from lightshow.parameters._base import _BaseParameters
 from lightshow.common.kpoints import GenericEstimatorKpoints
-from lightshow import (
-    _get_CHPSP_DIRECTORY_from_environ,
-    _get_PSP_DIRECTORY_from_environ,
+from lightshow.parameters._base import _BaseParameters
+from lightshow.utils.environ_utils import (
+    get_CHPSP_DIRECTORY_from_environ,
+    get_PSP_DIRECTORY_from_environ,
 )
 
 XSPECTRA_DEFAULT_CARDS = {
@@ -63,40 +63,43 @@ class XSpectraParameters(MSONable, _BaseParameters):
         .. code-block:: python
 
            cards = {
-                    "QE": {
-                        "control": {
-                            "restart_mode": "from_scratch",
-                        },
-                        "electrons": {"conv_thr": 1e-08, "mixing_beta": 0.4},
-                        "system": {
-                            "degauss": 0.002,
-                            "ecutrho": 320,
-                            "ecutwfc": 40,
-                            "nspin": 1,
-                            "occupations": "smearing",
-                            "smearing": "gauss",
-                        },
-                    },
-                    "XS": {
-                        "cut_occ": {"cut_desmooth": 0.3},
-                        "input_xspectra": {
-                            "outdir": "../",
-                            "prefix": "pwscf",
-                            "xcheck_conv": 200,
-                            "xerror": 0.01,  #
-                            "xniter": 5000,
-                            "xcoordcrys": ".false.",
-                       },
-                        "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
-                        "plot": {
-                            "cut_occ_states": ".true.",
-                            "terminator": ".true.",
-                            "xemax": 70,
-                            "xemin": -15.0,
-                            "xnepoint": 400,
-                        },
-                    },
-            }
+               "QE": {
+                   "control": {
+                       "restart_mode": "from_scratch",
+                   },
+                   "electrons": {
+                       "conv_thr": 1e-08,
+                       "mixing_beta": 0.4,
+                   },
+                   "system": {
+                       "degauss": 0.002,
+                       "ecutrho": 320,
+                       "ecutwfc": 40,
+                       "nspin": 1,
+                       "occupations": "smearing",
+                       "smearing": "gauss",
+                   },
+               },
+               "XS": {
+                   "cut_occ": {"cut_desmooth": 0.3},
+                   "input_xspectra": {
+                       "outdir": "../",
+                       "prefix": "pwscf",
+                       "xcheck_conv": 200,
+                       "xerror": 0.01,  #
+                       "xniter": 5000,
+                       "xcoordcrys": ".false.",
+                   },
+                   "kpts": {"kpts": "2 2 2", "shift": "0 0 0"},
+                   "plot": {
+                       "cut_occ_states": ".true.",
+                       "terminator": ".true.",
+                       "xemax": 70,
+                       "xemin": -15.0,
+                       "xnepoint": 400,
+                   },
+               },
+           }
 
     kpoints : lightshow.common.kpoints._BaseKpointsMethod
         The method for constructing he kpoints file from the structure. Should
@@ -153,7 +156,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         # chpsp information
         if chpsp_directory is None:
-            chpsp_directory = _get_CHPSP_DIRECTORY_from_environ()
+            chpsp_directory = get_CHPSP_DIRECTORY_from_environ()
         if chpsp_directory is None:
             warn(
                 "chpsp_directory not provided, and XS_CHPSP_DIRECTORY not in "
@@ -166,7 +169,7 @@ class XSpectraParameters(MSONable, _BaseParameters):
         self._psp_json = psp_json
 
         if psp_directory is None:
-            psp_directory = _get_PSP_DIRECTORY_from_environ()
+            psp_directory = get_PSP_DIRECTORY_from_environ()
 
         self._psp_directory = psp_directory
 
@@ -389,13 +392,13 @@ class XSpectraParameters(MSONable, _BaseParameters):
 
         kpoints_xas = self._kpoints(structure)
 
-        self._cards["XS"]["kpts"][
-            "kpts"
-        ] = f"{kpoints_xas[0]} {kpoints_xas[1]} {kpoints_xas[2]}"
+        self._cards["XS"]["kpts"]["kpts"] = (
+            f"{kpoints_xas[0]} {kpoints_xas[1]} {kpoints_xas[2]}"
+        )
         # Determine the SCF? convergence threshold
-        self._cards["QE"]["electrons"][
-            "conv_thr"
-        ] = self._defaultConvPerAtom * len(structure)
+        self._cards["QE"]["electrons"]["conv_thr"] = (
+            self._defaultConvPerAtom * len(structure)
+        )
         # Get the psp data ready for the GS calculations; similar to SCF
         # (neutral) calculations in VASP
         # need to treat three different cases here

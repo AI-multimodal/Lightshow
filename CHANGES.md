@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.3
+
+- Fix the "ghost atom" problem in VASP. See [#256](https://github.com/AI-multimodal/Lightshow/issues/254).
+- Cleanup the testing suite, replace Black with Ruff.
+
+
 ## v1.2.2
 
 - Add multiple utilities into the `lightshow.postprocess`.
