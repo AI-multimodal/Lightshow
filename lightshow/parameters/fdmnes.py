@@ -2,9 +2,10 @@ from copy import copy
 from pathlib import Path
 from warnings import warn
 
-from pymatgen.core import Structure
+from monty.json import MSONable
 from pymatgen.core.periodic_table import Element
-from pymatgen.io.cif import CifParser
+
+from lightshow.parameters._base import _BaseParameters
 
 
 FDMNES_DEFAULT_CARDS = {
@@ -22,7 +23,7 @@ FDMNES_DEFAULT_CARDS = {
 }
 
 
-class FDMNESParameters:
+class FDMNESParameters(MSONable, _BaseParameters):
     """A one-stop-shop for all the different ways to modify input parameters
     for an FDMNES calculation.
 
@@ -194,19 +195,29 @@ class FDMNESParameters:
 
         structure = kwargs["structure"]
         Z_absorber = kwargs["Z_absorber"]
+
+        if structure is None:
+            raise ValueError("Structure must be provided.")
+
+        # prepare lattice parameters, atomic numbers and fractional coordinates
+        a, b, c = structure.lattice.abc
+        alpha, beta, gamma = structure.lattice.angles
+        atomic_numbers = structure.atomic_numbers
+        scaled_positions = structure.frac_coords   
+
+        if Z_absorber is None:
+            Z_absorber = atomic_numbers[0]
+            warn(
+                "Z_absorber is not provided, apply the first atom specie" 
+                f"to be the absorbing specie Z={atomic_numbers[0]} "
+            )
         
         element_absorber = Element.from_Z(Z_absorber).symbol
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
 
         fdmnesinput = self.get_FDMNESinput(structure, Z_absorber)
-        filepath = target_directory / f"{element_absorber}_in.txt"
-
-        # prepare lattice parameters, atomic numbers and fractional coordinates
-        a, b, c = structure.lattice.abc
-        alpha, beta, gamma = structure.lattice.angles
-        atomic_numbers = structure.atomic_numbers
-        scaled_positions = structure.frac_coords     
+        filepath = target_directory / f"{element_absorber}_in.txt"  
 
         with open(filepath, "w") as f:
             f.write("Filout\n")
