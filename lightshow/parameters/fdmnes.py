@@ -1,4 +1,3 @@
-from copy import copy
 from pathlib import Path
 from warnings import warn
 
@@ -6,7 +5,6 @@ from monty.json import MSONable
 from pymatgen.core.periodic_table import Element
 
 from lightshow.parameters._base import _BaseParameters
-
 
 FDMNES_DEFAULT_CARDS = {
     "Energpho": True,
@@ -19,7 +17,7 @@ FDMNES_DEFAULT_CARDS = {
     "Screening": False,
     "Full_atom": False,
     "TDDFT": False,
-    "PBE96": False
+    "PBE96": False,
 }
 
 
@@ -49,7 +47,7 @@ class FDMNESParameters(MSONable, _BaseParameters):
                 "Screening": False,
                 "Full_atom": False,
                 "TDDFT": False,
-                "PBE96": False
+                "PBE96": False,
             }
 
         The detailed description of the FDMNES parameters can be find at
@@ -57,15 +55,15 @@ class FDMNESParameters(MSONable, _BaseParameters):
         they can just add a key-value pair to the cards.
 
     e_range : str
-        The energy range E that one defines in the input is the energy of 
-        the photoelectron relative to the phonon level. If one wants the 
+        The energy range E that one defines in the input is the energy of
+        the photoelectron relative to the phonon level. If one wants the
         output energy relative to the Fermi level, put ``Energpho`` = False.
     edge : str
         The XAS edge of the calculation.
     radius : float
         FDMNES uses clusters for its calculations. The ``radius`` parameter
         determines how large to make the cluster. It is calculated from the
-        absorbing atom center in units of Angstroms. The cluster radius is 
+        absorbing atom center in units of Angstroms. The cluster radius is
         applicable to both SCF and XAS caluclations.
     name : str
         The name of the calculation.
@@ -77,9 +75,8 @@ class FDMNESParameters(MSONable, _BaseParameters):
         e_range="-5. 0.5 60.",
         edge="K",
         radius=7.0,
-        name=None
+        name=None,
     ):
-
         self._cards = cards
         self._radius = radius
         self._range = e_range
@@ -88,10 +85,10 @@ class FDMNESParameters(MSONable, _BaseParameters):
         self._edge = edge
 
         self.validate_edge()
-    
+
     def validate_edge(self):
         """
-        Validates and adjusts the edge attribute based on standard edge choices 
+        Validates and adjusts the edge attribute based on standard edge choices
         supported by FDMNES.
 
         Edge types recognized:
@@ -102,21 +99,42 @@ class FDMNESParameters(MSONable, _BaseParameters):
         - 'N4', 'N5', 'N45'
 
         Warnings:
-            Warns if the provided edge is 'L' that it is being modified to 'L23'.
-            Warns if the provided edge is not recognized and is being set to 'K'.
+            Warns if the provided edge is 'L' that it is being modified to
+            'L23'.
+            Warns if the provided edge is not recognized and is being set to
+            'K'.
 
         Returns:
             None.
         """
-        valid_edges = ["K", "L1", "L2", "L3", "L23", "M1", "M2", "M3", "M23",
-                       "M4", "M5", "M45", "N1", "N2", "N3", "N23", "N4", "N5", "N45"]
+
+        valid_edges = [
+            "K",
+            "L1",
+            "L2",
+            "L3",
+            "L23",
+            "M1",
+            "M2",
+            "M3",
+            "M23",
+            "M4",
+            "M5",
+            "M45",
+            "N1",
+            "N2",
+            "N3",
+            "N23",
+            "N4",
+            "N5",
+            "N45",
+        ]
         if self._edge == "L":
             warn("Edge 'L' changed to 'L23' for FDMNES compatibility.")
             self._edge = "L23"
         elif self._edge not in valid_edges:
             warn(f"Edge {self._edge} not recognized. Defaulting to 'K'.")
             self._edge = "K"
-
 
     def get_FDMNESinput(self, structure, Z_absorber):
         """Constructs and returns a dictionary corresponds to the
@@ -136,7 +154,7 @@ class FDMNESParameters(MSONable, _BaseParameters):
         dict
             A dictionary of FDMNES input parameters.
         """
-        
+
         cards = self._cards.copy()
         species_z_list = [species.Z for species in structure.species]
 
@@ -146,9 +164,10 @@ class FDMNESParameters(MSONable, _BaseParameters):
             if "Nonrelat" not in cards.keys():
                 cards["Spinorbit"] = True
                 warn(
-                    "Spin-orbit has been turned on for K-edge calculation for accuracy."
-                    "The simulation is typically 4 to 8 times longer and need 2 times "
-                    "more memory space. To turn it off, set 'Nonrelat' = True. "
+                    "Spin-orbit has been turned on for K-edge calculation "
+                    "for accuracy. The simulation is typically 4 to 8 times "
+                    "longer and need 2 times more memory space. To turn"
+                    " it off, set 'Nonrelat' = True. "
                 )
             if any(Z_absorber in r for r in transition_metal_ranges):
                 cards["Quadrupole"] = True
@@ -158,19 +177,18 @@ class FDMNESParameters(MSONable, _BaseParameters):
 
         if any(z > 36 for z in species_z_list):
             cards["Relativism"] = True
-        
+
         if any(z > 50 for z in species_z_list):
             cards["Spinorbit"] = True
-        
+
         if 8 in species_z_list:
             cards["Full_atom"] = True
 
         return cards
 
-
     def write(self, target_directory, **kwargs):
-        """Writes the input files for the provided structure and absoring specie. 
-        In the case of Fdmnes, if Z_absorber is None, then the absorbing specie 
+        """Writes the input files for the provided structure and absorber.
+        In the case of Fdmnes, if Z_absorber is None, then the absorbing specie
         is the first one in the atom list.
 
         Parameters
@@ -180,7 +198,7 @@ class FDMNESParameters(MSONable, _BaseParameters):
         **kwargs
             Must contain the ``structure`` key (the
             :class:`pymatgen.core.structure.Structure` of interest) and the
-            ``Z_absorber`` key (an int indicates the atomic number of the 
+            ``Z_absorber`` key (an int indicates the atomic number of the
             absorbing chemical specie).
 
         Returns
@@ -203,21 +221,21 @@ class FDMNESParameters(MSONable, _BaseParameters):
         a, b, c = structure.lattice.abc
         alpha, beta, gamma = structure.lattice.angles
         atomic_numbers = structure.atomic_numbers
-        scaled_positions = structure.frac_coords   
+        scaled_positions = structure.frac_coords
 
         if Z_absorber is None:
             Z_absorber = atomic_numbers[0]
             warn(
-                "Z_absorber is not provided, apply the first atom specie" 
+                "Z_absorber is not provided, apply the first atom specie"
                 f"to be the absorbing specie Z={atomic_numbers[0]} "
             )
-        
+
         element_absorber = Element.from_Z(Z_absorber).symbol
         target_directory = Path(target_directory)
         target_directory.mkdir(exist_ok=True, parents=True)
 
         fdmnesinput = self.get_FDMNESinput(structure, Z_absorber)
-        filepath = target_directory / f"{element_absorber}_in.txt"  
+        filepath = target_directory / f"{element_absorber}_in.txt"
 
         with open(filepath, "w") as f:
             f.write("Filout\n")
@@ -232,13 +250,18 @@ class FDMNESParameters(MSONable, _BaseParameters):
             for key, value in fdmnesinput.items():
                 if value:
                     f.write(f"{key}\n\n")
-            
+
             f.write("Crystal \n")
-            f.write(f"{a:.4f} {b:.4f} {c:.4f} {alpha:.1f} {beta:.1f} {gamma:.1f}\n")
+            f.write(
+                f"{a:.4f} {b:.4f} {c:.4f} {alpha:.1f} {beta:.1f} {gamma:.1f}\n"
+            )
             for atomic_number, pos in zip(atomic_numbers, scaled_positions):
-                f.write(f"  {atomic_number} {pos[0]:.4f} {pos[1]:.4f} {pos[2]:.4f}\n")
-		
-            f.write(f"\nZ_Absorber\n")
+                f.write(
+                    f"  {atomic_number} {pos[0]:.4f} {pos[1]:.4f} "
+                    f"{pos[2]:.4f}\n"
+                )
+
+            f.write("\nZ_Absorber\n")
             f.write(f"  {Z_absorber}\n\n")
             f.write("Edge \n")
             f.write(f"  {self._edge}\n\n")
