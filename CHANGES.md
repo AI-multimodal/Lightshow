@@ -1,5 +1,7 @@
 # Changelog
 
+## v1.2.4
+- Add `Ho_3` potential file. See [#272](https://github.com/AI-multimodal/Lightshow/issues/272).
 ## v1.2.3
 
 - Fix the "ghost atom" problem in VASP. See [#256](https://github.com/AI-multimodal/Lightshow/issues/254).
