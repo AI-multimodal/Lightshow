@@ -216,6 +216,7 @@ VASP_POTCAR_DEFAULT_ELEMENT_MAPPING = {
     "Po": "Po_d_GW",
     "At": "At_d_GW",
     "Rn": "Rn_d_GW",
+    "Ho": "Ho_3",
 }
 
 
