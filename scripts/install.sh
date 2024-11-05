@@ -11,7 +11,7 @@ install() {
 
 	echo "installing $TARGET"
 
-	python3 -c "import toml; c = toml.load('pyproject.toml'); print('\n'.join(c$TARGET))" |
+	python -c "import toml; c = toml.load('pyproject.toml'); print('\n'.join(c$TARGET))" |
 		pip install -r /dev/stdin
 }
 
