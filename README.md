@@ -1,7 +1,10 @@
 <div align="center">
     
-![sysfs line plot](https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg)
+<!-- ![sysfs line plot](https://raw.githubusercontent.com/AI-multimodal/Lightshow/master/docs/_static/images/lightshow.jpg) -->
 
+# Lightshow
+
+<!--badges-start-->
 [![image](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43/status.svg)](https://joss.theoj.org/papers/a9cabcd7f4b85a926a797997c6622b43)
 [![image](https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml/badge.svg)](https://github.com/AI-multimodal/Lightshow/actions/workflows/ci.yml)
 [![image](https://codecov.io/gh/AI-multimodal/Lightshow/branch/master/graph/badge.svg?token=CW7BMFA5O7)](https://codecov.io/gh/AI-multimodal/Lightshow)
@@ -9,10 +12,13 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![python](https://img.shields.io/badge/-Python_3.9+-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Downloads](https://static.pepy.tech/badge/lightshow)](https://pepy.tech/project/lightshow)
+<!--badges-end-->
 </div>
+
     
 ------------------------------------------------------------------------
 
+<!--lightshow-intro-start-->
 **Lightshow** is a Python library for easily generating computational
 spectroscopy input files. If you use our code, please consider citing our [manuscript](https://doi.org/10.21105/joss.05182) in the Journal of Open Source Software and our multi-code benchmark [paper](https://doi.org/10.1103/PhysRevMaterials.8.013801), which provides the methods and default parameters used in Lightshow.
 
@@ -36,6 +42,9 @@ extensively documented and tested, and extendable for those users who
 wish to add additional spectroscopy functionalities. There are also a
 few comprehensive tutorials to help you get started.
 
+<!--lightshow-intro-end-->
+
+
 ## Tutorials
 
 We offer a few tutorials to get you started (with more on the way!)
@@ -47,6 +56,8 @@ We offer a few tutorials to get you started (with more on the way!)
 
 
 ## Installation
+
+<!--standard-installation-start-->
 
 To install Lightshow, simply use `pip`
 
@@ -64,7 +75,13 @@ export MP_API_KEY="your_Materials_Project_v2_API_key"
 
 More details can be found at our [documentation](https://ai-multimodal.github.io/Lightshow/installation.html).
 
+<!--standard-installation-end-->
+
+
 ### Development installation
+
+
+<!--dev-installation-start-->
 
 For developers: after cloning Lightshow locally, install `pre-commit` via
 
@@ -74,12 +91,8 @@ pre-commit
 pre-commit install
 ```
 
-and check that the tests (below) work correctly.
 
-### Running tests
-
-For developers: tests can be run via `pytest`. After cloning, simply use
-
+and check that the tests (below) work correctly (these can be run via `pytest`). After cloning, simply use
 ```bash
 pytest lightshow/_tests
 ```
@@ -89,6 +102,17 @@ or with coverage
 ```bash
 pytest -v --cov --cov-report xml lightshow/_tests
 ```
+
+We use helper scripts to parse the ``pyproject.toml`` file and install only specific packages required for certain parts of development. For development, we recommend installing all dependencies:
+
+```bash
+bash scripts/install.sh       # Install Lightshow's core dependencies
+bash scripts/install.sh test  # Install the test requirements only
+bash scripts/install.sh doc   # Install requirements for building the docs
+```
+
+
+<!--dev-installation-end-->
 
 
 ## Contributing 
@@ -107,6 +131,7 @@ e.g. "VASP"). Take a look at the examples in the `lightshow.parameters` module f
 
 ## Funding acknowledgement
 
+<!--funding-start-->
 This research is based upon work supported by the U.S. Department of
 Energy, Office of Science, Office Basic Energy Sciences, under Award
 Number FWP PS-030. This research used resources of the Center for
@@ -140,3 +165,4 @@ ENERGY, OR THEIR EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, CONSEQUENTIAL, SPECIAL OR PUNITIVE DAMAGES OF ANY KIND OR
 NATURE RESULTING FROM EXERCISE OF THIS LICENSE AGREEMENT OR THE USE OF
 THE SOFTWARE.
+<!--funding-end-->

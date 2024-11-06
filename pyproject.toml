@@ -65,9 +65,10 @@ doc = [
     "sphinx",
     "numpydoc",
     "sphinx-copybutton",
-    "sphinx_rtd_theme",
     "ipython",
-    "matplotlib"
+    "matplotlib",
+    "myst-parser",
+    "sphinx-doc"
 ]
 build = [
     "flit~=3.7",

@@ -12,7 +12,7 @@ Welcome to the **Lightshow** quickstart guide! In the text to follow, we will pr
 The database
 ============
 
-Everything in **Lightshow** is built around materials databases, specifically the :py:class:`lightshow.database.Database` class. This object is a lightweight container for `Pymatgen Structure <https://pymatgen.org/pymatgen.core.html#pymatgen.core.structure.Structure>`_ objects, and can be instantiated in a few different ways.
+Everything in **Lightshow** is built around materials databases, specifically the ``lightshow.database.Database`` class. This object is a lightweight container for Pymatgen ``Structure`` objects, and can be instantiated in a few different ways.
 
 Begin by importing the ``Database`` object.
 
@@ -37,7 +37,7 @@ Begin by importing the ``Database`` object.
 Databases from the Materials Project
 ------------------------------------
 
-The database is designed to be constructed via classmethods. The primary classmethod we recommend using is :py:class:`lightshow.database.Database.from_materials_project`. It interfaces directly with the ``mp_api.client.MPRester`` object to make queries and pull data locally. As of Lightshow 1.0.0, this interfaces directly with the `Materials Project v2 API <https://next-gen.materialsproject.org/api>`_ and is a simple passthrough. You should type something like ``mpr.materials.summary.search?`` (check its docstring) for the options you can pass directly through to ``Database.from_materials_project``. 
+The database is designed to be constructed via classmethods. The primary classmethod we recommend using is ``from_materials_project``. It interfaces directly with the ``mp_api.client.MPRester`` object to make queries and pull data locally. As of `Lightshow==1.0.0`, this interfaces directly with the `Materials Project v2 API <https://next-gen.materialsproject.org/api>`_ and is a simple passthrough. You should type something like ``mpr.materials.summary.search?`` (check its docstring) for the options you can pass directly through to ``Database.from_materials_project``. 
 
 #. Directly pull a list of Materials Project IDs
    
@@ -86,8 +86,8 @@ It is also possible to construct the ``Database`` from data on disk. This method
 The code above will look recursively in the provided directory for files matching the ``filename`` argument, and will attempt to read those into a ``Structure`` object via Pymatgen's ``Structure.from_file`` classmethod. The keys to the ``database.structures`` property will be the path to the parent directory containing the structure file instead of the MPID.
 
 
-Input Parameters
-================
+Parameters
+==========
 
 Our primary common abstraction is that of the spectroscopy simulation parameters. These control every aspect of the input files to be written and are specific to each type of code. However, while all options are exposed for the user, sensible defaults are also provided, making it straightforward to get started. Currently, we provide support for 5 different codes: FEFF, VASP, EXCITING, OCEAN and Xspectra.
 
