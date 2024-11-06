@@ -10,8 +10,6 @@ import os
 #
 import sys
 
-print(sys.path)
-
 project = "Lightshow"
 copyright = "2024, Broohaven National Laboratory"
 author = "Broohaven National Laboratory"

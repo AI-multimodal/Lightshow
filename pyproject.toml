@@ -68,7 +68,6 @@ doc = [
     "ipython",
     "matplotlib",
     "myst-parser",
-    "sphinx-doc"
 ]
 build = [
     "flit~=3.7",

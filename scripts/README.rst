@@ -18,6 +18,3 @@ Building
 --------
 We provide two self-contained scripts for building the Lightshow source and docs. These scripts are `build_project.sh` and `build_docs.sh`, respectively.
 
-Versioning
-----------
-The version of Lightshow is controlled in a completely automatic fashion during CI execution. It works using the script `update_version.sh`. Specifically: TODO
