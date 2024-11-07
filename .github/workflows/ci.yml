@@ -15,6 +15,7 @@ jobs:
 
     env:
         MP_API_KEY: ${{ secrets.MP_API_KEY }}
+        GITHUB_ACTION_IS_RUNNING: 1
 
     runs-on: ${{ matrix.os }}
     strategy:

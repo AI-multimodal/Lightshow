@@ -21,5 +21,6 @@ pip install toml
 bash scripts/install.sh
 bash scripts/install.sh doc
 echo "__version__ = '$(dunamai from any --style=pep440 --no-metadata)'" >lightshow/_version.py
+cat lightshow/_version.py
 build_docs
 git checkout lightshow/_version.py
