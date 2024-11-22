@@ -31,9 +31,9 @@ requires-python = ">=3.9"
 dependencies = [
     "ase>=3.23.0",
     "monty>=2024.10.21",
-    "mp-api>=0.42.2",
+    "mp-api==0.41.2",
     "numpy>=1.26.4",
-    "pymatgen>=2024.8.9",
+    "pymatgen==2024.3.1",
     "tqdm>=4.67.0",
 ]
 version = "1.2.7.post1.dev0"
@@ -67,8 +67,9 @@ ai = [
     "dgl==2.1.0",
     "lightning>=2.4.0",
     "matgl==0.8.5",
-    "pydantic>=2.9.2",
-    "pymatgen>=2024.8.9",
+    "pydantic-core==2.23.4",
+    "pydantic==2.9.2",
+    "pymatgen==2024.3.1",
     "torch==2.2.0",
     "torchdata==0.7.1",
 ]
@@ -79,6 +80,9 @@ all = [
     "lightshow[ai]",
 ]
 
+[project.scripts]
+lightshow-predict = "lightshow.ai.entrypoint:entrypoint"
+    
 [tool.ruff]
 line-length = 80
 
