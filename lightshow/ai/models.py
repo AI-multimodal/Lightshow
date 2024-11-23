@@ -147,6 +147,22 @@ class XASModel:
         structure: PymatgenStructure,
     ):
         feature = self._get_feature(structure)
-        print(feature.shape)
         spectrum = self.model(torch.tensor(feature))
         return spectrum.detach().numpy().squeeze()
+
+
+def predict(structure, absorbing_site, spectroscopy_type):
+    site_idxs = [
+        ii
+        for ii, site in enumerate(structure.sites)
+        if site.specie.symbol == absorbing_site
+    ]
+    if len(site_idxs) == 0:
+        raise ValueError(
+            f"element {absorbing_site} not found in provided structure"
+        )
+    spec = XASModel(
+        element=absorbing_site, spectroscopy_type=spectroscopy_type
+    ).predict(structure)
+    result = {ii: spec[ii] for ii in site_idxs}
+    return result

@@ -79,9 +79,13 @@ all = [
     "lightshow[extras]",
     "lightshow[ai]",
 ]
+server = [
+    "flask>=3.1.0",
+]
 
 [project.scripts]
 lightshow-predict = "lightshow.ai.entrypoint:entrypoint"
+lightshow-serve = "lightshow.ai.server:serve"
     
 [tool.ruff]
 line-length = 80
