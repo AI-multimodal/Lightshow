@@ -147,8 +147,12 @@ class XASModel:
         structure: PymatgenStructure,
     ):
         feature = self._get_feature(structure)
-        spectrum = self.model(torch.tensor(feature))
-        return spectrum.detach().numpy().squeeze()
+        if torch.cuda.is_available():
+            spectrum = self.model(torch.tensor(feature, device=torch.device('cuda:0')))
+            return spectrum.detach().cpu().numpy().squeeze()
+        else:
+            spectrum = self.model(torch.tensor(feature))
+            return spectrum.detach().numpy().squeeze()
 
 
 def predict(structure, absorbing_site, spectroscopy_type):
