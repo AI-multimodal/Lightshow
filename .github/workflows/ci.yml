@@ -23,30 +23,26 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
 
     - uses: actions/checkout@v4
 
-    - name: Install the latest version of uv and set the python version
-      uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v4
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Test with python ${{ matrix.python-version }}
       run: uv run --frozen --extra test pytest -v --cov --cov-report xml lightshow/_tests
 
-    - name: Upload code coverage
-      uses: codecov/codecov-action@v5
+    - uses: codecov/codecov-action@v5
       timeout-minutes: 10
-      # This shouldn't be required anymore on v5
-      # with:
-      #   token: ${{ secrets.CODECOV_TOKEN }}
-      #   fail_ci_if_error: false
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
 
   ruff:
-    name: Ruff
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,19 +51,15 @@ jobs:
           src: "./lightshow"
 
   docs:
-    name: Docs
-
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4      
 
-    - name: Install the latest version of uv and set the python version
-      uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v4
 
-    - name: Install and build
+    - name: build
       run: uv run --frozen --extra doc make -C docs/ html
 
   # NOTE: Commented this out for now
