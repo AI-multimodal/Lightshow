@@ -22,7 +22,7 @@ def _get_api_key(api_key):
     if api_key is None:
         api_key = get_API_key_from_environ()
     if api_key is None:
-        raise ValueError(f"Invalid API key {api_key}")
+        raise ValueError("Invalid API key")
     return api_key
 
 
