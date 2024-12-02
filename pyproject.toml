@@ -32,9 +32,9 @@ requires-python = ">=3.9"
 dependencies = [
     "ase>=3.23.0",
     "monty>=2024.10.21",
-    "mp-api>=0.41.2",
+    "mp-api==0.41.2",
     "numpy>=1.26.4",
-    "pymatgen>=2024.3.1",
+    "pymatgen==2024.3.1",
     "tqdm>=4.67.0",
 ]
 

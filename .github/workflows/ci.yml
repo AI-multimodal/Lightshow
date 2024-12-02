@@ -23,25 +23,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        python-version: [3.9, '3.10', 3.11]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
 
     - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Install the latest version of uv and set the python version
+      uses: astral-sh/setup-uv@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install testing dependencies
-      run: |
-        bash scripts/install.sh
-        bash scripts/install.sh test
-
-    - name: Run tests
-      run: |
-        pytest -v --cov --cov-report xml lightshow/_tests
+    - name: Test with python ${{ matrix.python-version }}
+      run: uv run --frozen pytest -v --cov --cov-report xml lightshow/_tests
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v2
