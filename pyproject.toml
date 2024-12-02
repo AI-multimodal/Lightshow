@@ -61,6 +61,7 @@ doc = [
     "numpydoc>=1.8.0",
     "sphinx>=7.4.7",
     "sphinx-copybutton>=0.5.2",
+    "sphinx-autobuild>=2024.10.3",
 ]
 extras = [
     "dunamai>=1.23.0",
