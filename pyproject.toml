@@ -1,28 +1,23 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "lightshow"
 authors = [
     {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
-    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"},
-    {"name" = "Deyu Lu", "email" = "dlu@bnl.gov"},
+    {"name" = "Fanchen Meng"},
+    {"name" = "Deyu Lu"},
     {"name" = "Benedikt Maurer"},
     {"name" = "Fabien Peschel"},
     {"name" = "Eli Stavitski"},
-    {"name" = "Xiaohui Qu"},
+    {"name" = "Xiaohui Qu", "email" = "xiaqu@bnl.gov"},
     {"name" = "John T. Vinson"},
     {"name" = "Christian Vorwerk"}
 ]
+dynamic = ["version"]
 maintainers = [
     {"name" = "Matthew R. Carbone", "email" = "mcarbone@bnl.gov"},
-    {"name" = "Fanchen Meng", "email" = "fmeng1@bnl.gov"}
+    {"name" = "Xiaohui Qu", "email" = "xiaqu@bnl.gov"},
 ]
-description = "A one-stop-shop for writing computational spectroscopy input files"
+description = "A one-stop-shop for computational spectroscopy"
 readme = "README.md"
-requires-python = ">=3.9"
-license = {"file" = "LICENSE"}
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Natural Language :: English",
@@ -33,50 +28,49 @@ classifiers = [
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
 ]
+requires-python = ">=3.9"
 dependencies = [
-    "numpy==1.26.4",
-    "pymatgen==2024.3.1",
-    "mp-api==0.41.2",
-    "ase",
-    "tqdm",
-    "monty"
+    "ase>=3.23.0",
+    "monty>=2024.10.21",
+    "mp-api>=0.41.2",
+    "numpy>=1.26.4",
+    "pymatgen>=2024.3.1",
+    "tqdm>=4.67.0",
 ]
 
-# Dynamic version reads __version__ directly from my_package.__init__
-dynamic = ["version"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-# [tool.flit.sdist]
-# exclude = [
-#     "lightshow/_tests",
-#     "docs"
-# ]
+[tool.hatch.version]
+path = "lightshow/_version.py"
 
 [project.optional-dependencies]
 test = [
-    "coverage",
-    "flake8",
-    "ruff",
-    "pytest",
-    "pytest-cov",
-    "nbstripout",
-    "pre-commit",
+    "coverage>=7.6.7",
+    "flake8>=7.1.1",
+    "nbstripout>=0.8.1",
+    "pytest>=8.3.3",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.7.4",
 ]
 doc = [
-    "sphinx",
-    "numpydoc",
-    "sphinx-copybutton",
-    "ipython",
-    "matplotlib",
-    "myst-parser",
-    "dunamai==1.19.2",
+    "myst-parser>=3.0.1",
+    "numpydoc>=1.8.0",
+    "sphinx>=7.4.7",
+    "sphinx-copybutton>=0.5.2",
 ]
-build = [
-    "flit~=3.7",
-    "dunamai==1.19.2",
+extras = [
+    "dunamai>=1.23.0",
+    "ipython>=8.18.1",
+    "jupyterlab>=4.3.1",
+    "matplotlib>=3.9.2",
 ]
-
-[tool.setuptools]
-packages = ["lightshow"]
+all = [
+    "lightshow[test]",
+    "lightshow[doc]",
+    "lightshow[extras]",
+]
 
 [tool.ruff]
 line-length = 80
