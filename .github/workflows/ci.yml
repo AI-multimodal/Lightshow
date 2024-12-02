@@ -35,44 +35,25 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Test with python ${{ matrix.python-version }}
-      run: uv run --frozen pytest -v --cov --cov-report xml lightshow/_tests
+      run: uv run --frozen --extra test pytest -v --cov --cov-report xml lightshow/_tests
 
     - name: Upload code coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v5
       timeout-minutes: 10
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
+      # This shouldn't be required anymore on v5
+      # with:
+      #   token: ${{ secrets.CODECOV_TOKEN }}
+      #   fail_ci_if_error: false
 
   ruff:
-    name: Run Ruff code quality check
+    name: Ruff
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
-        with:
-          src: './lightshow'
-
-  flake8_py3:
-    name: Run flake8 code quality check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install flake8
-        run: pip install flake8
-      - name: Run flake8
-        uses: suo/flake8-github-action@releases/v1
-        with:
-          checkName: 'flake8_py3'   # NOTE: this needs to be the same as the job name
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: astral-sh/ruff-action@v1
 
   docs:
-    name: Build documentation test
+    name: Docs
 
     runs-on: ubuntu-latest
 
@@ -81,112 +62,104 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    ###########################################################################
-    # Getting the tags like this is REQUIRED for the dynamic versioning
-    # system to work properly
-    - name: Get tags
-      if: "! startsWith(github.ref, 'refs/tags')"
-      run: git fetch --unshallow --tags
-    ###########################################################################
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+    - name: Install the latest version of uv and set the python version
+      uses: astral-sh/setup-uv@v4
 
     - name: Install and build
-      run: bash scripts/build_docs.sh
+      run: uv run --frozen --extra doc make -C docs/ html
 
-  build_and_publish:
-    # This workflow follows the best practices outlined here:
-    # https://github.com/marketplace/actions/pypi-publish
-    # for deploying a project to PyPI via a GH action. It only runs on tags
-
-    name: Upload release to PyPI
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/lightshow/
-    permissions:
-      id-token: write
-
-    needs:
-      - tests
-      - ruff
-      - flake8_py3
-      - docs
-
-    steps:
-
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Build and apply version
-      run: bash scripts/build_project.sh
-
-    - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://upload.pypi.org/legacy/
-
-  build_and_publish_docs:
-    name: Build and publish documentation via GitHub Pages
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    # Only allow tagged commits
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-
-    needs:
-      - tests
-      - ruff
-      - flake8_py3
-      - docs
-      - build_and_publish
-
-    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    # Allow one concurrent deployment
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Build and apply version
-      run: |
-        bash scripts/build_docs.sh
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v2
-
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
-      with:
-        path: 'docs/build/html/'
-
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v1
+  # NOTE: Commented this out for now
+  #
+  # build_and_publish:
+  #   # This workflow follows the best practices outlined here:
+  #   # https://github.com/marketplace/actions/pypi-publish
+  #   # for deploying a project to PyPI via a GH action. It only runs on tags
+  #
+  #   name: Upload release to PyPI
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: pypi
+  #     url: https://pypi.org/project/lightshow/
+  #   permissions:
+  #     id-token: write
+  #
+  #   needs:
+  #     - tests
+  #     - ruff
+  #     - flake8_py3
+  #     - docs
+  #
+  #   steps:
+  #
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+  #
+  #   - name: Set up Python 3.9
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.9
+  #
+  #   - name: Build and apply version
+  #     run: bash scripts/build_project.sh
+  #
+  #   - name: Publish package distributions to PyPI
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       repository-url: https://upload.pypi.org/legacy/
+  #
+  # build_and_publish_docs:
+  #   name: Build and publish documentation via GitHub Pages
+  #
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
+  #
+  #   # Only allow tagged commits
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+  #
+  #   needs:
+  #     - tests
+  #     - ruff
+  #     - flake8_py3
+  #     - docs
+  #     - build_and_publish
+  #
+  #   # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+  #   permissions:
+  #     contents: read
+  #     pages: write
+  #     id-token: write
+  #
+  #   # Allow one concurrent deployment
+  #   concurrency:
+  #     group: "pages"
+  #     cancel-in-progress: true
+  #
+  #   runs-on: ubuntu-latest
+  #
+  #   steps:
+  #
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+  #
+  #   - name: Set up Python 3.9
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.9
+  #
+  #   - name: Build and apply version
+  #     run: |
+  #       bash scripts/build_docs.sh
+  #
+  #   - name: Setup Pages
+  #     uses: actions/configure-pages@v2
+  #
+  #   - name: Upload artifact
+  #     uses: actions/upload-pages-artifact@v1
+  #     with:
+  #       path: 'docs/build/html/'
+  #
+  #   - name: Deploy to GitHub Pages
+  #     id: deployment
+  #     uses: actions/deploy-pages@v1
