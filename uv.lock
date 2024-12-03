@@ -1359,7 +1359,7 @@ wheels = [
 
 [[package]]
 name = "lightshow"
-version = "1.2.8.dev3"
+version = "1.2.8"
 source = { editable = "." }
 dependencies = [
     { name = "ase" },
@@ -1438,7 +1438,7 @@ requires-dist = [
     { name = "numpydoc", marker = "extra == 'doc'", specifier = ">=1.8.0" },
     { name = "pydantic", specifier = "<=2.9.2" },
     { name = "pydantic-core", specifier = "<=2.23.4" },
-    { name = "pymatgen", specifier = "==2024.3.1" },
+    { name = "pymatgen", specifier = ">=2024.3.1" },
     { name = "pytest", marker = "extra == 'all'", specifier = ">=8.3.3" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.3" },
     { name = "pytest-cov", marker = "extra == 'all'", specifier = ">=6.0.0" },
