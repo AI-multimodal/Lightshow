@@ -62,98 +62,70 @@ jobs:
     - name: build
       run: uv run --frozen --extra doc make -C docs/ html
 
-  # NOTE: Commented this out for now
-  #
-  # build_and_publish:
-  #   # This workflow follows the best practices outlined here:
-  #   # https://github.com/marketplace/actions/pypi-publish
-  #   # for deploying a project to PyPI via a GH action. It only runs on tags
-  #
-  #   name: Upload release to PyPI
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: pypi
-  #     url: https://pypi.org/project/lightshow/
-  #   permissions:
-  #     id-token: write
-  #
-  #   needs:
-  #     - tests
-  #     - ruff
-  #     - flake8_py3
-  #     - docs
-  #
-  #   steps:
-  #
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #
-  #   - name: Set up Python 3.9
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.9
-  #
-  #   - name: Build and apply version
-  #     run: bash scripts/build_project.sh
-  #
-  #   - name: Publish package distributions to PyPI
-  #     uses: pypa/gh-action-pypi-publish@release/v1
-  #     with:
-  #       repository-url: https://upload.pypi.org/legacy/
-  #
-  # build_and_publish_docs:
-  #   name: Build and publish documentation via GitHub Pages
-  #
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
-  #
-  #   # Only allow tagged commits
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-  #
-  #   needs:
-  #     - tests
-  #     - ruff
-  #     - flake8_py3
-  #     - docs
-  #     - build_and_publish
-  #
-  #   # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-  #   permissions:
-  #     contents: read
-  #     pages: write
-  #     id-token: write
-  #
-  #   # Allow one concurrent deployment
-  #   concurrency:
-  #     group: "pages"
-  #     cancel-in-progress: true
-  #
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #
-  #   - name: Set up Python 3.9
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.9
-  #
-  #   - name: Build and apply version
-  #     run: |
-  #       bash scripts/build_docs.sh
-  #
-  #   - name: Setup Pages
-  #     uses: actions/configure-pages@v2
-  #
-  #   - name: Upload artifact
-  #     uses: actions/upload-pages-artifact@v1
-  #     with:
-  #       path: 'docs/build/html/'
-  #
-  #   - name: Deploy to GitHub Pages
-  #     id: deployment
-  #     uses: actions/deploy-pages@v1
+    - name: artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'docs/build/html/'
+
+  publish-code:
+    # This workflow follows the best practices outlined here:
+    # https://github.com/marketplace/actions/pypi-publish
+    # for deploying a project to PyPI via a GH action. It only runs on tags
+
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/lightshow/
+    permissions:
+      id-token: write
+
+    needs:
+      - tests
+      - ruff
+      - docs
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - uses: astral-sh/setup-uv@v4
+
+    - name: build
+      run: uv build
+
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://upload.pypi.org/legacy/
+
+  publish-docs:
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs:
+      - tests
+      - ruff
+      - docs
+      - publish-code
+
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    # permissions:
+    #   contents: read
+    #   pages: write
+    #   id-token: write
+
+    # Allow one concurrent deployment
+    # concurrency:
+    #   group: "pages"
+    #   cancel-in-progress: true
+
+    # runs-on: ubuntu-latest
+
+    steps:
+
+    - name: publish
+      id: deployment
+      uses: actions/deploy-pages@v4
