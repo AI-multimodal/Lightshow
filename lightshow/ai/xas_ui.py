@@ -42,6 +42,9 @@ onmixas_layout = Columns([
     Input(search_component.id(), "data")
 )
 def update_structure_by_mpid(search_mpid: str) -> Structure:
+    if not search_mpid:
+        raise PreventUpdate
+    
     with MPRester() as mpr:
         struct = mpr.get_structure_by_material_id(search_mpid)
         print("Struct from material.")
