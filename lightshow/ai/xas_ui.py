@@ -38,7 +38,7 @@ onmixas_layout = Columns([
 
 
 @app.callback(
-    Output(struct_component.id(), "data"),
+    Output(struct_component.id(), "data", allow_duplicate=True),
     Input(search_component.id(), "data")
 )
 def update_structure_by_mpid(search_mpid: str) -> Structure:
@@ -46,10 +46,21 @@ def update_structure_by_mpid(search_mpid: str) -> Structure:
         raise PreventUpdate
     
     with MPRester() as mpr:
-        struct = mpr.get_structure_by_material_id(search_mpid)
+        st = mpr.get_structure_by_material_id(search_mpid)
         print("Struct from material.")
 
-    return struct
+    return st
+
+
+@app.callback(
+    Output(struct_component.id(), "data", allow_duplicate=True),
+    Input(upload_component.id(), "data")
+)
+def update_structure_by_file(upload_data: str) -> Structure:
+    if not upload_data:
+        raise PreventUpdate
+    st = Structure.from_dict(upload_data['data'])
+    return st
 
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
