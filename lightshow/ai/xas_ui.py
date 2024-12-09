@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import dash
 from dash import dcc
 import plotly.express as px
@@ -17,12 +18,15 @@ from crystal_toolkit.helpers.layouts import (
     Loading
 )
 
-app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS Prediction @ Lightshow.ai")
+from lightshow.ai.models import predict
+
+
+app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS@Lightshow.ai")
 
 struct_component = ctc.StructureMoleculeComponent(id="st_vis")
 search_component = ctc.SearchComponent(id='mpid_search')
 upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
-xas_plot = dcc.Graph()
+xas_plot = dcc.Graph(id='xas_plot')
 
 onmixas_layout = Columns([
         Column(Box([
@@ -61,6 +65,24 @@ def update_structure_by_file(upload_data: str) -> Structure:
         raise PreventUpdate
     st = Structure.from_dict(upload_data['data'])
     return st
+
+
+@app.callback(
+    Output("xas_plot", "figure"),
+    Input(struct_component.id(), "data")
+)
+def predict_xas(st_data: str) -> Structure:
+    if not st_data:
+        raise PreventUpdate
+    st = Structure.from_dict(st_data)
+    absorbing_site = 'Cu'
+    spectroscopy_type = 'FEFF'
+    specs = predict(st, absorbing_site, spectroscopy_type)
+    spectrum = specs.mean(axis=0)
+    ene = np.arange(spectrum.shape[0])
+    fig = px.scatter(x=ene, y=ene)
+    return fig
+
 
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
