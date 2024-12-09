@@ -78,9 +78,10 @@ def predict_xas(st_data: str) -> Structure:
     absorbing_site = 'Cu'
     spectroscopy_type = 'FEFF'
     specs = predict(st, absorbing_site, spectroscopy_type)
+    specs = np.stack(list(specs.values()))
     spectrum = specs.mean(axis=0)
     ene = np.arange(spectrum.shape[0])
-    fig = px.scatter(x=ene, y=ene)
+    fig = px.scatter(x=ene, y=spectrum)
     return fig
 
 
