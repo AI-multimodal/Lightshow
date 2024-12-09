@@ -22,8 +22,10 @@ upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
 xas_plot = dcc.Graph()
 
 onmixas_layout = Columns([
-        Column([search_component.layout(),
-                upload_component.layout()]),
+        Column(Box([
+                    search_component.layout(),
+                    upload_component.layout()],
+                style={"width": "350px"}), narrow=True),
         Column(Loading(struct_component.layout(size="100%"))),
         Column(xas_plot)
     ],
