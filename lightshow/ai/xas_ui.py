@@ -14,7 +14,7 @@ from crystal_toolkit.helpers.layouts import (
     Loading
 )
 
-app = dash.Dash(prevent_initial_callbacks=True)
+app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS Prediction @ Lightshow.ai")
 
 struct_component = ctc.StructureMoleculeComponent(id="st_vis")
 search_component = ctc.SearchComponent(id='mpid_search')
