@@ -3,8 +3,10 @@ from dash import dcc
 import plotly.express as px
 
 from dash.dependencies import Input, Output
+from dash.exceptions import PreventUpdate
 from pymatgen.core.lattice import Lattice
 from pymatgen.core.structure import Structure
+from mp_api.client import MPRester
 
 import crystal_toolkit.components as ctc
 from crystal_toolkit.helpers.layouts import (
@@ -32,6 +34,19 @@ onmixas_layout = Columns([
     desktop_only=False,
     centered=False
 )
+
+
+@app.callback(
+    Output(struct_component.id(), "data"),
+    Input(search_component.id(), "data")
+)
+def update_structure_by_mpid(search_mpid: str) -> Structure:
+    with MPRester() as mpr:
+        struct = mpr.get_structure_by_material_id(search_mpid)
+        print("Struct from material.")
+
+    return struct
+
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
 
