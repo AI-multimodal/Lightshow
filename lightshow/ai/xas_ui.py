@@ -1,3 +1,4 @@
+import os
 import dash
 from dash import dcc
 import plotly.express as px
@@ -51,4 +52,9 @@ def update_structure_by_mpid(search_mpid: str) -> Structure:
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
 
 if __name__ == "__main__":
+    if "MP_API_KEY" not in os.environ:
+        print("Environment variable MP_API_KEY not found, "
+              "please set your materials project API key to "
+              "this environment variable before running this app")
+        exit()
     app.run_server(debug=True, port=8050, host='0.0.0.0')
