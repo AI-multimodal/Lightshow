@@ -60,7 +60,7 @@ def update_structure_by_mpid(search_mpid: str) -> Structure:
     Output(struct_component.id(), "data", allow_duplicate=True),
     Input(upload_component.id(), "data")
 )
-def update_structure_by_file(upload_data: str) -> Structure:
+def update_structure_by_file(upload_data: dict) -> Structure:
     if not upload_data:
         raise PreventUpdate
     st = Structure.from_dict(upload_data['data'])
@@ -71,7 +71,7 @@ def update_structure_by_file(upload_data: str) -> Structure:
     Output("xas_plot", "figure"),
     Input(struct_component.id(), "data")
 )
-def predict_xas(st_data: str) -> Structure:
+def predict_xas(st_data: dict) -> Structure:
     if not st_data:
         raise PreventUpdate
     st = Structure.from_dict(st_data)
