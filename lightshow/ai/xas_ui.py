@@ -1,43 +1,37 @@
 import dash
-from dash import html
+from dash import dcc
+import plotly.express as px
 
-# standard Dash imports for callbacks (interactivity)
 from dash.dependencies import Input, Output
 from pymatgen.core.lattice import Lattice
 from pymatgen.core.structure import Structure
 
 import crystal_toolkit.components as ctc
+from crystal_toolkit.helpers.layouts import (
+    Box,
+    Column,
+    Columns,
+    Loading
+)
 
-# don't run callbacks on page load
 app = dash.Dash(prevent_initial_callbacks=True)
 
-# now we give a list of structures to pick from
-structures = [
-    Structure(Lattice.hexagonal(5, 3), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]]),
-    Structure(Lattice.cubic(5), ["K", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]]),
-]
+struct_component = ctc.StructureMoleculeComponent(id="st_vis")
+search_component = ctc.SearchComponent(id='mpid_search')
+upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
+xas_plot = dcc.Graph()
 
-# we show the first structure by default
-structure_component = ctc.StructureMoleculeComponent(structures[0], id="my_structure")
-
-# and we create a button for user interaction
-my_button = html.Button("Swap Structure", id="change_structure_button")
-
-# now we have two entries in our app layout,
-# the structure component's layout and the button
-my_layout = html.Div([structure_component.layout(), my_button])
-
-ctc.register_crystal_toolkit(app=app, layout=my_layout)
-
-
-# for the interactivity, we use a standard Dash callback
-@app.callback(
-    Output(structure_component.id(), "data"),
-    [Input("change_structure_button", "n_clicks")],
+onmixas_layout = Columns([
+        Column([search_component.layout(),
+                upload_component.layout()]),
+        Column(Loading(struct_component.layout(size="100%"))),
+        Column(xas_plot)
+    ],
+    desktop_only=False,
+    centered=False
 )
-def update_structure(n_clicks):
-    return structures[n_clicks % 2]
 
+ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8050, host='0.0.0.0')
