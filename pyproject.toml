@@ -57,12 +57,6 @@ doc = [
     "sphinx>=7.4.7",
     "sphinx-copybutton>=0.5.2",
 ]
-extras = [
-    "dunamai>=1.23.0",
-    "ipython>=8.18.1",
-    "jupyterlab>=4.3.1",
-    "matplotlib>=3.9.2",
-]
 ai = [
     "dgl==2.1.0",
     "lightning>=2.4.0",
@@ -76,7 +70,6 @@ ai = [
 all = [
     "lightshow[test]",
     "lightshow[doc]",
-    "lightshow[extras]",
     "lightshow[ai]",
 ]
 server = [

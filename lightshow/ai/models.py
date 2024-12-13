@@ -50,12 +50,11 @@ class XASBlockModule(LightningModule):
     def load(
         cls,
         element: str,
-        type: str,
+        spectroscopy_type: str,
         pattern=XASBLOCKS_PATH / "{element}_{type}.ckpt",
     ):
         pattern = str(pattern)
-        path = pattern.format(element=element, type=type)
-        print(f"Loading XASBlock model from {path}")
+        path = pattern.format(element=element, type=spectroscopy_type)
         model = XASBlock(
             input_dim=64,
             hidden_dims=[
@@ -66,8 +65,6 @@ class XASBlockModule(LightningModule):
             output_dim=141,
         )
         module = cls.load_from_checkpoint(checkpoint_path=path, model=model)
-        module.eval()
-        module.freeze()
         return module
 
 
@@ -119,7 +116,8 @@ class M3GNetFeaturizer:
                 edge_feat, node_feat, state_feat = self.model.graph_layers[i](
                     g, edge_feat, node_feat, state_feat
                 )
-        return np.array(node_feat.detach().numpy())
+        res = np.array(node_feat.detach().numpy())
+        return res
 
     @cache
     @staticmethod
@@ -136,8 +134,9 @@ class XASModel:
         self.element = element
         self.spectroscopy_type = spectroscopy_type
         self.model = XASBlockModule.load(
-            element=element, type=spectroscopy_type
+            element=element, spectroscopy_type=spectroscopy_type
         )
+        self.model.eval()
 
     def _get_feature(self, structure: PymatgenStructure):
         return self.featurizer.featurize(structure)
@@ -146,16 +145,20 @@ class XASModel:
         self,
         structure: PymatgenStructure,
     ):
-        feature = self._get_feature(structure)
-        if torch.cuda.is_available():
-            spectrum = self.model(torch.tensor(feature, device=torch.device('cuda:0')))
-            return spectrum.detach().cpu().numpy().squeeze()
-        else:
-            spectrum = self.model(torch.tensor(feature))
-            return spectrum.detach().numpy().squeeze()
+        with torch.no_grad():
+            feature = self._get_feature(structure)
+            print("feature", feature)
+            device = (
+                torch.device("cuda") if torch.cuda.is_available() else "cpu"
+            )
+            feature = torch.tensor(feature, device=device)
+            spectrum = self.model(feature)
+        spectrum = spectrum.detach().cpu().numpy().squeeze()
+        return spectrum
 
 
 def predict(structure, absorbing_site, spectroscopy_type):
+    print("structure", structure)
     site_idxs = [
         ii
         for ii, site in enumerate(structure.sites)
@@ -168,5 +171,7 @@ def predict(structure, absorbing_site, spectroscopy_type):
     spec = XASModel(
         element=absorbing_site, spectroscopy_type=spectroscopy_type
     ).predict(structure)
+    print("spectrum", spec)
+    print("-" * 20)
     result = {ii: spec[ii] for ii in site_idxs}
     return result
