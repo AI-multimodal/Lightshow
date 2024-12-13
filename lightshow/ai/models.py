@@ -147,7 +147,8 @@ class XASModel:
     ):
         with torch.no_grad():
             feature = self._get_feature(structure)
-            print("feature", feature)
+            # Normalize by the proper amount
+            feature = feature * 1000.0
             device = (
                 torch.device("cuda") if torch.cuda.is_available() else "cpu"
             )
@@ -158,7 +159,6 @@ class XASModel:
 
 
 def predict(structure, absorbing_site, spectroscopy_type):
-    print("structure", structure)
     site_idxs = [
         ii
         for ii, site in enumerate(structure.sites)
@@ -171,7 +171,5 @@ def predict(structure, absorbing_site, spectroscopy_type):
     spec = XASModel(
         element=absorbing_site, spectroscopy_type=spectroscopy_type
     ).predict(structure)
-    print("spectrum", spec)
-    print("-" * 20)
     result = {ii: spec[ii] for ii in site_idxs}
     return result
