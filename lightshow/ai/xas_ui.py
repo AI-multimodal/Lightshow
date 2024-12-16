@@ -4,7 +4,7 @@ import dash
 from dash import dcc
 import plotly.express as px
 
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from pymatgen.core.lattice import Lattice
 from pymatgen.core.structure import Structure
@@ -87,10 +87,19 @@ def predict_xas(st_data: dict) -> Structure:
 
 @app.callback(
     Output("xas_plot", "figure", allow_duplicate=True),
-    Input(struct_component.id('scene'), "selectedObject")
+    Input(struct_component.id('scene'), "selectedObject"),
+    State(struct_component.id(), 'data')
 )
-def predict_xas(sel) -> Structure:
-    print(sel, struct_component.all_ids)
+def predict_xas(sel, st_data) -> Structure:
+    st = Structure.from_dict(st_data)
+    i_sphere = int(sel[0]['id'].split('--')[-1])
+    spheres = st._get_sites_to_draw()
+    spheres = list(spheres)
+    cur_sphere = spheres[i_sphere]
+    i_site = cur_sphere[0]
+    site = st[i_site]
+    print(st)
+    print(sel, site)
     
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
