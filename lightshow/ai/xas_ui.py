@@ -68,7 +68,7 @@ def update_structure_by_file(upload_data: dict) -> Structure:
 
 
 @app.callback(
-    Output("xas_plot", "figure"),
+    Output("xas_plot", "figure", allow_duplicate=True),
     Input(struct_component.id(), "data")
 )
 def predict_xas(st_data: dict) -> Structure:
@@ -85,6 +85,13 @@ def predict_xas(st_data: dict) -> Structure:
     return fig
 
 
+@app.callback(
+    Output("xas_plot", "figure", allow_duplicate=True),
+    Input(struct_component.id('scene'), "selectedObject")
+)
+def predict_xas(sel) -> Structure:
+    print(sel, struct_component.all_ids)
+    
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
 
