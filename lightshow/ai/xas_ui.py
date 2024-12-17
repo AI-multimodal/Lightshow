@@ -28,10 +28,17 @@ search_component = ctc.SearchComponent(id='mpid_search')
 upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
 xas_plot = dcc.Graph(id='xas_plot')
 
+all_elements = ['Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu']
+ene_start = {'Ti': 4964.504, 'V': 5464.097, 'Cr': 5989.168, 'Mn': 6537.886, 
+             'Fe': 7111.23, 'Co': 7709.282, 'Ni': 8332.181, 'Cu': 8983.173}
+ene_grid = {el: np.linspace(start, start + 35, 141) for el, start in ene_start.items()}
+xas_model_names = [f'{el} FEFF' for el in all_elements] + ['Ti VASP', 'Cu VASP']
+absorber_dropdown = dcc.Dropdown(xas_model_names, value='Ti VASP')
+
 onmixas_layout = Columns([
-        Column(Box([
-                    search_component.layout(),
-                    upload_component.layout()],
+        Column(Box([search_component.layout(),
+                    upload_component.layout(),
+                    absorber_dropdown],
                 style={"width": "350px"}), narrow=True),
         Column(Loading(struct_component.layout(size="100%"))),
         Column(xas_plot)
