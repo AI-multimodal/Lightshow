@@ -108,10 +108,10 @@ def predict_average_xas(st_data: dict, el_type) -> Structure:
 
 
 def build_figure(spectrum, el_type, is_average, no_element, sel_mismatch):
+    element = el_type.split(" ")[0]
     if spectrum is None:
         ene = None
     else:
-        element = el_type.split(" ")[0]
         ene = ene_grid[element]
     if no_element:
         title = f"This structure doesn't contain {element}"
