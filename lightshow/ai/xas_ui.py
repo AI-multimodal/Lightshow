@@ -64,6 +64,7 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
     st_dict = decorate_structure_with_xas(st, el_type)
     return st_dict
 
+
 def decorate_structure_with_xas(st: Structure, el_type):
     absorbing_site, spectroscopy_type = el_type.split(' ')
     st_dict = st.as_dict()
@@ -98,13 +99,26 @@ def predict_average_xas(st_data: dict, el_type) -> Structure:
         raise PreventUpdate
     specs = st_data['xas']
     if len(specs) == 0:
-        element = el_type.split(' ')[0]
-        fig = px.scatter(title=f"This structure doesn't contain {element}")
+        fig = build_figure(None, el_type, is_average=True, no_element=True, sel_mismatch=False)
     else:
         specs = np.array(list(specs.values()))
         spectrum = specs.mean(axis=0)
-        ene = np.arange(spectrum.shape[0])
-        fig = px.scatter(x=ene, y=spectrum, title=f'Average K-edge XANES Spectrum of {el_type}')
+        fig = build_figure(spectrum, el_type, is_average=True, no_element=False, sel_mismatch=False)
+    return fig
+
+
+def build_figure(spectrum, el_type, is_average, no_element, sel_mismatch):
+    element = el_type.split("_")[0]
+    ene = ene_grid[element]
+    if no_element:
+        title = f"This structure doesn't contain {element}"
+    elif sel_mismatch:
+        title = f"The selected atom is not a {element} atom"
+    elif is_average:
+        title = f'Average K-edge XANES Spectrum of {el_type}'
+    else:
+        title = f'K-edge XANES Spectrum for the selected {element} Cu atom'
+    fig = px.scatter(x=ene, y=spectrum, title=title)
     return fig
 
 
@@ -115,23 +129,26 @@ def predict_average_xas(st_data: dict, el_type) -> Structure:
     State('absorber', 'value')
 )
 def predict_site_specific_xas(sel, st_data, el_type) -> Structure:
-    st = Structure.from_dict(st_data)
-    i_sphere = int(sel[0]['id'].split('--')[-1])
-    spheres = st._get_sites_to_draw()
-    spheres = list(spheres)
-    cur_sphere = spheres[i_sphere]
-    i_site = cur_sphere[0]
     specs = st_data['xas']
     element = el_type.split(' ')[0]
     if len(specs) == 0:
-        fig = px.scatter(title=f"This structure doesn't contain {element}")
+        fig = build_figure(None, el_type, is_average=False, no_element=True, sel_mismatch=False)
+    elif len(sel) == 0:
+        specs = np.array(list(specs.values()))
+        spectrum = specs.mean(axis=0)
+        fig = build_figure(spectrum, el_type, is_average=True, no_element=False, sel_mismatch=False)
     else:
+        st = Structure.from_dict(st_data)
+        spheres = st._get_sites_to_draw()
+        spheres = list(spheres)
+        i_sphere = int(sel[0]['id'].split('--')[-1])
+        cur_sphere = spheres[i_sphere]
+        i_site = cur_sphere[0]
         if st[i_site].specie.symbol != element:
-            fig = px.scatter(title=f"The selected atom is not a {element} atom")
+            fig = build_figure(None, el_type, is_average=False, no_element=False, sel_mismatch=True)
         else:
             spectrum = np.array(specs[str(i_site)])
-            ene = np.arange(spectrum.shape[0])
-            fig = px.scatter(x=ene, y=spectrum)
+            fig = build_figure(spectrum, el_type, is_average=False, no_element=False, sel_mismatch=False)
     return fig
     
 
