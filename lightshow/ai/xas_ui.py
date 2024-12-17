@@ -154,6 +154,17 @@ def predict_site_specific_xas(sel, st_data, el_type) -> Structure:
             spectrum = np.array(specs[str(i_site)])
             fig = build_figure(spectrum, el_type, is_average=False, no_element=False, sel_mismatch=False)
     return fig
+
+
+@app.callback(
+    Output(struct_component.id(), "data", allow_duplicate=True),
+    Input('absorber', 'value'),
+    State(struct_component.id(), "data")
+)
+def update_structure_by_mpid(el_type, st_data) -> Structure:
+    st = Structure.from_dict(st_data)
+    st_dict = decorate_structure_with_xas(st, el_type)
+    return st_dict
     
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
