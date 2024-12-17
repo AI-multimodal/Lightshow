@@ -84,7 +84,7 @@ def predict_average_xas(st_data: dict) -> Structure:
     if not st_data:
         raise PreventUpdate
     specs = st_data['xas']
-    specs = np.stack(list(specs.values()))
+    specs = np.array(list(specs.values()))
     spectrum = specs.mean(axis=0)
     ene = np.arange(spectrum.shape[0])
     fig = px.scatter(x=ene, y=spectrum)
@@ -104,7 +104,7 @@ def predict_site_specific_xas(sel, st_data) -> Structure:
     cur_sphere = spheres[i_sphere]
     i_site = cur_sphere[0]
     specs = st_data['xas']
-    spectrum = specs[str(i_site)]
+    spectrum = np.array(specs[str(i_site)])
     ene = np.arange(spectrum.shape[0])
     fig = px.scatter(x=ene, y=spectrum)
     return fig
