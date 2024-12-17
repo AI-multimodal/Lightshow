@@ -52,8 +52,16 @@ def update_structure_by_mpid(search_mpid: str) -> Structure:
     with MPRester() as mpr:
         st = mpr.get_structure_by_material_id(search_mpid)
         print("Struct from material.")
+    st_dict = decorate_structure_with_xas(st)
+    return st_dict
 
-    return st
+def decorate_structure_with_xas(st):
+    absorbing_site = 'Cu'
+    spectroscopy_type = 'FEFF'
+    specs = predict(st, absorbing_site, spectroscopy_type)
+    st_dict = st.as_dict()
+    st_dict['xas'] = specs
+    return st_dict
 
 
 @app.callback(
@@ -64,20 +72,18 @@ def update_structure_by_file(upload_data: dict) -> Structure:
     if not upload_data:
         raise PreventUpdate
     st = Structure.from_dict(upload_data['data'])
-    return st
+    st_dict = decorate_structure_with_xas(st)
+    return st_dict
 
 
 @app.callback(
     Output("xas_plot", "figure", allow_duplicate=True),
     Input(struct_component.id(), "data")
 )
-def predict_xas(st_data: dict) -> Structure:
+def predict_average_xas(st_data: dict) -> Structure:
     if not st_data:
         raise PreventUpdate
-    st = Structure.from_dict(st_data)
-    absorbing_site = 'Cu'
-    spectroscopy_type = 'FEFF'
-    specs = predict(st, absorbing_site, spectroscopy_type)
+    specs = st_data['xas']
     specs = np.stack(list(specs.values()))
     spectrum = specs.mean(axis=0)
     ene = np.arange(spectrum.shape[0])
@@ -97,9 +103,11 @@ def predict_site_specific_xas(sel, st_data) -> Structure:
     spheres = list(spheres)
     cur_sphere = spheres[i_sphere]
     i_site = cur_sphere[0]
-    site = st[i_site]
-    print(st)
-    print(sel, site)
+    specs = st_data['xas']
+    spectrum = specs[i_site]
+    ene = np.arange(spectrum.shape[0])
+    fig = px.scatter(x=ene, y=spectrum)
+    return fig
     
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
