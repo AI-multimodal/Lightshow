@@ -90,7 +90,7 @@ def predict_xas(st_data: dict) -> Structure:
     Input(struct_component.id('scene'), "selectedObject"),
     State(struct_component.id(), 'data')
 )
-def predict_xas(sel, st_data) -> Structure:
+def predict_site_specific_xas(sel, st_data) -> Structure:
     st = Structure.from_dict(st_data)
     i_sphere = int(sel[0]['id'].split('--')[-1])
     spheres = st._get_sites_to_draw()
