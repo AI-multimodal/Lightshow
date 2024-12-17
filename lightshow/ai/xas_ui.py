@@ -175,4 +175,4 @@ if __name__ == "__main__":
               "please set your materials project API key to "
               "this environment variable before running this app")
         exit()
-    app.run_server(debug=True, port=8050, host='0.0.0.0')
+    app.run_server(debug=False, port=8050, host='0.0.0.0')
