@@ -121,10 +121,10 @@ def predict_site_specific_xas(sel, st_data, el_type) -> Structure:
     cur_sphere = spheres[i_sphere]
     i_site = cur_sphere[0]
     specs = st_data['xas']
+    element = el_type.split(' ')[0]
     if len(specs) == 0:
         fig = px.scatter(title=f"This structure doesn't contain {element}")
     else:
-        element = el_type.split(' ')[0]
         if st[i_site].specie.symbol != element:
             fig = px.scatter(title=f"The selected atom is not a {element} atom")
         else:
