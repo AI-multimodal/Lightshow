@@ -1,12 +1,11 @@
 import os
 import numpy as np
 import dash
-from dash import dcc
+from dash import dcc, html
 import plotly.express as px
 
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-from pymatgen.core.lattice import Lattice
 from pymatgen.core.structure import Structure
 from mp_api.client import MPRester
 
@@ -38,6 +37,8 @@ absorber_dropdown = dcc.Dropdown(xas_model_names, value='Ti VASP', id='absorber'
 onmixas_layout = Columns([
         Column(Box([Loading(search_component.layout()),
                     Loading(upload_component.layout()),
+                    html.Br(), html.Br(),
+                    html.Div("Element and Theory:"),
                     Loading(absorber_dropdown)],
                 style={"width": "350px"}), narrow=True),
         Column(Loading(struct_component.layout(size="100%"))),
