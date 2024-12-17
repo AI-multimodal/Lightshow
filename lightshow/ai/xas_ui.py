@@ -120,7 +120,7 @@ def build_figure(spectrum, el_type, is_average, no_element, sel_mismatch):
     elif is_average:
         title = f'Average K-edge XANES Spectrum of {el_type}'
     else:
-        title = f'K-edge XANES Spectrum for the selected {element}atom'
+        title = f'K-edge XANES Spectrum for the selected {element} atom'
     fig = px.scatter(x=ene, y=spectrum, title=title, 
                      labels={'x': "Energy (eV)", "y": "Absorption"})
     return fig
