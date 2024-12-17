@@ -36,9 +36,9 @@ xas_model_names = [f'{el} FEFF' for el in all_elements] + ['Ti VASP', 'Cu VASP']
 absorber_dropdown = dcc.Dropdown(xas_model_names, value='Ti VASP')
 
 onmixas_layout = Columns([
-        Column(Box([search_component.layout(),
-                    upload_component.layout(),
-                    absorber_dropdown],
+        Column(Box([Loading(search_component.layout()),
+                    Loading(upload_component.layout()),
+                    Loading(absorber_dropdown)],
                 style={"width": "350px"}), narrow=True),
         Column(Loading(struct_component.layout(size="100%"))),
         Column(xas_plot)
