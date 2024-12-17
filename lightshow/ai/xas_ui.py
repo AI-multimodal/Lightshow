@@ -65,9 +65,9 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
 
 def decorate_structure_with_xas(st: Structure, el_type):
     absorbing_site, spectroscopy_type = el_type.split(' ')
+    st_dict = st.as_dict()
     if absorbing_site in st.composition:
         specs = predict(st, absorbing_site, spectroscopy_type)
-        st_dict = st.as_dict()
         st_dict['xas'] = specs
     else:
         st_dict['xas'] = {}
