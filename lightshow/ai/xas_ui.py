@@ -63,47 +63,57 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
     st_dict = decorate_structure_with_xas(st, el_type)
     return st_dict
 
-def decorate_structure_with_xas(st, el_type):
+def decorate_structure_with_xas(st: Structure, el_type):
     absorbing_site, spectroscopy_type = el_type.split(' ')
-    specs = predict(st, absorbing_site, spectroscopy_type)
-    st_dict = st.as_dict()
-    st_dict['xas'] = specs
+    if absorbing_site in st.composition:
+        specs = predict(st, absorbing_site, spectroscopy_type)
+        st_dict = st.as_dict()
+        st_dict['xas'] = specs
+    else:
+        st_dict['xas'] = {}
     return st_dict
 
 
 @app.callback(
     Output(struct_component.id(), "data", allow_duplicate=True),
-    Input(upload_component.id(), "data")
+    Input(upload_component.id(), "data"),
+    State('absorber', 'value')
 )
-def update_structure_by_file(upload_data: dict) -> Structure:
+def update_structure_by_file(upload_data: dict, el_type) -> Structure:
     if not upload_data:
         raise PreventUpdate
     st = Structure.from_dict(upload_data['data'])
-    st_dict = decorate_structure_with_xas(st)
+    st_dict = decorate_structure_with_xas(st, el_type)
     return st_dict
 
 
 @app.callback(
     Output("xas_plot", "figure", allow_duplicate=True),
-    Input(struct_component.id(), "data")
+    Input(struct_component.id(), "data"),
+    State('absorber', 'value')
 )
-def predict_average_xas(st_data: dict) -> Structure:
+def predict_average_xas(st_data: dict, el_type) -> Structure:
     if not st_data:
         raise PreventUpdate
     specs = st_data['xas']
-    specs = np.array(list(specs.values()))
-    spectrum = specs.mean(axis=0)
-    ene = np.arange(spectrum.shape[0])
-    fig = px.scatter(x=ene, y=spectrum)
+    if len(specs) == 0:
+        element = el_type.split(' ')[0]
+        fig = px.scatter(title=f"This structure doesn't contain {element}")
+    else:
+        specs = np.array(list(specs.values()))
+        spectrum = specs.mean(axis=0)
+        ene = np.arange(spectrum.shape[0])
+        fig = px.scatter(x=ene, y=spectrum, title=f'Average K-edge XANES Spectrum of {el_type}')
     return fig
 
 
 @app.callback(
     Output("xas_plot", "figure", allow_duplicate=True),
     Input(struct_component.id('scene'), "selectedObject"),
-    State(struct_component.id(), 'data')
+    State(struct_component.id(), 'data'),
+    State('absorber', 'value')
 )
-def predict_site_specific_xas(sel, st_data) -> Structure:
+def predict_site_specific_xas(sel, st_data, el_type) -> Structure:
     st = Structure.from_dict(st_data)
     i_sphere = int(sel[0]['id'].split('--')[-1])
     spheres = st._get_sites_to_draw()
@@ -111,9 +121,16 @@ def predict_site_specific_xas(sel, st_data) -> Structure:
     cur_sphere = spheres[i_sphere]
     i_site = cur_sphere[0]
     specs = st_data['xas']
-    spectrum = np.array(specs[str(i_site)])
-    ene = np.arange(spectrum.shape[0])
-    fig = px.scatter(x=ene, y=spectrum)
+    if len(specs) == 0:
+        fig = px.scatter(title=f"This structure doesn't contain {element}")
+    else:
+        element = el_type.split(' ')[0]
+        if st[i_site].specie.symbol != element:
+            fig = px.scatter(title=f"The selected atom is not a {element} atom")
+        else:
+            spectrum = np.array(specs[str(i_site)])
+            ene = np.arange(spectrum.shape[0])
+            fig = px.scatter(x=ene, y=spectrum)
     return fig
     
 
