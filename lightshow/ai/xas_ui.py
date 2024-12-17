@@ -104,7 +104,7 @@ def predict_site_specific_xas(sel, st_data) -> Structure:
     cur_sphere = spheres[i_sphere]
     i_site = cur_sphere[0]
     specs = st_data['xas']
-    spectrum = specs[i_site]
+    spectrum = specs[str(i_site)]
     ene = np.arange(spectrum.shape[0])
     fig = px.scatter(x=ene, y=spectrum)
     return fig
