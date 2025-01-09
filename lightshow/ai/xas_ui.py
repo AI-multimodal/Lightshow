@@ -1,4 +1,9 @@
+from base64 import b64encode
 import os
+import tempfile
+import pathlib
+from zipfile import ZipFile
+import pandas as pd
 import numpy as np
 import dash
 from dash import dcc, html
@@ -47,11 +52,49 @@ onmixas_layout = Columns([
                     Loading(absorber_dropdown)],
                 style={"width": "350px"}), narrow=True),
         Column(Loading(struct_component.layout(size="100%"))),
-        Column(xas_plot)
+        Column(Box([xas_plot,
+                    html.Button("Download POSCAR and Spectrum", id="download_btn"),
+                    dcc.Download(id="download_sink")]))
     ],
     desktop_only=False,
     centered=False
 )
+
+
+@app.callback(
+    Output("download-sink", "data"),
+    Input("download_btn", "n_clicks"),
+    State(struct_component.id(), "data"),
+    State('absorber', 'value')
+)
+def func(n_clicks, st_data, el_type):
+    absorbing_site, spectroscopy_type = el_type.split(' ')
+    specs = st_data['xas']
+    site_idxs = [f'Atom #{ii + 1}'
+        for ii, site in enumerate(st.sites)
+        if site.specie.symbol == absorbing_site
+    ]
+    df = pd.DataFrame(specs, index=site_idxs)
+    st = Structure.from_dict(st_data)
+    with tempfile.TemporaryDirectory() as td:
+        tmpdir = pathlib.Path(td)
+        fn_spec = f"{absorbing_site}_K_edge_spectrum.csv"
+        fn_poscar = tmpdir / 'POSCAR'
+        files_to_zip = [fn_poscar, tmpdir / fn_spec]
+        st.to("POSCAR", fmt='poscar')
+        df.to_csv(fn_spec, float_format="%.3f")
+        zip_fn = f'OmniXAS_{absorbing_site}_{spectroscopy_type}_Prediction_{n_clicks}.zip'
+        with ZipFile(zip_fn, 
+                     mode="w") as zip_file:
+            for fn in files_to_zip:
+                zip_file.write(fn, arcname=fn.name)
+        bytes = b64encode((tmpdir / zip_fn).read_bytes()).decode("ascii")
+        download_data = {"content": bytes,
+                         "base64": True,
+                         "type": "application/zip",
+                         "filename": zip_fn}
+
+    return download_data
 
 
 @app.callback(
