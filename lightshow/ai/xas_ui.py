@@ -22,7 +22,9 @@ from lightshow.ai.models import predict
 
 app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS@Lightshow.ai")
 
-struct_component = ctc.StructureMoleculeComponent(id="st_vis")
+struct_component = ctc.StructureMoleculeComponent(id="st_vis", 
+                                                  show_image_button=False, 
+                                                  show_export_button=False)
 search_component = ctc.SearchComponent(id='mpid_search')
 upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
 xas_plot = dcc.Graph(id='xas_plot')
