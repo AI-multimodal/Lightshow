@@ -65,25 +65,21 @@ onmixas_layout = Columns([
     Output("download_sink", "data"),
     Input("download_btn", "n_clicks"),
     State(struct_component.id(), "data"),
-    State('absorber', 'value')
 )
-def func(n_clicks, st_data, el_type):
-    absorbing_site, spectroscopy_type = el_type.split(' ')
-    specs = st_data['xas']
-    site_idxs = [f'Atom #{ii + 1}'
-        for ii, site in enumerate(st.sites)
-        if site.specie.symbol == absorbing_site
-    ]
-    df = pd.DataFrame(specs, index=site_idxs)
+def func(n_clicks, st_data):  
     st = Structure.from_dict(st_data)
+    d_xas = st_data['xas']
+    specs = np.stack(list(d_xas.values()))
+    site_idxs = [f'Atom #{int(i) + 1}' for i in d_xas.keys()]
+    df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
-        fn_spec = f"{absorbing_site}_K_edge_spectrum.csv"
+        fn_spec = "spectrum.csv"
         fn_poscar = tmpdir / 'POSCAR'
         files_to_zip = [fn_poscar, tmpdir / fn_spec]
         st.to("POSCAR", fmt='poscar')
         df.to_csv(fn_spec, float_format="%.3f")
-        zip_fn = f'OmniXAS_{absorbing_site}_{spectroscopy_type}_Prediction_{n_clicks}.zip'
+        zip_fn = f'OmniXAS_Prediction_{n_clicks}.zip'
         with ZipFile(zip_fn, 
                      mode="w") as zip_file:
             for fn in files_to_zip:
