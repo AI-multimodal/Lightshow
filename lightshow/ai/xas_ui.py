@@ -76,7 +76,7 @@ def download_xas_prediction(n_clicks, st_data, el_type):
     df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
-        if d_xas is None:
+        if len(d_xas) is None:
             fn_spec = tmpdir / "no_spectrum.csv"
         else:
             fn_spec = tmpdir / "spectrum.csv"
