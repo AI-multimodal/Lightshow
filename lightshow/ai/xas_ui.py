@@ -65,12 +65,14 @@ onmixas_layout = Columns([
     Output("download_sink", "data"),
     Input("download_btn", "n_clicks"),
     State(struct_component.id(), "data"),
+    State('absorber', 'value'),
 )
-def func(n_clicks, st_data):  
+def download_xas_prediction(n_clicks, st_data, el_type):  
+    el, theory = el_type.split(' ')
     st = Structure.from_dict(st_data)
     d_xas = st_data['xas']
-    specs = np.stack(list(d_xas.values()))
-    site_idxs = [f'Atom #{int(i) + 1}' for i in d_xas.keys()]
+    specs = np.stack([ene_grid[el]] + list(d_xas.values()))
+    site_idxs = ["Energy"] + [f'Atom #{int(i) + 1}' for i in d_xas.keys()]
     df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
@@ -78,8 +80,8 @@ def func(n_clicks, st_data):
         fn_poscar = tmpdir / 'POSCAR'
         files_to_zip = [fn_poscar, fn_spec]
         st.to(fn_poscar, fmt='poscar')
-        df.to_csv(fn_spec, float_format="%.3f")
-        zip_fn = tmpdir / f'OmniXAS_Prediction_{n_clicks}.zip'
+        df.to_csv(fn_spec, float_format="%.3f", header=False)
+        zip_fn = tmpdir / f'OmniXAS_{el}_{theory}_Prediction_{n_clicks}.zip'
         with ZipFile(zip_fn, 
                      mode="w") as zip_file:
             for fn in files_to_zip:
