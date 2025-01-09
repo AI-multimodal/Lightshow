@@ -53,6 +53,7 @@ onmixas_layout = Columns([
 
 @app.callback(
     Output(struct_component.id(), "data", allow_duplicate=True),
+    Output(upload_component.id("upload_data"), "contents"),
     Input(search_component.id(), "data"),
     State('absorber', 'value')
 )
@@ -64,7 +65,7 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
         st = mpr.get_structure_by_material_id(search_mpid)
         print("Struct from material.")
     st_dict = decorate_structure_with_xas(st, el_type)
-    return st_dict
+    return st_dict, None
 
 
 def decorate_structure_with_xas(st: Structure, el_type):
