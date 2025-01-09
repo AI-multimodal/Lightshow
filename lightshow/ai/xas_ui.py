@@ -74,12 +74,12 @@ def func(n_clicks, st_data):
     df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
-        fn_spec = "spectrum.csv"
+        fn_spec = tmpdir / "spectrum.csv"
         fn_poscar = tmpdir / 'POSCAR'
-        files_to_zip = [fn_poscar, tmpdir / fn_spec]
-        st.to("POSCAR", fmt='poscar')
+        files_to_zip = [fn_poscar, fn_spec]
+        st.to(fn_poscar, fmt='poscar')
         df.to_csv(fn_spec, float_format="%.3f")
-        zip_fn = f'OmniXAS_Prediction_{n_clicks}.zip'
+        zip_fn = tmpdir / f'OmniXAS_Prediction_{n_clicks}.zip'
         with ZipFile(zip_fn, 
                      mode="w") as zip_file:
             for fn in files_to_zip:
@@ -88,7 +88,7 @@ def func(n_clicks, st_data):
         download_data = {"content": bytes,
                          "base64": True,
                          "type": "application/zip",
-                         "filename": zip_fn}
+                         "filename": zip_fn.name}
 
     return download_data
 
