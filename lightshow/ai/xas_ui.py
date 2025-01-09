@@ -68,6 +68,8 @@ onmixas_layout = Columns([
     State('absorber', 'value'),
 )
 def download_xas_prediction(n_clicks, st_data, el_type):  
+    if st_data is None:
+        raise PreventUpdate
     el, theory = el_type.split(' ')
     st = Structure.from_dict(st_data)
     d_xas = st_data['xas']
