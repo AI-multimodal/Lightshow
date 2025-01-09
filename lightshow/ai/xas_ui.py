@@ -62,7 +62,7 @@ onmixas_layout = Columns([
 
 
 @app.callback(
-    Output("download-sink", "data"),
+    Output("download_sink", "data"),
     Input("download_btn", "n_clicks"),
     State(struct_component.id(), "data"),
     State('absorber', 'value')
