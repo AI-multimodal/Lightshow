@@ -76,7 +76,10 @@ def download_xas_prediction(n_clicks, st_data, el_type):
     df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
-        fn_spec = tmpdir / "spectrum.csv"
+        if d_xas is None:
+            fn_spec = tmpdir / "no_spectrum.csv"
+        else:
+            fn_spec = tmpdir / "spectrum.csv"
         fn_poscar = tmpdir / 'POSCAR'
         files_to_zip = [fn_poscar, fn_spec]
         st.to(fn_poscar, fmt='poscar')
