@@ -28,6 +28,7 @@ struct_component = ctc.StructureMoleculeComponent(id="st_vis",
 search_component = ctc.SearchComponent(id='mpid_search')
 upload_component = ctc.StructureMoleculeUploadComponent(id='file_loader')
 xas_plot = dcc.Graph(id='xas_plot')
+st_source = html.H1(id='st_source', children='No structure loaded yet')
 
 all_elements = ['Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu']
 ene_start = {'Ti': 4964.504, 'V': 5464.097, 'Cr': 5989.168, 'Mn': 6537.886, 
@@ -39,6 +40,8 @@ absorber_dropdown = dcc.Dropdown(xas_model_names, clearable=False, value='Ti VAS
 onmixas_layout = Columns([
         Column(Box([Loading(search_component.layout()),
                     Loading(upload_component.layout()),
+                    html.Br(), html.Br(),
+                    st_source,
                     html.Br(), html.Br(),
                     html.Div("Element and Theory:"),
                     Loading(absorber_dropdown)],
@@ -54,6 +57,7 @@ onmixas_layout = Columns([
 @app.callback(
     Output(struct_component.id(), "data", allow_duplicate=True),
     Output(upload_component.id("upload_data"), "contents"),
+    Output('st_source', "children", allow_duplicate=True),
     Input(search_component.id(), "data"),
     State('absorber', 'value')
 )
@@ -65,7 +69,7 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
         st = mpr.get_structure_by_material_id(search_mpid)
         print("Struct from material.")
     st_dict = decorate_structure_with_xas(st, el_type)
-    return st_dict, None
+    return st_dict, None, f"Current structure: {search_mpid}"
 
 
 def decorate_structure_with_xas(st: Structure, el_type):
@@ -81,15 +85,17 @@ def decorate_structure_with_xas(st: Structure, el_type):
 
 @app.callback(
     Output(struct_component.id(), "data", allow_duplicate=True),
+    Output('st_source', "children", allow_duplicate=True),
     Input(upload_component.id(), "data"),
+    State(upload_component.id('upload_data'), 'filename'),
     State('absorber', 'value')
 )
-def update_structure_by_file(upload_data: dict, el_type) -> Structure:
+def update_structure_by_file(upload_data: dict, fn, el_type) -> Structure:
     if not upload_data:
         raise PreventUpdate
     st = Structure.from_dict(upload_data['data'])
     st_dict = decorate_structure_with_xas(st, el_type)
-    return st_dict
+    return st_dict, f"Current structure: {fn}"
 
 
 @app.callback(
