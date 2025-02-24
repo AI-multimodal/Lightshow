@@ -224,10 +224,14 @@ def update_structure_by_mpid(el_type, st_data) -> Structure:
 
 ctc.register_crystal_toolkit(app=app, layout=onmixas_layout)
 
-if __name__ == "__main__":
+
+def serve():
     if "MP_API_KEY" not in os.environ:
         print("Environment variable MP_API_KEY not found, "
               "please set your materials project API key to "
               "this environment variable before running this app")
         exit()
     app.run_server(debug=False, port=8050, host='0.0.0.0')
+
+if __name__ == "__main__":
+    serve()

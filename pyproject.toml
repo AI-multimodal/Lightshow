@@ -79,7 +79,7 @@ server = [
 
 [project.scripts]
 lightshow-predict = "lightshow.ai.entrypoint:entrypoint"
-lightshow-serve = "lightshow.ai.server:serve"
+lightshow-serve = "lightshow.ai.xas_ui:serve"
     
 [tool.ruff]
 line-length = 80
