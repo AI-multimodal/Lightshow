@@ -234,7 +234,7 @@ def serve():
     cert_path = pathlib.Path(os.environ.get("LIGHTSHOW_CERT_PATH"))
     ssl_context = (cert_path / 'cert.pem',
                    cert_path / 'key.pem')
-    app.run_server(debug=False, port=443, host='0.0.0.0', ssl_context=ssl_context)
+    app.run_server(debug=False, port=8443, host='0.0.0.0', ssl_context=ssl_context)
 
 if __name__ == "__main__":
     serve()
