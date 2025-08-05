@@ -231,7 +231,9 @@ def serve():
               "please set your materials project API key to "
               "this environment variable before running this app")
         exit()
-    app.run_server(debug=False, port=8050, host='0.0.0.0')
+    ssl_context = ('/home/xiaqu/Documents/data/lightshow/cert.pem',
+                   '/home/xiaqu/Documents/data/lightshow/key.pem')
+    app.run_server(debug=False, port=443, host='0.0.0.0', ssl_context=ssl_context)
 
 if __name__ == "__main__":
     serve()
