@@ -26,6 +26,7 @@ from lightshow.ai.models import predict
 
 
 app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS@Lightshow.ai")
+server = app.server
 
 struct_component = ctc.StructureMoleculeComponent(id="st_vis", 
                                                   show_image_button=False, 
