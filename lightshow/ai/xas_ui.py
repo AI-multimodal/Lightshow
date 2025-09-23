@@ -25,7 +25,8 @@ from crystal_toolkit.helpers.layouts import (
 from lightshow.ai.models import predict
 
 
-app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS@Lightshow.ai")
+app = dash.Dash(prevent_initial_callbacks=True, title="OmniXAS@Lightshow.ai",
+                url_base_pathname="/omnixas/")
 server = app.server
 
 struct_component = ctc.StructureMoleculeComponent(id="st_vis", 
