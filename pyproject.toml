@@ -34,7 +34,7 @@ dependencies = [
     "monty>=2024.10.21",
     "mp-api==0.41.2",
     "numpy>=1.26.4",
-    "pydantic-core<=2.23.4",
+    "pydantic-core<=2.39.0",
     "pydantic<=2.9.2",
     "pymatgen>=2024.3.1",
     "tqdm>=4.67.0",
