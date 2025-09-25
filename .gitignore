@@ -4,7 +4,6 @@ pyrightconfig.json
 
 *.pyc
 !build_sphinx.sh
-*.png
 .ipynb_checkpoints/
 .coverage
 
