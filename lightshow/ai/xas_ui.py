@@ -53,7 +53,7 @@ onmixas_layout = Columns([
                     html.Div("Element and Theory:"),
                     Loading(absorber_dropdown)],
                 style={"width": "350px"}), narrow=True),
-        Column(Loading(struct_component.layout(size="100%"))),
+        Column(Loading(struct_component.layout(size="70%"))),
         Column(Box([xas_plot,
                     html.Button("Download POSCAR and Spectrum", id="download_btn"),
                     dcc.Download(id="download_sink")]))
