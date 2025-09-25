@@ -1,0 +1,4 @@
+﻿#siteMenu > li:nth-child(2) > a,
+#siteMenu > li:nth-child(2) > p {
+	border-bottom-color: #abd043;
+}   

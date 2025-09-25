@@ -1,0 +1,66 @@
+{
+  "name": "jquery.finger",
+  "version": "0.1.6",
+  "description": "jQuery Finger unifies click and touch events by removing the 300ms delay on touch devices. It also provide a common set of events to handle basic gestures such as drag and pinch. Small (< 1kb gzipped), it is focused on performance, is well tested and ... also supports jQuery delegated events.",
+  "homepage": "https://github.com/ngryman/jquery.finger",
+  "keywords": [
+    "jquery",
+    "tap",
+    "doubletap",
+    "swipe",
+    "flick",
+    "drag",
+    "move",
+    "gestures",
+    "touch",
+    "tappable",
+    "event",
+    "mobile",
+    "tablet"
+  ],
+  "categories": [
+    "UI",
+    "DOM",
+    "Shims",
+    "Utilities"
+  ],
+  "main": "dist/jquery.finger.js",
+  "jam": {
+    "main": "dist/jquery.finger.js",
+    "include": [
+      "dist/jquery.finger.js",
+      "dist/jquery.finger.min.js"
+    ],
+    "dependencies": {
+      "jquery": "~1.7.0"
+    }
+  },
+  "author": {
+    "name": "Nicolas Gryman",
+    "email": "ngryman@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ngryman/jquery.finger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ngryman/jquery.finger/issues",
+    "email": "ngryman@gmail.com"
+  },
+  "engines": {
+    "node": ">= 0.10"
+  },
+  "scripts": {
+    "test": "grunt mocha"
+  },
+  "devDependencies": {
+    "grunt": "~1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-contrib-connect": "^1.0.2",
+    "grunt-mocha": "~1.0.2"
+  }
+}
