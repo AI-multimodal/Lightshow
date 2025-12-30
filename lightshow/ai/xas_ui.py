@@ -76,7 +76,7 @@ def download_xas_prediction(n_clicks, st_data, el_type):
     st = Structure.from_dict(st_data)
     d_xas = st_data['xas']
     specs_list = [ene_grid[el]] + list(d_xas.values())
-    avg_spec = np.stack(specs_list).mean(axis=0)
+    avg_spec = np.stack(specs_list[1:]).mean(axis=0)
     specs_list.append(avg_spec)
     specs = np.stack(specs_list)
     
