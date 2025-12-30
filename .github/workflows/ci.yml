@@ -28,8 +28,6 @@ jobs:
     steps:
 
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -57,8 +55,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: chartboost/ruff-action@v1
         with:
           src: './lightshow'
@@ -68,8 +64,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -92,8 +86,6 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     ###########################################################################
     # Getting the tags like this is REQUIRED for the dynamic versioning
@@ -135,8 +127,6 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -185,8 +175,6 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
