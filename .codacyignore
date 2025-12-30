@@ -1,24 +1,6 @@
-**ai/html/**
-
-# Dependency folders
 node_modules/**
-vendor/**
-.venv/**
-venv/**
-
-# Build artifacts
 dist/**
 build/**
-out/**
-target/**
-
-# Generated / cache files
-coverage/**
-*.lock
-*.log
-
-# Binary / large files
 *.zip
-*.tar
-*.gz
 *.bin
+**ai/html/**
