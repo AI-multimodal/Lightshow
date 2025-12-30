@@ -64,11 +64,15 @@ ai = [
     "matgl==0.8.5",
     "pydantic-core==2.23.4",
     "pydantic==2.9.2",
-    "pymatgen>=2024.3.1",
+    "pymatgen >=2024.3.1, <=2024.11.13",
     "torch==2.2.0",
     "torchdata==0.7.1",
     "gunicorn>=23.0.0",
-    "gevent>=25.5.0"
+    "gevent>=25.5.0",
+    "numpy<=1.26.4",
+    "ipython",
+    "emmet-core==0.84.3rc0",
+    "dash>=3.0"
 ]
 all = [
     "lightshow[test]",
