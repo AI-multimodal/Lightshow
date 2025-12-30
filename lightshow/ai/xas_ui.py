@@ -8,7 +8,6 @@ import numpy as np
 import dash
 from dash import dcc, html
 import plotly.express as px
-
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from pymatgen.core.structure import Structure
