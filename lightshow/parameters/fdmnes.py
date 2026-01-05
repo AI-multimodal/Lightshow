@@ -160,7 +160,7 @@ class FDMNESParameters(MSONable, _BaseParameters):
 
         transition_metal_ranges = [range(21, 31), range(39, 49), range(57, 81)]
 
-        if cards["Green"] == True:
+        if cards["Green"]:
             return cards
         
         else:
