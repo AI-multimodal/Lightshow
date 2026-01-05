@@ -75,8 +75,12 @@ def download_xas_prediction(n_clicks, st_data, el_type):
     el, theory = el_type.split(' ')
     st = Structure.from_dict(st_data)
     d_xas = st_data['xas']
-    specs = np.stack([ene_grid[el]] + list(d_xas.values()))
-    site_idxs = ["Energy"] + [f'Atom #{int(i) + 1}' for i in d_xas.keys()]
+    specs_list = [ene_grid[el]] + list(d_xas.values())
+    avg_spec = np.stack(specs_list[1:]).mean(axis=0)
+    specs_list.append(avg_spec)
+    specs = np.stack(specs_list)
+    
+    site_idxs = ["Energy"] + [f'Atom #{int(i) + 1}' for i in d_xas.keys()] + ['Average']
     df = pd.DataFrame(specs, index=site_idxs)
     with tempfile.TemporaryDirectory() as td:
         tmpdir = pathlib.Path(td)
