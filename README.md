@@ -36,6 +36,7 @@ generation, and currently supports the following codes:
 -   [OCEAN](https://www.nist.gov/services-resources/software/ocean)
 -   [EXCITING](https://exciting-code.org)
 -   [Xspectra](https://gitlab.com/QEF/q-e/-/tree/master/XSpectra)
+-   [FDMNES](https://fdmnes.neel.cnrs.fr)
 
 with more on the way! The software is intended to be user-friendly,
 extensively documented and tested, and extendable for those users who

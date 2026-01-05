@@ -1,4 +1,3 @@
-from pathlib import Path
 from warnings import warn
 
 from monty.json import MSONable
@@ -17,7 +16,8 @@ FDMNES_DEFAULT_CARDS = {
     "Screening": False,
     "Full_atom": False,
     "TDDFT": False,
-    "PBE96": False,
+    "Perdew": True,
+    "Green": False
 }
 
 
@@ -72,23 +72,22 @@ class FDMNESParameters(MSONable, _BaseParameters):
     def __init__(
         self,
         cards=FDMNES_DEFAULT_CARDS,
-        e_range="-5. 0.5 60.",
+        e_range="-5. 0.2 60.",
         edge="K",
-        radius=7.0,
-        name=None,
+        radius=5.0,
+        name=None
     ):
         self._cards = cards
         self._radius = radius
-        self._range = e_range
-
-        self._name = name if name is not None else "FDMNES"
+        self._e_range = e_range
         self._edge = edge
-
+        
+        self._name = name if name is not None else "FDMNES"
         self.validate_edge()
 
     def validate_edge(self):
         """
-        Validates and adjusts the edge attribute based on standard edge choices
+        # Validates and adjusts the edge attribute based on standard edge choices
         supported by FDMNES.
 
         Edge types recognized:
@@ -160,29 +159,33 @@ class FDMNESParameters(MSONable, _BaseParameters):
 
         transition_metal_ranges = [range(21, 31), range(39, 49), range(57, 81)]
 
-        if self._edge == "K":
-            if "Nonrelat" not in cards.keys():
+        if cards.get("Green", False):
+            return cards
+        
+        else:
+            if self._edge == "K":
+                if "Nonrelat" not in cards.keys():
+                    cards["Spinorbit"] = True
+                    warn(
+                        "Spin-orbit has been turned on for K-edge calculation "
+                        "for accuracy. The simulation is typically 4 to 8 times "
+                        "longer and need 2 times more memory space. To turn"
+                        " it off, set 'Nonrelat' = True. "
+                    )
+                if any(Z_absorber in r for r in transition_metal_ranges):
+                    cards["Quadrupole"] = True
+
+            elif self._edge == "L23" and Z_absorber in range(21, 26):
+                cards["TDDFT"] = True
+
+            if any(z > 36 for z in species_z_list):
+                cards["Relativism"] = True
+
+            if any(z > 50 for z in species_z_list):
                 cards["Spinorbit"] = True
-                warn(
-                    "Spin-orbit has been turned on for K-edge calculation "
-                    "for accuracy. The simulation is typically 4 to 8 times "
-                    "longer and need 2 times more memory space. To turn"
-                    " it off, set 'Nonrelat' = True. "
-                )
-            if any(Z_absorber in r for r in transition_metal_ranges):
-                cards["Quadrupole"] = True
 
-        elif self._edge == "L23" and Z_absorber in range(21, 26):
-            cards["TDDFT"] = True
-
-        if any(z > 36 for z in species_z_list):
-            cards["Relativism"] = True
-
-        if any(z > 50 for z in species_z_list):
-            cards["Spinorbit"] = True
-
-        if 8 in species_z_list:
-            cards["Full_atom"] = True
+            if 8 in species_z_list:
+                cards["Full_atom"] = True
 
         return cards
 
@@ -211,11 +214,28 @@ class FDMNESParameters(MSONable, _BaseParameters):
             ``{"pass": True, "errors": dict(), "path": ...}``.
         """
 
-        structure = kwargs["structure"]
-        Z_absorber = kwargs["Z_absorber"]
+        structure = kwargs.get("structure_uc", kwargs["structure"])
 
-        if structure is None:
-            raise ValueError("Structure must be provided.")
+        Z_absorber = kwargs.get("Z_absorber")
+
+        sites = kwargs.get("sites")
+        if sites is None:
+            # Infer absorber sites from Z_absorber; if absent, default to the first site
+            if Z_absorber is None:
+                sites = [0]
+            else:
+                if isinstance(Z_absorber, (list, tuple, set)):
+                    zset = {int(z) for z in Z_absorber}
+                else:
+                    zset = {int(Z_absorber)}
+
+                sites = [i for i, s in enumerate(structure) if int(s.specie.Z) in zset]
+                if not sites:
+                    raise ValueError(f"No absorber sites found for Z_absorber={Z_absorber}.")
+        
+        all_species = [structure[site].specie.symbol for site in sites]
+        species = list(dict.fromkeys(all_species))
+        Z_absorbers = [Element(specie).Z for specie in species]
 
         # prepare lattice parameters, atomic numbers and fractional coordinates
         a, b, c = structure.lattice.abc
@@ -223,49 +243,44 @@ class FDMNESParameters(MSONable, _BaseParameters):
         atomic_numbers = structure.atomic_numbers
         scaled_positions = structure.frac_coords
 
-        if Z_absorber is None:
-            Z_absorber = atomic_numbers[0]
-            warn(
-                "Z_absorber is not provided, apply the first atom specie"
-                f"to be the absorbing specie Z={atomic_numbers[0]} "
-            )
+        for i in range(len(Z_absorbers)):
+            specie = species[i]
+            Z_absorber = Z_absorbers[i]
 
-        element_absorber = Element.from_Z(Z_absorber).symbol
-        target_directory = Path(target_directory)
-        target_directory.mkdir(exist_ok=True, parents=True)
+            target_directory.mkdir(exist_ok=True, parents=True)
 
-        fdmnesinput = self.get_FDMNESinput(structure, Z_absorber)
-        filepath = target_directory / f"{element_absorber}_in.txt"
+            fdmnesinput = self.get_FDMNESinput(structure, Z_absorber)
+            filepath = target_directory / f"{specie}_in.txt"
 
-        with open(filepath, "w") as f:
-            f.write("Filout\n")
-            f.write(f"  {element_absorber}\n\n")
+            with open(filepath, "w") as f:
+                f.write("Filout\n")
+                f.write(f"  {specie}\n\n")
 
-            f.write("Range\n")
-            f.write(f"  {self._range}\n\n")
+                f.write("Range\n")
+                f.write(f"  {self._e_range}\n\n")
 
-            f.write("Radius\n")
-            f.write(f"  {self._radius}\n\n")
+                f.write("Radius\n")
+                f.write(f"  {self._radius}\n\n")
 
-            for key, value in fdmnesinput.items():
-                if value:
-                    f.write(f"{key}\n\n")
+                for key, value in fdmnesinput.items():
+                    if value:
+                        f.write(f"{key}\n\n")
 
-            f.write("Crystal \n")
-            f.write(
-                f"{a:.4f} {b:.4f} {c:.4f} {alpha:.1f} {beta:.1f} {gamma:.1f}\n"
-            )
-            for atomic_number, pos in zip(atomic_numbers, scaled_positions):
+                f.write("Crystal \n")
                 f.write(
-                    f"  {atomic_number} {pos[0]:.4f} {pos[1]:.4f} "
-                    f"{pos[2]:.4f}\n"
+                    f"{a:.4f} {b:.4f} {c:.4f} {alpha:.1f} {beta:.1f} {gamma:.1f}\n"
                 )
+                for atomic_number, pos in zip(atomic_numbers, scaled_positions):
+                    f.write(
+                        f"  {atomic_number} {pos[0]:.4f} {pos[1]:.4f} "
+                        f"{pos[2]:.4f}\n"
+                    )
 
-            f.write("\nZ_Absorber\n")
-            f.write(f"  {Z_absorber}\n\n")
-            f.write("Edge \n")
-            f.write(f"  {self._edge}\n\n")
-            f.write("Convolution \n\n")
-            f.write("End")
+                f.write("\nZ_Absorber\n")
+                f.write(f"  {Z_absorber}\n\n")
+                f.write("Edge \n")
+                f.write(f"  {self._edge}\n\n")
+                f.write("Convolution \n\n")
+                f.write("End")
 
         return {"pass": True, "errors": dict(), "path": str(filepath)}
