@@ -237,7 +237,7 @@ def serve():
               "please set your materials project API key to "
               "this environment variable before running this app")
         exit()
-    app.run(debug=False, port=8443, host='0.0.0.0')
+    app.run(debug=False, port=8443, host='127.0.0.1')
 
 if __name__ == "__main__":
     serve()
