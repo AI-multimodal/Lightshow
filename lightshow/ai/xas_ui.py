@@ -119,7 +119,11 @@ def update_structure_by_mpid(search_mpid: str, el_type) -> Structure:
     
     with MPRester() as mpr:
         st = mpr.get_structure_by_material_id(search_mpid)
+        if not isinstance(st, Structure):
+            raise Exception("mp_api MPRester.get_structure_by_material_id did not return a pymatgen \"Structure\" object. This has been observed to occur when using an outdated version of mp_api with a more recent version of emmet-core. For now, please use the versions specified by LightShow's pyproject.toml")
+        
         print("Struct from material.")
+        
     st_dict = decorate_structure_with_xas(st, el_type)
     return st_dict, None, f"Current structure: {search_mpid}"
 
@@ -237,7 +241,7 @@ def serve():
               "please set your materials project API key to "
               "this environment variable before running this app")
         exit()
-    app.run_server(debug=False, port=8443, host='0.0.0.0')
+    app.run(debug=False, port=8443, host='127.0.0.1')
 
 if __name__ == "__main__":
     serve()
