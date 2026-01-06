@@ -32,7 +32,7 @@ requires-python = ">=3.9"
 dependencies = [
     "ase>=3.23.0",
     "monty>=2024.10.21",
-    "mp-api==0.41.2",
+    "mp-api==0.45.15",
     "numpy>=1.26.4",
     "pydantic-core<=2.23.4",
     "pydantic<=2.9.2",
