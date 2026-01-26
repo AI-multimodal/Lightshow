@@ -206,6 +206,8 @@ def predict_site_specific_xas(sel, st_data, el_type) -> Structure:
         st = Structure.from_dict(st_data)
         el_sel = sel[0]['tooltip'].split('(')[0].strip()
         pos_sel = np.array([float(x) for x in sel[0]['tooltip'].split('(')[1].split(')')[0].split(',')])
+        frac_pos_sel = st.lattice.get_fractional_coords(pos_sel)
+        pos_sel = st.lattice.get_cartesian_coords(frac_pos_sel % 1.0)
         dist = np.linalg.norm(st.cart_coords - pos_sel, axis=1)
         i_site = np.argmin(dist)
         assert dist[i_site] < 0.01
